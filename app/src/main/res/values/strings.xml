@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">IntervalTraining</string>
+    <string name="ic_description_exercise_icon">Exercise Icon</string>
+    <string name="ic_description_play_icon">Play Icon</string>
+    <string name="welcome_trained_time_first_line">You have trained</string>
+    <string name="welcome_trained_time_second_line">%1$s</string>
+    <string name="welcome_trained_time_third_line">hours this week.</string>
+    <string name="welcome_training_min">%1$s\'</string>
+
+</resources>
