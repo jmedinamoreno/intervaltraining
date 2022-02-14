@@ -1,6 +1,7 @@
 package com.medina.intervaltraining.screens
 
 import android.content.res.Configuration
+import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,13 +11,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.preview.SampleData
+import com.medina.intervaltraining.room.Word
+import com.medina.intervaltraining.room.WordViewModel
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import com.medina.intervaltraining.viewmodel.Training
 
@@ -45,7 +51,9 @@ fun IntervalTrainingScreen(
     onPlay: (training:Training, immediate:Boolean) -> Unit = {_,_->},
     trainedHours: Float,
     trainingList: List<Training>,
+    wordViewModel: WordViewModel
 ){
+    val items: List<Word> by wordViewModel.allWords.observeAsState(listOf())
     Scaffold(floatingActionButton = {
         FloatingActionButton(onClick = onNewTraining) {
             Icon(imageVector = Icons.Default.Add, contentDescription = "New")
@@ -53,14 +61,21 @@ fun IntervalTrainingScreen(
         ) {
         Column() {
             TrainedHoursComponent(hours = trainedHours,
-                modifier = Modifier.fillMaxWidth().padding(all=16.dp))
-            TrainingListComponent(trainingList = trainingList,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(all=16.dp)
-                    .weight(1f),
-                onPlay = onPlay
-            )
+                    .padding(all = 16.dp))
+            LazyColumn{
+                items(items){ word ->
+                    Text(text = word.word)
+                }
+            }
+//            TrainingListComponent(trainingList = trainingList,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(all=16.dp)
+//                    .weight(1f),
+//                onPlay = onPlay
+//            )
         }
     }
 }
@@ -136,6 +151,6 @@ fun TrainingListPreview() {
 @Composable
 fun InternalTrainingScreenPreview() {
     IntervalTrainingTheme {
-        IntervalTrainingScreen(trainedHours = 1.5f, trainingList = SampleData.trainingList)
+        IntervalTrainingScreen(trainedHours = 1.5f, trainingList = SampleData.trainingList, wordViewModel = viewModel())
     }
 }
