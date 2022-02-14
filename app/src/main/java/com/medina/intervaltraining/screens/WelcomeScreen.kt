@@ -16,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.medina.intervaltraining.R
+import com.medina.intervaltraining.preview.SampleData
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import com.medina.intervaltraining.viewmodel.Training
 
@@ -39,20 +40,27 @@ fun FirstRunScreen(onStart: () -> Unit) {
 }
 
 @Composable
-fun IntervalTrainingScreen(){
+fun IntervalTrainingScreen(
+    onNewTraining: () -> Unit = {},
+    onPlay: (training:Training, immediate:Boolean) -> Unit = {_,_->},
+    trainedHours: Float,
+    trainingList: List<Training>,
+){
     Scaffold(floatingActionButton = {
-        FloatingActionButton(onClick = { /*TODO*/ }) {
+        FloatingActionButton(onClick = onNewTraining) {
             Icon(imageVector = Icons.Default.Add, contentDescription = "New")
         }}
         ) {
         Column() {
-            TrainedHoursComponent(hours = 1.5f,
+            TrainedHoursComponent(hours = trainedHours,
                 modifier = Modifier.fillMaxWidth().padding(all=16.dp))
-            TrainingListComponent(trainingList = listOf(Training(45,"Mi tabla de ejercicios 1")),
+            TrainingListComponent(trainingList = trainingList,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(all=16.dp)
-                    .weight(1f))
+                    .weight(1f),
+                onPlay = onPlay
+            )
         }
     }
 }
@@ -73,10 +81,14 @@ fun TrainedHoursComponent(hours:Float, modifier: Modifier){
 }
 
 @Composable
-fun TrainingListComponent(trainingList:List<Training>,modifier: Modifier){
+fun TrainingListComponent(
+    modifier: Modifier,
+    trainingList:List<Training>,
+    onPlay: (training:Training, immediate:Boolean) -> Unit = {_,_->},){
     LazyColumn(modifier = modifier) {
         items(trainingList) { training ->
-            TrainingItemComponent(training, Modifier.padding(2.dp), {},{})
+            TrainingItemComponent(training, Modifier.padding(2.dp),
+                {onPlay(training,false)},{onPlay(training,true)})
         }
     }
 }
@@ -112,9 +124,8 @@ fun TrainingListPreview() {
     IntervalTrainingTheme {
         TrainingListComponent(modifier = Modifier,
             trainingList = listOf(
-                Training(45,"Mi tabla de ejercicios 1"),
-                Training(25,"Mi tabla de ejercicios 2"),
-                Training(95,"Mi tabla de ejercicios 3"),
+                SampleData.training,
+                SampleData.training,
             ))
     }
 }
@@ -125,6 +136,6 @@ fun TrainingListPreview() {
 @Composable
 fun InternalTrainingScreenPreview() {
     IntervalTrainingTheme {
-        IntervalTrainingScreen()
+        IntervalTrainingScreen(trainedHours = 1.5f, trainingList = SampleData.trainingList)
     }
 }

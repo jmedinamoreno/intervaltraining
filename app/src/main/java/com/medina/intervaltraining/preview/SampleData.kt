@@ -2,6 +2,7 @@ package com.medina.intervaltraining.preview
 
 import com.medina.intervaltraining.viewmodel.Exercise
 import com.medina.intervaltraining.viewmodel.ExerciseIcon
+import com.medina.intervaltraining.viewmodel.Training
 
 
 object SampleData {
@@ -22,5 +23,12 @@ object SampleData {
             name = "None",
             icon = ExerciseIcon.NONE
         ),
+    )
+    val training = Training(45,"My training", exerciseTable)
+
+    val trainingList = mutableListOf(
+        Training(45,"My training 1", exerciseTable),
+        Training(25,"My training 2", exerciseTable),
+        Training(60,"My training 3", exerciseTable)
     )
 }

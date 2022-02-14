@@ -4,31 +4,27 @@ import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.medina.intervaltraining.preview.SampleData
-import com.medina.intervaltraining.screens.ExerciseTableScreen
+import com.medina.intervaltraining.screens.*
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
-import com.medina.intervaltraining.viewmodel.Exercise
-import com.medina.intervaltraining.viewmodel.ExerciseViewModel
+import com.medina.intervaltraining.viewmodel.Training
 
 class MainActivity : ComponentActivity() {
-
-    private val exerciseViewModel by viewModels<ExerciseViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,7 +35,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    IntervalTrainingApp(exerciseViewModel)
+                    IntervalTrainingApp()
                 }
             }
         }
@@ -47,48 +43,94 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun IntervalTrainingApp(exerciseViewModel: ExerciseViewModel) {
+fun IntervalTrainingApp() {
+    var isFirstRun by remember { mutableStateOf(true) }
+    val navController = rememberNavController()
+    val backstackEntry = navController.currentBackStackEntryAsState()
+    val currentRoute = backstackEntry.value?.destination?.route
 
-    val items: List<Exercise> by exerciseViewModel.exerciseItems.observeAsState(listOf())
-    var shouldShowOnboarding by remember { mutableStateOf(true) }
-
-    if (shouldShowOnboarding) {
-        OnboardingScreen(onStart = {shouldShowOnboarding = false})
+    if (isFirstRun) {
+        FirstRunScreen(onStart = { isFirstRun = false })
     } else {
-        ExerciseTableScreen(
-            items = items,
-            onAddItem = {exerciseViewModel.addItem(it)},
-            onRemoveItem = {exerciseViewModel.removeItem(it)}
-        )
+        IntervalTrainingNavHost(navController)
     }
 }
 
+enum class IntervalTrainingScreens{
+    Welcome,
+    Training,
+    Editor
+}
+
 @Composable
-fun OnboardingScreen(onStart: () -> Unit) {
-    Surface {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Welcome to the Basics Codelab!")
-            Button(
-                modifier = Modifier.padding(vertical = 24.dp),
-                onClick = onStart
-            ) {
-                Text("Continue")
-            }
+fun IntervalTrainingNavHost(
+    navController: NavHostController,
+    modifier: Modifier = Modifier
+) {
+    NavHost(
+        navController = navController,
+        startDestination = IntervalTrainingScreens.Welcome.name,
+        modifier = modifier
+    ) {
+        composable(IntervalTrainingScreens.Welcome.name) {
+            IntervalTrainingScreen(
+                trainingList = SampleData.trainingList,
+                trainedHours = 1.5f,
+                onNewTraining = {
+                    navController.navigate(IntervalTrainingScreens.Editor.name)
+                },
+                onPlay = {training, immediate ->
+                    val index = SampleData.trainingList.indexOf(training)
+                    navController.navigate("${IntervalTrainingScreens.Training.name}/$index/$immediate")
+                }
+            )
+        }
+        composable(
+            "${IntervalTrainingScreens.Training.name}/{$TRAINING_INDEX_KEY}/{immediate}",
+            arguments = listOf(
+                navArgument(TRAINING_INDEX_KEY) {
+                    type = NavType.IntType
+                },
+                navArgument("immediate"){
+                    type = NavType.BoolType
+                }
+            ),
+        ) { entry ->
+            val immediate = entry.arguments?.getBoolean("immediate")?:false
+            val training = getTrainingByNavEntry(entry)
+            ExerciseTableScreen(training = training,
+                immediate = immediate,
+                onBack = { navController.popBackStack() },
+                onEdit = {
+                    val index = SampleData.trainingList.indexOf(training)
+                    navController.navigate("${IntervalTrainingScreens.Editor.name}/$index")
+                }
+            )
+        }
+        composable(
+            "${IntervalTrainingScreens.Editor.name}/{$TRAINING_INDEX_KEY}",
+            arguments = listOf(
+                navArgument(TRAINING_INDEX_KEY) {
+                    type = NavType.IntType
+                },
+            ),
+        ) { entry ->
+            val training = getTrainingByNavEntry(entry)
+            EditExerciseTableScreen(training = training,
+                onBack = { navController.popBackStack() },
+                onDelete = {},
+                onUpdateTraining = {}
+            )
         }
     }
 }
 
-@Preview(showBackground = true, widthDp = 320, heightDp = 320)
-@Composable
-fun OnboardingPreview() {
-    IntervalTrainingTheme {
-        OnboardingScreen(onStart = {})
-    }
+fun getTrainingByNavEntry(navBackStackEntry:NavBackStackEntry):Training{
+    val index = navBackStackEntry.arguments?.getInt(TRAINING_INDEX_KEY)?:0
+    return SampleData.trainingList[index]
 }
+
+const val TRAINING_INDEX_KEY = "index"
 
 @Preview
 @Preview(name = "Light Mode")
@@ -100,6 +142,6 @@ fun OnboardingPreview() {
 @Composable
 fun DefaultPreview() {
     IntervalTrainingTheme {
-        ExerciseTableScreen(SampleData.exerciseTable, {}, {})
+        IntervalTrainingApp()
     }
 }
