@@ -1,7 +1,7 @@
 package com.medina.intervaltraining.ui.theme
 
 import com.medina.intervaltraining.R
-import com.medina.intervaltraining.viewmodel.ExerciseIcon
+import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 
 object Utils {
     fun iconToDrawableResource(icon: ExerciseIcon):Int = when(icon){

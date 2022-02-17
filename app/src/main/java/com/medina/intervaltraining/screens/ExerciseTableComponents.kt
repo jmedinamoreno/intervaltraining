@@ -1,9 +1,6 @@
 package com.medina.intervaltraining.screens
 
 
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringDef
-import androidx.annotation.StringRes
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -33,8 +30,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.medina.intervaltraining.R
-import com.medina.intervaltraining.viewmodel.Exercise
-import com.medina.intervaltraining.viewmodel.ExerciseIcon
+import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 
 /**
  * Draws a row of [TodoIcon] with visibility changes animated.

@@ -6,16 +6,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.Observer
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -23,14 +19,21 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.medina.intervaltraining.preview.SampleData
-import com.medina.intervaltraining.room.*
-import com.medina.intervaltraining.screens.*
+import com.example.jetcaster.util.viewModelProviderFactoryOf
+import com.medina.intervaltraining.data.repository.TrainingDummyRepository
+import com.medina.intervaltraining.data.repository.TrainingRoomRepository
+import com.medina.intervaltraining.data.room.TrainingRoomDatabase
+import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
+import com.medina.intervaltraining.data.viewmodel.TrainingViewModel
+import com.medina.intervaltraining.data.viewmodel.TrainingViewModelFactory
+import com.medina.intervaltraining.screens.EditExerciseTableScreen
+import com.medina.intervaltraining.screens.ExerciseTableScreen
+import com.medina.intervaltraining.screens.FirstRunScreen
+import com.medina.intervaltraining.screens.IntervalTrainingScreen
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
-import com.medina.intervaltraining.viewmodel.Training
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-
+import java.util.*
 
 
 class MainActivity : ComponentActivity() {
@@ -39,10 +42,18 @@ class MainActivity : ComponentActivity() {
 
     // Using by lazy so the database and the repository are only created when they're needed
     // rather than when the application starts
-    private val database by lazy { WordRoomDatabase.getDatabase(this, applicationScope) }
-    private val repository by lazy { WordRepository(database.wordDao()) }
-    private val wordViewModel: WordViewModel by viewModels {
-        WordViewModelFactory(repository)
+//    private val database by lazy { WordRoomDatabase.getDatabase(this, applicationScope) }
+//    private val repository by lazy { WordRepository(database.wordDao()) }
+//    private val wordViewModel: WordViewModel by viewModels {
+//        WordViewModelFactory(repository)
+//    }
+
+    // Using by lazy so the database and the repository are only created when they're needed
+    // rather than when the application starts
+    private val database by lazy { TrainingRoomDatabase.getDatabase(this, applicationScope) }
+    private val repository by lazy { TrainingRoomRepository(database.trainingDao()) }
+    private val trainingViewModel: TrainingViewModel by viewModels {
+        TrainingViewModelFactory(repository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,7 +65,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    IntervalTrainingApp(wordViewModel)
+                    IntervalTrainingApp(trainingViewModel)
                 }
             }
         }
@@ -62,7 +73,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun IntervalTrainingApp(wordViewModel: WordViewModel) {
+fun IntervalTrainingApp(trainingViewModel: TrainingViewModel) {
     var isFirstRun by remember { mutableStateOf(true) }
     val navController = rememberNavController()
     val backstackEntry = navController.currentBackStackEntryAsState()
@@ -71,7 +82,7 @@ fun IntervalTrainingApp(wordViewModel: WordViewModel) {
     if (isFirstRun) {
         FirstRunScreen(onStart = { isFirstRun = false })
     } else {
-        IntervalTrainingNavHost(navController,wordViewModel)
+        IntervalTrainingNavHost(navController,trainingViewModel)
     }
 }
 
@@ -84,7 +95,7 @@ enum class IntervalTrainingScreens{
 @Composable
 fun IntervalTrainingNavHost(
     navController: NavHostController,
-    wordViewModel: WordViewModel,
+    trainingViewModel: TrainingViewModel,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -94,51 +105,60 @@ fun IntervalTrainingNavHost(
     ) {
         composable(IntervalTrainingScreens.Welcome.name) {
             IntervalTrainingScreen(
-                wordViewModel = wordViewModel,
-                trainingList = SampleData.trainingList,
+                trainingViewModel = trainingViewModel,
                 trainedHours = 1.5f,
                 onNewTraining = {
-                    wordViewModel.insert(Word("Test"))
-                   // navController.navigate(IntervalTrainingScreens.Editor.name)
+                    //navController.navigate(IntervalTrainingScreens.Editor.name)
+                                trainingViewModel.newTraining("Test new")
                 },
                 onPlay = {training, immediate ->
-                    val index = SampleData.trainingList.indexOf(training)
-                    navController.navigate("${IntervalTrainingScreens.Training.name}/$index/$immediate")
+                    navController.navigate("${IntervalTrainingScreens.Training.name}/${training.id}/$immediate")
                 }
             )
         }
         composable(
-            "${IntervalTrainingScreens.Training.name}/{$TRAINING_INDEX_KEY}/{immediate}",
+            "${IntervalTrainingScreens.Training.name}/{$TRAINING_KEY}/{$IMMEDIATE_FLAG}",
             arguments = listOf(
-                navArgument(TRAINING_INDEX_KEY) {
-                    type = NavType.IntType
+                navArgument(TRAINING_KEY) {
+                    type = NavType.StringType
                 },
-                navArgument("immediate"){
+                navArgument(IMMEDIATE_FLAG){
                     type = NavType.BoolType
                 }
             ),
         ) { entry ->
-            val immediate = entry.arguments?.getBoolean("immediate")?:false
-            val training = getTrainingByNavEntry(entry)
-            ExerciseTableScreen(training = training,
+            val immediate = entry.arguments?.getBoolean(IMMEDIATE_FLAG)?:false
+            val training = entry.arguments?.getString(TRAINING_KEY)
+            val viewModel:ExerciseViewModel = viewModel(
+                key = "exercise_model_for_$training",
+                factory = viewModelProviderFactoryOf { ExerciseViewModel(
+                    repository = trainingViewModel.repository, UUID.fromString(training)
+                ) }
+            )
+            ExerciseTableScreen( exerciseViewModel = viewModel,
                 immediate = immediate,
                 onBack = { navController.popBackStack() },
                 onEdit = {
-                    val index = SampleData.trainingList.indexOf(training)
-                    navController.navigate("${IntervalTrainingScreens.Editor.name}/$index")
+                    navController.navigate("${IntervalTrainingScreens.Editor.name}/${training}")
                 }
             )
         }
         composable(
-            "${IntervalTrainingScreens.Editor.name}/{$TRAINING_INDEX_KEY}",
+            "${IntervalTrainingScreens.Editor.name}/{$TRAINING_KEY}",
             arguments = listOf(
-                navArgument(TRAINING_INDEX_KEY) {
-                    type = NavType.IntType
+                navArgument(TRAINING_KEY) {
+                    type = NavType.StringType
                 },
             ),
         ) { entry ->
-            val training = getTrainingByNavEntry(entry)
-            EditExerciseTableScreen(training = training,
+            val training = entry.arguments?.getString(TRAINING_KEY)
+            val viewModel:ExerciseViewModel = viewModel(
+                key = "exercise_model_for_$training",
+                factory = viewModelProviderFactoryOf { ExerciseViewModel(
+                    repository = trainingViewModel.repository, UUID.fromString(training)
+                ) }
+            )
+            EditExerciseTableScreen( exerciseViewModel = viewModel,
                 onBack = { navController.popBackStack() },
                 onDelete = {},
                 onUpdateTraining = {}
@@ -147,12 +167,9 @@ fun IntervalTrainingNavHost(
     }
 }
 
-fun getTrainingByNavEntry(navBackStackEntry:NavBackStackEntry):Training{
-    val index = navBackStackEntry.arguments?.getInt(TRAINING_INDEX_KEY)?:0
-    return SampleData.trainingList[index]
-}
 
-const val TRAINING_INDEX_KEY = "index"
+const val TRAINING_KEY = "trainingkey"
+const val IMMEDIATE_FLAG = "inmediate"
 
 @Preview
 @Preview(name = "Light Mode")
@@ -164,6 +181,6 @@ const val TRAINING_INDEX_KEY = "index"
 @Composable
 fun DefaultPreview() {
     IntervalTrainingTheme {
-        IntervalTrainingApp(viewModel())
+        IntervalTrainingApp(TrainingViewModel(TrainingDummyRepository()))
     }
 }

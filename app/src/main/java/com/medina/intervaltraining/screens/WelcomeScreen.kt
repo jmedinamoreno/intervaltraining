@@ -1,7 +1,6 @@
 package com.medina.intervaltraining.screens
 
 import android.content.res.Configuration
-import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,14 +16,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.medina.intervaltraining.R
-import com.medina.intervaltraining.preview.SampleData
-import com.medina.intervaltraining.room.Word
-import com.medina.intervaltraining.room.WordViewModel
+import com.medina.intervaltraining.data.repository.TrainingDummyRepository
+import com.medina.intervaltraining.data.viewmodel.Training
+import com.medina.intervaltraining.data.viewmodel.TrainingViewModel
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
-import com.medina.intervaltraining.viewmodel.Training
 
 @Composable
 fun FirstRunScreen(onStart: () -> Unit) {
@@ -48,12 +47,10 @@ fun FirstRunScreen(onStart: () -> Unit) {
 @Composable
 fun IntervalTrainingScreen(
     onNewTraining: () -> Unit = {},
-    onPlay: (training:Training, immediate:Boolean) -> Unit = {_,_->},
+    onPlay: (training: Training, immediate:Boolean) -> Unit = { _, _->},
     trainedHours: Float,
-    trainingList: List<Training>,
-    wordViewModel: WordViewModel
+    trainingViewModel: TrainingViewModel
 ){
-    val items: List<Word> by wordViewModel.allWords.observeAsState(listOf())
     Scaffold(floatingActionButton = {
         FloatingActionButton(onClick = onNewTraining) {
             Icon(imageVector = Icons.Default.Add, contentDescription = "New")
@@ -64,18 +61,13 @@ fun IntervalTrainingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(all = 16.dp))
-            LazyColumn{
-                items(items){ word ->
-                    Text(text = word.word)
-                }
-            }
-//            TrainingListComponent(trainingList = trainingList,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(all=16.dp)
-//                    .weight(1f),
-//                onPlay = onPlay
-//            )
+            TrainingListComponent(trainingViewModel = trainingViewModel,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(all = 16.dp)
+                    .weight(1f),
+                onPlay = onPlay
+            )
         }
     }
 }
@@ -98,21 +90,23 @@ fun TrainedHoursComponent(hours:Float, modifier: Modifier){
 @Composable
 fun TrainingListComponent(
     modifier: Modifier,
-    trainingList:List<Training>,
-    onPlay: (training:Training, immediate:Boolean) -> Unit = {_,_->},){
+    trainingViewModel: TrainingViewModel,
+    onPlay: (training: Training, immediate:Boolean) -> Unit = { _, _->},){
+    val items: List<Training> by trainingViewModel.trainingList.observeAsState(listOf())
     LazyColumn(modifier = modifier) {
-        items(trainingList) { training ->
-            TrainingItemComponent(training, Modifier.padding(2.dp),
+        items(items) { training ->
+            val timeMin: Int by trainingViewModel.getTimeForTrainingLiveData(training.id).observeAsState(0)
+            TrainingItemComponent(training, timeMin, Modifier.padding(2.dp),
                 {onPlay(training,false)},{onPlay(training,true)})
         }
     }
 }
 
 @Composable
-fun TrainingItemComponent(training: Training, modifier: Modifier, onClick:()->Unit, onPlay:()->Unit){
+fun TrainingItemComponent(training: Training, timeMin: Int, modifier: Modifier, onClick:()->Unit, onPlay:()->Unit){
     Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, elevation = 1.dp) {
         Row (modifier = Modifier.fillMaxWidth()){
-            Text(stringResource(id = R.string.welcome_training_min,training.timeMin),
+            Text(stringResource(id = R.string.welcome_training_min,timeMin),
                 color = MaterialTheme.colors.primary,
                 style = MaterialTheme.typography.button,
                 modifier = Modifier
@@ -138,10 +132,7 @@ fun TrainingItemComponent(training: Training, modifier: Modifier, onClick:()->Un
 fun TrainingListPreview() {
     IntervalTrainingTheme {
         TrainingListComponent(modifier = Modifier,
-            trainingList = listOf(
-                SampleData.training,
-                SampleData.training,
-            ))
+            trainingViewModel = TrainingViewModel(TrainingDummyRepository()))
     }
 }
 
@@ -151,6 +142,7 @@ fun TrainingListPreview() {
 @Composable
 fun InternalTrainingScreenPreview() {
     IntervalTrainingTheme {
-        IntervalTrainingScreen(trainedHours = 1.5f, trainingList = SampleData.trainingList, wordViewModel = viewModel())
+        IntervalTrainingScreen(trainedHours = 1.5f,
+            trainingViewModel = TrainingViewModel(TrainingDummyRepository()))
     }
 }

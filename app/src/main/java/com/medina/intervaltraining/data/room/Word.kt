@@ -1,4 +1,4 @@
-package com.medina.intervaltraining.room
+package com.medina.intervaltraining.data.room
 
 import android.content.Context
 import androidx.annotation.WorkerThread
@@ -8,11 +8,12 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import java.util.*
 
 @Entity(tableName = "word_table")
 class Word(
     @ColumnInfo(name = "word") val word: String,
-    @PrimaryKey(autoGenerate = true) val id: Int = 0
+    @PrimaryKey val id: UUID = UUID.randomUUID()
 )
 
 @Dao
