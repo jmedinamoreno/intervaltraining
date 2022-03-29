@@ -17,6 +17,10 @@ interface TrainingRepository{
 
     fun timeForTrainingMinAsFlow(training: UUID): Flow<Int>
 
+    fun getTrainingFlow(uuid: UUID): Flow<TrainingItem?>
+
+    fun exercisesFlow(training: UUID): Flow<List<ExerciseItem>>
+
     suspend fun exercises(training: UUID) : List<ExerciseItem>
 
     suspend fun timeForTrainingMin(training: UUID):Int
@@ -25,7 +29,11 @@ interface TrainingRepository{
 
     suspend fun insert(exercise: ExerciseItem)
 
-    suspend fun getTraining(uuid: UUID): TrainingItem
+    suspend fun getTraining(uuid: UUID): TrainingItem?
+
+    suspend fun deleteTraining(training: UUID)
+
+    suspend fun deleteExercise(exercise: UUID)
 }
 
 class TrainingRoomRepository(
@@ -33,13 +41,21 @@ class TrainingRoomRepository(
 ):TrainingRepository{
     override val trainingsFlow: Flow<List<TrainingItem>> = trainingDao.getTrainingListAsFlow()
 
-    override fun timeForTrainingMinAsFlow(training: UUID) = trainingDao.getTotalTimeSecForTrainingByIdAsFlow(training).map { it/60 }
+    override fun timeForTrainingMinAsFlow(training: UUID) = trainingDao.getTotalTimeSecForTrainingByIdAsFlow(training).map { (it?:0)/60 }
+
+    override fun getTrainingFlow(uuid: UUID): Flow<TrainingItem?> = trainingDao.getTrainingAsFlow(uuid)
+
+    override fun exercisesFlow(training: UUID) = trainingDao.getExercisesForTrainingByIdAsFlow(training)
 
     override suspend fun exercises(training: UUID) = trainingDao.getExercisesForTrainingById(training)
 
-    override suspend fun timeForTrainingMin(training: UUID) = trainingDao.getTotalTimeSecForTrainingById(training) / 60
+    override suspend fun timeForTrainingMin(training: UUID) = (trainingDao.getTotalTimeSecForTrainingById(training)?:0) / 60
 
-    override suspend fun getTraining(uuid: UUID): TrainingItem = trainingDao.getTraining(uuid)
+    override suspend fun getTraining(uuid: UUID): TrainingItem? = trainingDao.getTraining(uuid)
+
+    override suspend fun deleteTraining(training: UUID) = trainingDao.deleteTraining(training)
+
+    override suspend fun deleteExercise(exercise: UUID) = trainingDao.deleteExercise(exercise)
 
     @Suppress("RedundantSuspendModifier")
     @WorkerThread
@@ -48,40 +64,4 @@ class TrainingRoomRepository(
     @Suppress("RedundantSuspendModifier")
     @WorkerThread
     override suspend fun insert(exercise: ExerciseItem) = trainingDao.insert(exercise)
-}
-
-class TrainingDummyRepository():TrainingRepository{
-    override val trainingsFlow: Flow<List<TrainingItem>>
-        get() = flow {
-            emit(listOf(
-                TrainingItem(name = "Training 1", lastUsed = 0, defaultTimeSec = 45, defaultRestSec = 15),
-                TrainingItem(name = "Training 2", lastUsed = 0, defaultTimeSec = 45, defaultRestSec = 15),
-            ))
-        }
-
-    override fun timeForTrainingMinAsFlow(training: UUID): Flow<Int> = flow {
-        emit(45)
-    }
-
-    override suspend fun exercises(training: UUID): List<ExerciseItem> = listOf(
-        ExerciseItem(training = UUID.randomUUID(), name = "Exercise 1", timeSec = 45, restSec = 15, position = 0),
-        ExerciseItem(training = UUID.randomUUID(), name = "Exercise 2", timeSec = 45, restSec = 15, position = 1),
-        ExerciseItem(training = UUID.randomUUID(), name = "Exercise 3", timeSec = 45, restSec = 15, position = 2),
-    )
-
-    override suspend fun timeForTrainingMin(training: UUID): Int = 45
-
-    override suspend fun insert(training: TrainingItem) {
-    }
-
-    override suspend fun insert(exercise: ExerciseItem) {
-    }
-
-    override suspend fun getTraining(uuid: UUID): TrainingItem = TrainingItem(
-        name = "Dummy",
-        defaultRestSec = 15,
-        defaultTimeSec = 45,
-        lastUsed = Date().time
-    )
-
 }

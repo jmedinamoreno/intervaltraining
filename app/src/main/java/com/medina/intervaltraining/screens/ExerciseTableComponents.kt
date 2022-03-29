@@ -14,9 +14,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -31,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
+import kotlinx.coroutines.delay
 
 /**
  * Draws a row of [TodoIcon] with visibility changes animated.
@@ -152,7 +151,7 @@ private fun SelectableIconButton(
  * @param content (slot) content to draw in the background
  */
 @Composable
-fun TodoItemInputBackground(
+fun ItemInputBackground(
     elevate: Boolean,
     modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit
@@ -171,20 +170,50 @@ fun TodoItemInputBackground(
 }
 
 /**
- * Styled [TextField] for inputting a [TodoItem].
+ * Styled [TextField] for inputting a text
+ *
+ * @param entryText (state) current text to display
+ * @param onSave (event) request to save the value
+ * @param timeoutMill millisecond before calling onSave after a change
+ * @param modifier the modifier for this element
+ * @param placeholder text to show when the entry is empty
+ */
+@Composable
+fun SavableInputText(entryText: String, onSave:(String)->Unit, timeoutMill:Long,
+                     modifier: Modifier = Modifier,
+                     placeholder: String = "",){
+
+    val (text, setText) = remember(entryText) { mutableStateOf(entryText) }
+    LaunchedEffect(text){
+        delay(timeoutMill)
+        onSave(text)
+    }
+    InputText(
+        text = text,
+        onTextChange = {
+            setText(it)
+        },
+        modifier = modifier,
+        placeholder = placeholder
+    )
+}
+/**
+ * Styled [TextField] for inputting a text
  *
  * @param text (state) current text to display
  * @param onTextChange (event) request the text change state
  * @param modifier the modifier for this element
  * @param onImeAction (event) notify caller of [ImeAction.Done] events
+ * @param placeholder text to show when the entry is empty
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun TodoInputText(
+fun InputText(
     text: String,
     onTextChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    onImeAction: () -> Unit = {}
+    onImeAction: () -> Unit = {},
+    placeholder: String = "",
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     TextField(
@@ -197,7 +226,9 @@ fun TodoInputText(
             onImeAction()
             keyboardController?.hide()
         }),
-        modifier = modifier
+        modifier = modifier,
+        placeholder = {Text(placeholder)},
+        singleLine = true
     )
 }
 

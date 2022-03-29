@@ -16,33 +16,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.medina.intervaltraining.R
-import com.medina.intervaltraining.data.repository.TrainingDummyRepository
+import com.medina.intervaltraining.data.room.TrainingItem
 import com.medina.intervaltraining.data.viewmodel.Training
 import com.medina.intervaltraining.data.viewmodel.TrainingViewModel
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
-
-@Composable
-fun FirstRunScreen(onStart: () -> Unit) {
-    Surface {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Welcome to the Interval Training app!")
-            Button(
-                modifier = Modifier.padding(vertical = 24.dp),
-                onClick = onStart
-            ) {
-                Text("Continue")
-            }
-        }
-    }
-}
 
 @Composable
 fun IntervalTrainingScreen(
@@ -131,8 +111,15 @@ fun TrainingItemComponent(training: Training, timeMin: Int, modifier: Modifier, 
 @Composable
 fun TrainingListPreview() {
     IntervalTrainingTheme {
-        TrainingListComponent(modifier = Modifier,
-            trainingViewModel = TrainingViewModel(TrainingDummyRepository()))
+        val items: List<Training> = listOf(
+            Training(name = "Training 1", defaultTimeSec = 45, defaultRestSec = 15),
+            Training(name = "Training 2", defaultTimeSec = 45, defaultRestSec = 15),
+        )
+        LazyColumn(modifier = Modifier) {
+            items(items) { training ->
+                TrainingItemComponent(training, 45, Modifier.padding(2.dp), {},{})
+            }
+        }
     }
 }
 
@@ -143,6 +130,6 @@ fun TrainingListPreview() {
 fun InternalTrainingScreenPreview() {
     IntervalTrainingTheme {
         IntervalTrainingScreen(trainedHours = 1.5f,
-            trainingViewModel = TrainingViewModel(TrainingDummyRepository()))
+            trainingViewModel = viewModel())
     }
 }

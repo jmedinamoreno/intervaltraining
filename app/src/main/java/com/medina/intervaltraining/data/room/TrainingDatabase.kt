@@ -58,22 +58,22 @@ interface TrainingDao {
     suspend fun getTrainingList(): List<TrainingItem>
 
     @Query("SELECT * FROM training_table WHERE id = :id")
-    suspend fun getTraining(id: UUID): TrainingItem
+    fun getTrainingAsFlow(id: UUID): Flow<TrainingItem?>
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Query("SELECT * FROM training_table WHERE id = :id")
+    suspend fun getTraining(id: UUID): TrainingItem?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: TrainingItem)
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
     suspend fun update(entity: TrainingItem)
 
     @Query("SELECT SUM(timeSec + restSec) FROM exercise_table WHERE training = :id")
-    fun getTotalTimeSecForTrainingByIdAsFlow(id: UUID): Flow<Int>
+    fun getTotalTimeSecForTrainingByIdAsFlow(id: UUID): Flow<Int?>
 
     @Query("SELECT SUM(timeSec + restSec) FROM exercise_table WHERE training = :id")
-    suspend fun getTotalTimeSecForTrainingById(id: UUID): Int
-
-    @Query("SELECT SUM(timeSec + restSec) FROM exercise_table WHERE training = :id")
-    fun getTotalTimeForTrainingByIdNow(id: UUID): Int
+    suspend fun getTotalTimeSecForTrainingById(id: UUID): Int?
 
     @Query("SELECT SUM(timeSec) FROM exercise_table WHERE training = :id")
     suspend fun getTotalWorkTimeForTrainingById(id: UUID): Int
@@ -82,13 +82,22 @@ interface TrainingDao {
     suspend fun getTotalRestTimeForTrainingById(id: UUID): Int
 
     @Query("SELECT * FROM exercise_table WHERE training = :id ORDER BY position ASC")
+    fun getExercisesForTrainingByIdAsFlow(id: UUID): Flow<List<ExerciseItem>>
+
+    @Query("SELECT * FROM exercise_table WHERE training = :id ORDER BY position ASC")
     suspend fun getExercisesForTrainingById(id: UUID): List<ExerciseItem>
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: ExerciseItem)
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
     suspend fun update(entity: ExerciseItem)
+
+    @Query("DELETE FROM training_table WHERE id = :training")
+    suspend fun deleteTraining(training: UUID)
+
+    @Query("DELETE FROM exercise_table WHERE id = :exercise")
+    suspend fun deleteExercise(exercise: UUID)
 }
 
 @Database(

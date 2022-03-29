@@ -30,6 +30,42 @@ import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
 import com.medina.intervaltraining.data.viewmodel.Training
 
 @Composable
+fun PlayExerciseTableScreen(
+    exerciseViewModel: ExerciseViewModel,
+    immediate: Boolean = false,
+    onBack:()->Unit,
+    onEdit:()->Unit
+) {
+    val items: List<Exercise> by exerciseViewModel.exercises.observeAsState(listOf())
+    val training: Training by exerciseViewModel.training.observeAsState(Training("",0,0))
+    PlayExerciseTableView(training = training, onBack = onBack, onEdit = onEdit, items = items)
+}
+
+@Composable
+fun PlayExerciseTableView(
+    training: Training,
+    items: List<Exercise>,
+    onBack:()->Unit = {},
+    onEdit:()->Unit = {},){
+    Scaffold(topBar = {
+        PlayExerciseTableScreenTopBar(training = training, onBack = onBack, onEdit = onEdit)
+    })
+    {
+        PlayExerciseTableBody(
+            items = items,
+            playState = PlayExerciseTableState.READY,
+            currentExercise = 0,
+            currentTimeSec = 0,
+            onStart = {},
+            onPause = {},
+            onResume = {},
+            onSkip = {},
+            onRestart = {}
+        )
+    }
+}
+
+@Composable
 fun PlayExerciseTableScreenTopBar(training: Training, onBack:()->Unit, onEdit:()->Unit ){
     TopAppBar(
         title = { Text(training.name) },
@@ -47,59 +83,10 @@ fun PlayExerciseTableScreenTopBar(training: Training, onBack:()->Unit, onEdit:()
     )
 }
 
-@Composable
-fun EditExerciseTableScreenTopBar(training: Training, onBack:()->Unit, onDelete:()->Unit ){
-    TopAppBar(
-        title = { Text(training.name) },
-        navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = null)
-            }
-        },
-        actions = {
-            // RowScope here, so these icons will be placed horizontally
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = "Delete training")
-            }
-        }
-    )
-}
-
-@Composable
-fun ExerciseTableScreen(
-    exerciseViewModel: ExerciseViewModel,
-    immediate: Boolean = false,
-    onBack:()->Unit,
-    onEdit:()->Unit
-) {
-    val loaded:Boolean by exerciseViewModel.loaded.observeAsState(false)
-    val items: List<Exercise> by exerciseViewModel.exercises.observeAsState(listOf())
-    val training: Training by exerciseViewModel.training.observeAsState(Training("",0,0))
-    if(loaded) {
-        Scaffold(topBar = {
-            PlayExerciseTableScreenTopBar(training = training, onBack = onBack, onEdit = onEdit)
-        })
-        {
-            PlayExerciseTableScreen(
-                items = items,
-                playState = PlayExerciseTableState.RUNNING,
-                currentExercise = 0,
-                currentTimeSec = 190,
-                onStart = { /*TODO*/ },
-                onPause = { /*TODO*/ },
-                onResume = { /*TODO*/ },
-                onSkip = {},
-                onRestart = {}
-            )
-        }
-    }
-}
-
 enum class PlayExerciseTableState{ READY,RUNNING,PAUSED,COMPLETE}
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PlayExerciseTableScreen(
+fun PlayExerciseTableBody(
     items: List<Exercise>,
     playState: PlayExerciseTableState,
     currentExercise: Int,
@@ -216,75 +203,6 @@ fun FinishedTraining(modifier: Modifier, onRestart:()->Unit){
 }
 
 @Composable
-fun EditExerciseTableScreen(
-    exerciseViewModel: ExerciseViewModel,
-    onBack: () -> Unit,
-    onDelete: () -> Unit,
-    onUpdateTraining: (newTraining: Training) -> Unit
-) {
-    val loaded:Boolean by exerciseViewModel.loaded.observeAsState(false)
-    val items: List<Exercise> by exerciseViewModel.exercises.observeAsState(listOf())
-    val training: Training by exerciseViewModel.training.observeAsState(Training("",0,0))
-    if(loaded) {
-        Scaffold(topBar = {
-            EditExerciseTableScreenTopBar(training = training, onBack = onBack, onDelete = {
-
-            })
-        })
-        {
-            Column() {
-                // add TodoItemInputBackground and TodoItem at the top of TodoScreen
-                TodoItemInputBackground(elevate = true, modifier = Modifier.fillMaxWidth()) {
-                    TodoItemInput(onItemComplete = {})
-                }
-                LazyColumn {
-                    items(items) { exercise ->
-                        Row() {
-                            ExerciseLabel(exercise, Modifier.padding(2.dp))
-                            IconButton(onClick = { },) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "Edit"
-                                )
-                            }
-                            IconButton(onClick = { },) {
-                                Icon(
-                                    imageVector = Icons.Default.ControlPointDuplicate,
-                                    contentDescription = "Duplicate"
-                                )
-                            }
-                            IconButton(onClick = { },) {
-                                Icon(
-                                    imageVector = Icons.Default.Sort,
-                                    contentDescription = "Sort"
-                                )
-                            }
-                            IconButton(onClick = { },) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete"
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-
-@Composable
-fun ExerciseTable(exercises:List<Exercise>){
-    LazyColumn {
-        items(exercises) { exercise ->
-            ExerciseLabel(exercise, Modifier.padding(2.dp))
-        }
-    }
-}
-
-@Composable
 fun ExerciseLabel(exercise: Exercise, modifier: Modifier = Modifier) {
     Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, elevation = 1.dp) {
         Row (modifier = Modifier.fillMaxWidth()){
@@ -318,59 +236,6 @@ fun ExerciseLabel(exercise: Exercise, modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-fun TodoItemInput(onItemComplete: (Exercise) -> Unit) {
-    val (text, setText) = remember { mutableStateOf("") }
-    val (icon, setIcon) = remember { mutableStateOf(ExerciseIcon.NONE)}
-    val iconsVisible = text.isNotBlank()
-   Column {
-       Row(
-           Modifier
-               .padding(horizontal = 16.dp)
-               .padding(top = 16.dp)
-       ) {
-           TodoInputTextField(text,setText,
-               Modifier
-                   .weight(1f)
-                   .padding(end = 8.dp)
-           )
-           TodoEditButton(
-               onClick = {
-                            onItemComplete(Exercise(text))
-                            setText("") // clear the internal text
-                         },
-               text = "Add",
-               enabled = text.isNotBlank(),
-               modifier = Modifier.align(Alignment.CenterVertically)
-           )
-       }
-       if (iconsVisible) {
-           AnimatedIconRow(icon, setIcon, Modifier.padding(top = 8.dp))
-       } else {
-           Spacer(modifier = Modifier.height(16.dp))
-       }
-   }
-}
-
-@Composable
-fun TodoInputTextField(text: String, onTextChange: (String) -> Unit,modifier: Modifier) {
-    TodoInputText(text, onTextChange, modifier)
-}
-
-@Preview
-@Composable
-fun PreviewTodoItemInput() = TodoItemInput(onItemComplete = { })
-
-@Preview(name = "Light Mode")
-@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)
-@Composable
-fun EditorPreview() {
-    IntervalTrainingTheme {
-        Surface(color = MaterialTheme.colors.background) {
-            ExerciseTableScreen(viewModel(), false, {},{})
-        }
-    }
-}
 
 @Preview(name = "Light Mode")
 @Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)
@@ -381,5 +246,17 @@ fun RowPreview() {
             name = "Run",
             icon = ExerciseIcon.RUN
         ))
+    }
+}
+
+@ExperimentalFoundationApi
+@Preview(name = "Light Mode")
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)
+@Composable
+fun PlayerPreview() {
+    IntervalTrainingTheme {
+        Surface(color = MaterialTheme.colors.background) {
+            PlayExerciseTableView(training = Training("",0,0), items = emptyList())
+        }
     }
 }

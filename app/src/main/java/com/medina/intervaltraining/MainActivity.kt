@@ -1,5 +1,6 @@
 package com.medina.intervaltraining
 
+import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -20,16 +21,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.jetcaster.util.viewModelProviderFactoryOf
-import com.medina.intervaltraining.data.repository.TrainingDummyRepository
 import com.medina.intervaltraining.data.repository.TrainingRoomRepository
 import com.medina.intervaltraining.data.room.TrainingRoomDatabase
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
 import com.medina.intervaltraining.data.viewmodel.TrainingViewModel
 import com.medina.intervaltraining.data.viewmodel.TrainingViewModelFactory
 import com.medina.intervaltraining.screens.EditExerciseTableScreen
-import com.medina.intervaltraining.screens.ExerciseTableScreen
-import com.medina.intervaltraining.screens.FirstRunScreen
 import com.medina.intervaltraining.screens.IntervalTrainingScreen
+import com.medina.intervaltraining.screens.PlayExerciseTableScreen
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -79,11 +78,7 @@ fun IntervalTrainingApp(trainingViewModel: TrainingViewModel) {
     val backstackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = backstackEntry.value?.destination?.route
 
-    if (isFirstRun) {
-        FirstRunScreen(onStart = { isFirstRun = false })
-    } else {
-        IntervalTrainingNavHost(navController,trainingViewModel)
-    }
+    IntervalTrainingNavHost(navController,trainingViewModel)
 }
 
 enum class IntervalTrainingScreens{
@@ -108,8 +103,7 @@ fun IntervalTrainingNavHost(
                 trainingViewModel = trainingViewModel,
                 trainedHours = 1.5f,
                 onNewTraining = {
-                    //navController.navigate(IntervalTrainingScreens.Editor.name)
-                                trainingViewModel.newTraining("Test new")
+                    navController.navigate("${IntervalTrainingScreens.Editor.name}/${UUID.randomUUID()}")
                 },
                 onPlay = {training, immediate ->
                     navController.navigate("${IntervalTrainingScreens.Training.name}/${training.id}/$immediate")
@@ -135,7 +129,7 @@ fun IntervalTrainingNavHost(
                     repository = trainingViewModel.repository, UUID.fromString(training)
                 ) }
             )
-            ExerciseTableScreen( exerciseViewModel = viewModel,
+            PlayExerciseTableScreen( exerciseViewModel = viewModel,
                 immediate = immediate,
                 onBack = { navController.popBackStack() },
                 onEdit = {
@@ -148,39 +142,26 @@ fun IntervalTrainingNavHost(
             arguments = listOf(
                 navArgument(TRAINING_KEY) {
                     type = NavType.StringType
+                    nullable = true
                 },
             ),
         ) { entry ->
-            val training = entry.arguments?.getString(TRAINING_KEY)
+            val training = entry.arguments?.getString(TRAINING_KEY)?.let { UUID.fromString(it) } ?: UUID.randomUUID()
             val viewModel:ExerciseViewModel = viewModel(
                 key = "exercise_model_for_$training",
                 factory = viewModelProviderFactoryOf { ExerciseViewModel(
-                    repository = trainingViewModel.repository, UUID.fromString(training)
+                    repository = trainingViewModel.repository, training
                 ) }
             )
             EditExerciseTableScreen( exerciseViewModel = viewModel,
                 onBack = { navController.popBackStack() },
-                onDelete = {},
-                onUpdateTraining = {}
+                onDelete = { trainingViewModel.delete(training);navController.popBackStack();navController.popBackStack() },
+                onUpdateTraining = {trainingViewModel.update(it)},
+                onExerciseListUpdated = { viewModel.saveExerciseList(it) }
             )
         }
     }
 }
 
-
 const val TRAINING_KEY = "trainingkey"
 const val IMMEDIATE_FLAG = "inmediate"
-
-@Preview
-@Preview(name = "Light Mode")
-@Preview(
-    uiMode = Configuration.UI_MODE_NIGHT_YES,
-    showBackground = true,
-    name = "Dark Mode"
-)
-@Composable
-fun DefaultPreview() {
-    IntervalTrainingTheme {
-        IntervalTrainingApp(TrainingViewModel(TrainingDummyRepository()))
-    }
-}
