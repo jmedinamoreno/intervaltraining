@@ -18,6 +18,8 @@ import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
 import com.medina.intervaltraining.data.viewmodel.Training
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
+import java.util.*
+import kotlin.collections.ArrayList
 
 @Composable
 fun EditExerciseTableScreenTopBar(trainingTitle: String, onSave:(String)->Unit, onBack:()->Unit, onDelete:()->Unit ){
@@ -66,7 +68,8 @@ private fun EditExerciseTableView(
     onUpdateTraining: (newTraining: Training) -> Unit = {},
     onExerciseListUpdated: (newItems: List<Exercise>) -> Unit = {},
 ) {
-    val exerciseList = remember(items) {  mutableStateListOf<Exercise>() }
+    val exerciseList = ArrayList(items)
+    val (currentIndex, setIndex) = remember { mutableStateOf(-1) }
     Scaffold(topBar = {
         EditExerciseTableScreenTopBar(trainingTitle = training.name, onBack = onBack,
             onSave = {
@@ -79,68 +82,103 @@ private fun EditExerciseTableView(
     })
     {
         Column() {
-            // add TodoItemInputBackground and TodoItem at the top of TodoScreen
-            ItemInputBackground(elevate = true, modifier = Modifier.fillMaxWidth()) {
-                ExerciseItemInput( onItemComplete = {
-                    exerciseList.add(it)
-                    onExerciseListUpdated(exerciseList)
-                })
+            if(training.name.isNotEmpty()) {
+                ItemInputBackground(elevate = true, modifier = Modifier.fillMaxWidth()) {
+                    ExerciseItemInput(onItemComplete = { newExercise ->
+                        val pos = exerciseList.indexOfFirst { e -> e.id.equals(newExercise.id) }
+                        if(pos>=0) {
+                            exerciseList.set(pos,newExercise)
+                        }else {
+                            exerciseList.add(newExercise)
+                        }
+                        onExerciseListUpdated(exerciseList)
+                        setIndex(-1)
+                    }, exerciseList.getOrNull(currentIndex))
+                    setIndex(-1)
+                }
             }
             LazyColumn {
                 items(exerciseList) { exercise ->
-                    Row() {
-                        ExerciseLabel(exercise, Modifier.padding(2.dp))
-                        IconButton(onClick = { },) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "#Edit"
-                            )
-                        }
-                        IconButton(onClick = {
+                    EditExerciseTableItemView(exercise = exercise,
+                        onEdit = {
+                            val pos = exerciseList.indexOf(exercise)
+                            setIndex(pos)
+                            onExerciseListUpdated(exerciseList)
+                        },
+                        onDuplicate = {
                             val pos = exerciseList.indexOf(exercise)
                             exerciseList.add(pos, exercise.copy())
                             onExerciseListUpdated(exerciseList)
-                        },) {
-                            Icon(
-                                imageVector = Icons.Default.ControlPointDuplicate,
-                                contentDescription = "#Duplicate"
-                            )
-                        }
-                        IconButton(onClick = { },) {
-                            Icon(
-                                imageVector = Icons.Default.Sort,
-                                contentDescription = "#Sort"
-                            )
-                        }
-                        IconButton(onClick = {
-                             exerciseList.remove(exercise)
-                            onExerciseListUpdated(exerciseList)
-                        },) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "#Delete"
-                            )
-                        }
-                    }
+                        },
+                    onRemove = {
+                        exerciseList.remove(exercise)
+                        onExerciseListUpdated(exerciseList)
+                    })
                 }
             }
         }
     }
 }
 
-
+@Composable
+fun EditExerciseTableItemView(exercise: Exercise, onEdit:()->Unit, onDuplicate:()->Unit, onRemove:()->Unit){
+    Row() {
+        ExerciseLabel(exercise,
+            Modifier
+                .padding(2.dp)
+                .weight(0.1f))
+        IconButton(onClick = onEdit,) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = "#Edit"
+            )
+        }
+        IconButton(onClick = onDuplicate,) {
+            Icon(
+                imageVector = Icons.Default.FileCopy,
+                contentDescription = "#Duplicate"
+            )
+        }
+        IconButton(onClick = onRemove,) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "#Delete"
+            )
+        }
+    }
+}
 
 @Composable
-fun ExerciseItemInput(onItemComplete: (Exercise) -> Unit) {
+fun ExerciseItemInput(onItemComplete: (Exercise) -> Unit, currentExercise: Exercise? = null) {
     val (text, setText) = remember { mutableStateOf("") }
     val (icon, setIcon) = remember { mutableStateOf(ExerciseIcon.NONE) }
-    val iconsVisible = text.isNotBlank()
+    val (time, setTime) = remember { mutableStateOf(45) }
+    val (rest, setRest) = remember { mutableStateOf(15) }
+    val (id, setId) = remember { mutableStateOf(UUID.randomUUID()) }
+    var iconsVisible by remember { mutableStateOf(false) }
+    val timesVisible = true //text.isNotBlank()
+
+    if(currentExercise!=null){
+        setText(currentExercise.name)
+        setIcon(currentExercise.icon)
+        setTime(currentExercise.timeSec)
+        setRest(currentExercise.restSec)
+        setId(currentExercise.id)
+    }
+
     Column {
         Row(
             Modifier
                 .padding(horizontal = 16.dp)
                 .padding(top = 16.dp)
+                .height(54.dp)
         ) {
+            IconButton(
+                onClick = {
+                    iconsVisible = true
+                },) {
+                ExerciseTableIcon(icon = icon, MaterialTheme.colors.primary)
+            }
             InputText(text,setText,
                 Modifier
                     .weight(1f)
@@ -148,7 +186,7 @@ fun ExerciseItemInput(onItemComplete: (Exercise) -> Unit) {
             )
             IconButton(
                 onClick = {
-                    onItemComplete(Exercise(text, icon))
+                    onItemComplete(Exercise(text, icon, time, rest, id = id))
                     setText("")
                 },
                 enabled = text.isNotBlank(),) {
@@ -159,7 +197,22 @@ fun ExerciseItemInput(onItemComplete: (Exercise) -> Unit) {
             }
         }
         if (iconsVisible) {
-            AnimatedIconRow(icon, setIcon, Modifier.padding(top = 8.dp))
+            AnimatedIconRow(icon, { setIcon(it); iconsVisible=false; },
+                Modifier
+                    .padding(top = 8.dp)
+                    .height(48.dp))
+        } else {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+        if (timesVisible) {
+            Row (
+                Modifier
+                    .padding(16.dp)
+                    .height(48.dp)
+            ){
+                InputNumber(modifier = Modifier.weight(0.5f), value = time , onNumberChange = setTime)
+                InputNumber(modifier = Modifier.weight(0.5f), value = rest , onNumberChange = setRest)
+            }
         } else {
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -169,6 +222,11 @@ fun ExerciseItemInput(onItemComplete: (Exercise) -> Unit) {
 @Preview
 @Composable
 fun PreviewTodoItemInput() = ExerciseItemInput(onItemComplete = { })
+
+@Preview
+@Composable
+fun PreviewExerciseListItem() = EditExerciseTableItemView(Exercise("Exercise"),{},{},{})
+
 
 @Preview(name = "Light Mode")
 @Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)

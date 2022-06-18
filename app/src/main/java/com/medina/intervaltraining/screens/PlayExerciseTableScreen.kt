@@ -202,53 +202,6 @@ fun FinishedTraining(modifier: Modifier, onRestart:()->Unit){
     }
 }
 
-@Composable
-fun ExerciseLabel(exercise: Exercise, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, elevation = 1.dp) {
-        Row (modifier = Modifier.fillMaxWidth()){
-            Image(
-                painter = painterResource(id = Utils.iconToDrawableResource(exercise.icon)),
-                colorFilter = ColorFilter.tint(MaterialTheme.colors.secondaryVariant),
-                contentDescription = exercise.name,
-                modifier = Modifier
-                    .padding(2.dp)
-                    .align(Alignment.CenterVertically)
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .border(1.5.dp, MaterialTheme.colors.secondary, CircleShape)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = exercise.name ,
-                color = MaterialTheme.colors.primary,
-                style = MaterialTheme.typography.subtitle2.copy(
-                    fontSize = 28.sp
-                ),
-                modifier = Modifier
-                    .weight(1f)
-                    .align(Alignment.CenterVertically),
-            )
-            IconButton(
-                onClick = {  },
-            ) {
-                Icon(imageVector = Icons.Default.Delete, contentDescription = "Info")
-            }
-        }
-    }
-}
-
-
-@Preview(name = "Light Mode")
-@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)
-@Composable
-fun RowPreview() {
-    IntervalTrainingTheme {
-        ExerciseLabel(Exercise(
-            name = "Run",
-            icon = ExerciseIcon.RUN
-        ))
-    }
-}
-
 @ExperimentalFoundationApi
 @Preview(name = "Light Mode")
 @Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)

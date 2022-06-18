@@ -36,6 +36,7 @@ class TrainingViewModel(val repository: TrainingRepository):ViewModel(){
 
     fun delete(training: UUID) {
         viewModelScope.launch {
+            repository.deleteAllExercises(training)
             repository.deleteTraining(training)
         }
     }

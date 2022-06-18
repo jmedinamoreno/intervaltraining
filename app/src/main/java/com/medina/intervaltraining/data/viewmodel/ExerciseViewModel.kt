@@ -18,7 +18,9 @@ data class Exercise(
     val restSec:Int=-1,
     // since the user may generate identical tasks, give them each a unique ID
     val id: UUID = UUID.randomUUID()
-)
+){
+    fun copy() = this.copy(id = UUID.randomUUID())
+}
 
 enum class ExerciseIcon{NONE,RUN,JUMP,LEFT_ARM,RIGHT_ARM,SIT_UP,PUSH_UPS,FLEX}
 

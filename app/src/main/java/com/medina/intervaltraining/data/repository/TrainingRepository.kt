@@ -33,9 +33,10 @@ interface TrainingRepository{
 
     suspend fun deleteTraining(training: UUID)
 
+    suspend fun deleteAllExercises(training: UUID)
+
     suspend fun deleteExercise(exercise: UUID)
 }
-
 class TrainingRoomRepository(
     private val trainingDao: TrainingDao
 ):TrainingRepository{
@@ -55,6 +56,8 @@ class TrainingRoomRepository(
 
     override suspend fun deleteTraining(training: UUID) = trainingDao.deleteTraining(training)
 
+    override suspend fun deleteAllExercises(training: UUID) = trainingDao.deleteExercises(training)
+
     override suspend fun deleteExercise(exercise: UUID) = trainingDao.deleteExercise(exercise)
 
     @Suppress("RedundantSuspendModifier")
@@ -65,3 +68,4 @@ class TrainingRoomRepository(
     @WorkerThread
     override suspend fun insert(exercise: ExerciseItem) = trainingDao.insert(exercise)
 }
+

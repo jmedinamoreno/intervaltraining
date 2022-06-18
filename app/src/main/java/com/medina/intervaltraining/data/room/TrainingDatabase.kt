@@ -35,7 +35,7 @@ data class TrainingItem(
             parentColumns = ["id"],
             childColumns = ["training"],
             onUpdate = ForeignKey.NO_ACTION,
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.NO_ACTION
         )
     ]
 )
@@ -92,6 +92,9 @@ interface TrainingDao {
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
     suspend fun update(entity: ExerciseItem)
+
+    @Query("DELETE FROM exercise_table WHERE training = :training")
+    suspend fun deleteExercises(training: UUID)
 
     @Query("DELETE FROM training_table WHERE id = :training")
     suspend fun deleteTraining(training: UUID)

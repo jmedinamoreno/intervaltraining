@@ -1,14 +1,18 @@
 package com.medina.intervaltraining.screens
 
 
+import android.content.res.Configuration
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
@@ -18,21 +22,32 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.medina.intervaltraining.R
+import com.medina.intervaltraining.data.viewmodel.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
+import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
+import com.medina.intervaltraining.ui.theme.Utils
 import kotlinx.coroutines.delay
 
 /**
- * Draws a row of [TodoIcon] with visibility changes animated.
+ * Draws a row of [ExerciseTableIcon] with visibility changes animated.
  *
  * When not visible, will collapse to 16.dp high by default. You can enlarge this with the passed
  * modifier.
@@ -66,7 +81,7 @@ fun AnimatedIconRow(
 }
 
 /**
- * Displays a row of selectable [TodoIcon]
+ * Displays a row of selectable [ExerciseTableIcon]
  *
  * @param icon (state) the current selected icon
  * @param onIconChange (event) request the selected icon change
@@ -103,7 +118,7 @@ fun IconRow(
 /**
  * Displays a single icon that can be selected.
  *
- * @param icon the icon to draw
+ * @param iconSelectable the icon to draw
  * @param onIconSelected (event) request this icon be selected
  * @param isSelected (state) selection state
  * @param modifier modifier for this element
@@ -143,7 +158,7 @@ private fun SelectableIconButton(
 }
 
 /**
- * Draw a background based on [MaterialTheme.colors.onSurface] that animates resizing and elevation
+ * Draw a background based on MaterialTheme.colors.onSurface that animates resizing and elevation
  * changes.
  *
  * @param elevate draw a shadow, changes to this will be animated
@@ -233,44 +248,143 @@ fun InputText(
 }
 
 /**
- * Styled button for [TodoScreen]
+ * Styled [TextField] for inputting a number
  *
- * @param onClick (event) notify caller of click events
- * @param text button text
- * @param modifier modifier for button
- * @param enabled enable or disable the button
+ * @param value current number to display
+ * @param modifier the modifier for this element
+ * @param onNumberChange (event) notify value changed
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun TodoEditButton(
-    onClick: () -> Unit,
-    text: String,
+fun InputNumber(
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    value: Int = 0,
+    onNumberChange: (Int) -> Unit
 ) {
-    TextButton(
-        onClick = onClick,
-        shape = CircleShape,
-        enabled = enabled,
-        modifier = modifier
-    ) {
-        Text(text)
+    val keyboardController = LocalSoftwareKeyboardController.current
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        BasicTextField(
+            value = value.toString(),
+            onValueChange = { if(it.isNotEmpty()){ onNumberChange(it.toInt()) } },
+            maxLines = 1,
+            textStyle = TextStyle(textAlign = TextAlign.Center),
+            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done, keyboardType = KeyboardType.Number),
+            keyboardActions = KeyboardActions(onDone = {
+                keyboardController?.hide()
+            }),
+            modifier = Modifier
+                .weight(0.1f)
+                .padding(0.dp),
+            singleLine = true
+        )
+        Column(modifier = Modifier
+            .padding(0.dp)) {
+            IconButton(modifier = Modifier
+                .weight(0.1f)
+                .padding(0.dp), onClick = { onNumberChange(value+1) }) {
+                Icon(
+                    modifier = Modifier
+                        .widthIn(min = 48.dp)
+                        .heightIn(min = 24.dp),
+                    imageVector = Icons.Default.ExpandLess,
+                    contentDescription = "#More"
+                )
+            }
+            IconButton(modifier = Modifier
+                .weight(0.1f)
+                .padding(0.dp), onClick = { onNumberChange(value-1) }) {
+                Icon(
+                    modifier = Modifier
+                        .widthIn(min = 48.dp)
+                        .heightIn(min = 24.dp),
+                    imageVector = Icons.Default.ExpandMore,
+                    contentDescription = "#Less"
+                )
+            }
+        }
     }
 }
 
 @Composable
 fun ExerciseTableIcon(icon: ExerciseIcon, tint:Color, modifier: Modifier = Modifier,){
-    if(icon!=ExerciseIcon.NONE) {
-        Icon(
-            imageVector = when (icon) {
-                ExerciseIcon.RUN -> ImageVector.vectorResource(R.drawable.ic_exercise_run)
-                ExerciseIcon.JUMP -> ImageVector.vectorResource(R.drawable.ic_exercise_jump)
-                else -> Icons.Default.Block
-            },
-            tint = tint,
-            contentDescription = stringResource(id = R.string.ic_description_exercise_icon),
-        )
+    Icon(
+        modifier = modifier,
+        imageVector = when (icon) {
+            ExerciseIcon.RUN -> ImageVector.vectorResource(R.drawable.ic_exercise_run)
+            ExerciseIcon.JUMP -> ImageVector.vectorResource(R.drawable.ic_exercise_jump)
+            else -> ImageVector.vectorResource(R.drawable.ic_exercise_none)
+        },
+        tint = tint,
+        contentDescription = stringResource(id = R.string.ic_description_exercise_icon),
+    )
+}
+
+
+@Composable
+fun ExerciseLabel(exercise: Exercise, modifier: Modifier = Modifier) {
+    Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, elevation = 1.dp) {
+        Row() {
+            Image(
+                painter = painterResource(id = Utils.iconToDrawableResource(exercise.icon)),
+                colorFilter = ColorFilter.tint(MaterialTheme.colors.secondary.copy(alpha = 0.6f)),
+                contentDescription = exercise.name,
+                modifier = Modifier
+                    .padding(2.dp)
+                    .align(Alignment.CenterVertically)
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .border(1.5.dp, MaterialTheme.colors.secondary, CircleShape)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Column(modifier = Modifier
+                .weight(0.2f)
+                .align(Alignment.CenterVertically)) {
+                Text(text = exercise.name ,
+                    style = MaterialTheme.typography.h3.copy(
+                        fontSize = 18.sp
+                    ),
+                )
+                Row {
+                    Text(text = "#Time/Rest: ${exercise.timeSec}/${exercise.restSec}" ,
+                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+                        style = MaterialTheme.typography.h3.copy(
+                            fontSize = 14.sp
+                        ),
+                    )
+                }
+            }
+        }
     }
 }
+
+
+@Preview(name = "Light Mode")
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)
+@Composable
+fun RowPreview() {
+    IntervalTrainingTheme {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 8.dp, vertical = 8.dp)
+                .fillMaxWidth()
+                .height(120.dp)
+        ) {
+            ExerciseLabel(
+                Exercise(
+                    name = "Run",
+                    icon = ExerciseIcon.RUN
+                )
+            )
+            ExerciseLabel(
+                Exercise(
+                    name = "Jump",
+                    icon = ExerciseIcon.JUMP
+                )
+            )
+        }
+    }
+}
+
 
 @Preview
 @Composable
@@ -282,4 +396,13 @@ fun PreviewIconRow() {
 @Composable
 fun PreviewIcon() {
     ExerciseTableIcon(icon = ExerciseIcon.NONE, tint = MaterialTheme.colors.primary)
+}
+
+@Preview
+@Composable
+fun PreviewInputNumber() {
+    InputNumber(modifier = Modifier
+        .padding(horizontal = 8.dp, vertical = 8.dp)
+        .width(160.dp)
+        .height(48.dp), 0, {})
 }
