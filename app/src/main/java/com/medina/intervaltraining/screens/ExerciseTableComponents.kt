@@ -3,10 +3,7 @@ package com.medina.intervaltraining.screens
 
 import android.content.res.Configuration
 import androidx.compose.animation.*
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.TweenSpec
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,7 +29,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -321,38 +317,65 @@ fun ExerciseTableIcon(icon: ExerciseIcon, tint:Color, modifier: Modifier = Modif
 
 
 @Composable
-fun ExerciseLabel(exercise: Exercise, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, elevation = 1.dp) {
-        Row() {
-            Image(
-                painter = painterResource(id = Utils.iconToDrawableResource(exercise.icon)),
-                colorFilter = ColorFilter.tint(MaterialTheme.colors.secondary.copy(alpha = 0.6f)),
-                contentDescription = exercise.name,
-                modifier = Modifier
-                    .padding(2.dp)
-                    .align(Alignment.CenterVertically)
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .border(1.5.dp, MaterialTheme.colors.secondary, CircleShape)
+fun ExerciseLabelBody(exercise: Exercise, modifier: Modifier = Modifier) {
+    Row(modifier = modifier) {
+        Image(
+            painter = painterResource(id = Utils.iconToDrawableResource(exercise.icon)),
+            colorFilter = ColorFilter.tint(MaterialTheme.colors.secondary.copy(alpha = 0.6f)),
+            contentDescription = exercise.name,
+            modifier = Modifier
+                .padding(2.dp)
+                .align(Alignment.CenterVertically)
+                .size(40.dp)
+                .clip(CircleShape)
+                .border(1.5.dp, MaterialTheme.colors.secondary, CircleShape)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Column(modifier = Modifier
+            .weight(0.2f)
+            .align(Alignment.CenterVertically)) {
+            Text(text = exercise.name ,
+                style = MaterialTheme.typography.h3.copy(
+                    fontSize = 18.sp
+                ),
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Column(modifier = Modifier
-                .weight(0.2f)
-                .align(Alignment.CenterVertically)) {
-                Text(text = exercise.name ,
+            Row {
+                Text(text = "#Time/Rest: ${exercise.timeSec}/${exercise.restSec}" ,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
                     style = MaterialTheme.typography.h3.copy(
-                        fontSize = 18.sp
+                        fontSize = 14.sp
                     ),
                 )
-                Row {
-                    Text(text = "#Time/Rest: ${exercise.timeSec}/${exercise.restSec}" ,
-                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
-                        style = MaterialTheme.typography.h3.copy(
-                            fontSize = 14.sp
-                        ),
-                    )
+            }
+        }
+    }
+}
+
+@Composable
+fun ExerciseLabel(exercise: Exercise, modifier: Modifier = Modifier) {
+    Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, elevation = 1.dp) {
+        ExerciseLabelBody(exercise = exercise)
+    }
+}
+
+@Composable
+fun ExerciseRunningLabel(exercise: Exercise, currentTimeMilis:Int, modifier: Modifier = Modifier) {
+    val totalProgress: Float by animateFloatAsState(currentTimeMilis / ((exercise.restSec + exercise.timeSec)*1000).toFloat())
+    val isRest = exercise.timeSec*1000 < currentTimeMilis
+    val color = if(isRest) MaterialTheme.colors.primary else MaterialTheme.colors.secondary
+
+    when{
+        currentTimeMilis == 0 ->  ExerciseLabel(exercise = exercise,modifier = modifier)
+        currentTimeMilis < 0 ->
+            Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, elevation = 1.dp) {
+                Box(modifier = Modifier.height(2.dp).fillMaxWidth().background(Color(0x80808080)))
+                Box(modifier = Modifier.background(Color(0x40808080))) {
+                    ExerciseLabelBody(exercise = exercise, modifier = modifier.padding(2.dp))
                 }
             }
+        else -> Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, elevation = 1.dp) {
+            Box(modifier = Modifier.height(2.dp).fillMaxWidth(totalProgress).background(color))
+            ExerciseLabelBody(exercise = exercise, modifier = modifier.padding(2.dp))
         }
     }
 }
@@ -367,20 +390,47 @@ fun RowPreview() {
             modifier = Modifier
                 .padding(horizontal = 8.dp, vertical = 8.dp)
                 .fillMaxWidth()
-                .height(120.dp)
+                .height(420.dp)
         ) {
-            ExerciseLabel(
-                Exercise(
-                    name = "Run",
-                    icon = ExerciseIcon.RUN
-                )
-            )
             ExerciseLabel(
                 Exercise(
                     name = "Jump",
                     icon = ExerciseIcon.JUMP
                 )
             )
+            ExerciseRunningLabel(exercise =
+                Exercise(
+                    name = "Run",
+                    icon = ExerciseIcon.RUN
+                ),
+                0
+            )
+            ExerciseRunningLabel(exercise =
+            Exercise(
+                name = "Run",
+                icon = ExerciseIcon.RUN
+            ),
+                -1
+            )
+            ExerciseRunningLabel(exercise =
+            Exercise(
+                name = "Run",
+                icon = ExerciseIcon.RUN,
+                timeSec = 40,
+                restSec = 20,
+            ),
+                20
+            )
+            ExerciseRunningLabel(exercise =
+            Exercise(
+                name = "Run",
+                icon = ExerciseIcon.RUN,
+                timeSec = 40,
+                restSec = 20,
+            ),
+                50
+            )
+
         }
     }
 }

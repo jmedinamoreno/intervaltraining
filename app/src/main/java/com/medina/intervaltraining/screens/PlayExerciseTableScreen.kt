@@ -1,11 +1,11 @@
 package com.medina.intervaltraining.screens
 
 import android.content.res.Configuration
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -13,21 +13,25 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.inset
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
-import com.medina.intervaltraining.ui.theme.Utils
 import com.medina.intervaltraining.data.viewmodel.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
 import com.medina.intervaltraining.data.viewmodel.Training
+import com.medina.intervaltraining.ui.components.ContentAwareLazyColumn
+import kotlinx.coroutines.delay
 
 @Composable
 fun PlayExerciseTableScreen(
@@ -45,22 +49,53 @@ fun PlayExerciseTableScreen(
 fun PlayExerciseTableView(
     training: Training,
     items: List<Exercise>,
+    startState:PlayExerciseTableState = PlayExerciseTableState.READY,
     onBack:()->Unit = {},
     onEdit:()->Unit = {},){
+    // create variable for value
+    var currentExercise by remember {
+        mutableStateOf(0)
+    }
+    // create variable for current time
+    var currentTimeMilis by remember {
+        mutableStateOf(0)
+    }
+    // create variable for isTimerRunning
+    var playState by remember {
+        mutableStateOf(startState)
+    }
+    LaunchedEffect(key1 = currentTimeMilis, key2 = playState) {
+        if(playState == PlayExerciseTableState.RUNNING) {
+            delay(25L)
+            currentTimeMilis += 25
+            val currentTimeSec = currentTimeMilis/1000
+            if(currentTimeSec == items[currentExercise].timeSec + items[currentExercise].restSec){
+                currentTimeMilis = 0
+                currentExercise += 1
+            }
+            if(currentExercise>=items.size){
+                currentExercise = items.size-1
+                playState = PlayExerciseTableState.COMPLETE
+            }
+        }
+    }
     Scaffold(topBar = {
         PlayExerciseTableScreenTopBar(training = training, onBack = onBack, onEdit = onEdit)
     })
     {
         PlayExerciseTableBody(
             items = items,
-            playState = PlayExerciseTableState.READY,
-            currentExercise = 0,
-            currentTimeSec = 0,
-            onStart = {},
-            onPause = {},
-            onResume = {},
-            onSkip = {},
-            onRestart = {}
+            playState = playState,
+            currentExercise = currentExercise,
+            currentTimeMilis = currentTimeMilis,
+            onStart = {
+                playState = PlayExerciseTableState.RUNNING
+                currentTimeMilis = 0
+            },
+            onPause = {playState = PlayExerciseTableState.PAUSED},
+            onResume = {playState = PlayExerciseTableState.RUNNING},
+            onSkip = { toIndex -> currentExercise = toIndex},
+            onRestart = {playState = PlayExerciseTableState.READY}
         )
     }
 }
@@ -90,7 +125,7 @@ fun PlayExerciseTableBody(
     items: List<Exercise>,
     playState: PlayExerciseTableState,
     currentExercise: Int,
-    currentTimeSec: Int,
+    currentTimeMilis: Int,
     onStart:()->Unit,
     onPause:()->Unit,
     onResume:()->Unit,
@@ -106,21 +141,26 @@ fun PlayExerciseTableBody(
             PlayExerciseTableState.RUNNING -> RunningExercise(
                 Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.3f), items[currentExercise], onPause = onPause, currentTimeSec = currentTimeSec)
+                    .fillMaxHeight(0.3f), items[currentExercise], onPause = onPause, currentTimeMilis = currentTimeMilis)
             PlayExerciseTableState.PAUSED -> PausedExercise(
                 Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.3f), items[currentExercise], onResume = onResume, currentTimeSec = currentTimeSec)
+                    .fillMaxHeight(0.3f), items[currentExercise], onResume = onResume, currentTimeSec = currentTimeMilis/1000)
             PlayExerciseTableState.COMPLETE -> FinishedTraining(
                 Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(0.3f), onRestart = onRestart)
         }
-        val exercises = items.subList(currentExercise,items.size)
-        LazyColumn {
-            items(exercises) { exercise ->
-                ExerciseLabel(exercise,
-                    Modifier
+        ContentAwareLazyColumn(lazyColumnBody = {
+            items(items) { exercise ->
+                ExerciseRunningLabel(
+                    exercise = exercise,
+                    currentTimeMilis = when{
+                        items.indexOf(exercise) > currentExercise -> 0
+                        items.indexOf(exercise) < currentExercise -> -1
+                        else -> currentTimeMilis
+                    },
+                    modifier = Modifier
                         .padding(2.dp)
                         .combinedClickable(
                             onLongClick = { onSkip(items.indexOf(exercise)) },
@@ -128,7 +168,7 @@ fun PlayExerciseTableBody(
                             enabled = true
                         ))
             }
-        }
+        })
     }
 }
 
@@ -146,24 +186,77 @@ fun BigPlayButton(modifier: Modifier, onStart:()->Unit){
 }
 
 @Composable
-fun RunningExercise(modifier: Modifier, runningExercise:Exercise, currentTimeSec: Int, onPause:()->Unit){
-    val isRest = runningExercise.timeSec < currentTimeSec
-    val text = if(isRest) "Rest" else runningExercise.name
-    val progress = if (isRest) {
-        (currentTimeSec-runningExercise.timeSec).toFloat() / runningExercise.restSec.toFloat()
+fun RunningExercise(modifier: Modifier, runningExercise:Exercise, currentTimeMilis: Int, onPause:()->Unit){
+    val runTimeMilis = runningExercise.timeSec * 1000
+    val restTimeMilis = runningExercise.restSec * 1000
+    val totalTimeMilis = runTimeMilis + restTimeMilis
+    val isRest = runTimeMilis < currentTimeMilis
+    val text = if(isRest) "#Rest" else runningExercise.name
+    val timeText = if(isRest)
+        "${(runningExercise.restSec + runningExercise.timeSec) - currentTimeMilis/1000}"
+    else
+        "${runningExercise.timeSec - currentTimeMilis/1000}"
+
+    val localProgress: Float by animateFloatAsState( if (isRest) {
+        1 - ((currentTimeMilis-runTimeMilis).toFloat() / restTimeMilis.toFloat())
     }else{
-        currentTimeSec.toFloat() / runningExercise.restSec.toFloat()
-    }
-    val color = if(isRest) MaterialTheme.colors.primary else MaterialTheme.colors.secondary
-    Box(modifier = modifier.clickable { onPause() }) {
-        Text(text = text, modifier = Modifier
-            .align(Alignment.TopCenter))
-        CircularProgressIndicator(progress = progress, color = color,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(64.dp)
-                .align(Alignment.Center)
-        )
+        currentTimeMilis.toFloat() / runTimeMilis.toFloat()
+    })
+
+    val totalProgress: Float by animateFloatAsState(
+        currentTimeMilis.toFloat() / totalTimeMilis.toFloat()
+       )
+
+    val backgroundColor = if(isRest) MaterialTheme.colors.secondaryVariant else MaterialTheme.colors.secondary
+    val color = if(isRest) MaterialTheme.colors.primaryVariant else MaterialTheme.colors.primary
+
+    BoxWithConstraints(modifier = modifier.clickable { onPause() }) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val padding = 8.dp.toPx()
+            inset(left = padding, right = padding, top = padding, bottom = padding) {
+                val canvasWidth = size.width
+                val canvasHeight = size.height
+                val center = Offset(x = canvasWidth / 2, y = canvasHeight / 2)
+                val radius = canvasHeight / 2f
+                clipRect(0F, localProgress * canvasHeight, canvasWidth, canvasHeight) {
+                    drawCircle(
+                        color = backgroundColor,
+                        center = center,
+                        radius = radius,
+                    )
+                }
+                inset(
+                    left = (canvasWidth / 2) - radius,
+                    right = (canvasWidth / 2) - radius,
+                    top = 0f,
+                    bottom = 0f
+                ) {
+                    drawArc(
+                        color = color,
+                        useCenter = false,
+                        startAngle = 270f,
+                        sweepAngle = totalProgress * 360f,
+                        style = Stroke(5.dp.toPx()),
+                    )
+                }
+            }
+        }
+        Text(text = timeText, style = TextStyle(
+            fontSize = (maxHeight.value*0.7f).toInt().sp,
+            color = Color(1f,1f,1f,0.7f),
+            shadow = Shadow(
+                color =  Color(0f,0f,0f,0.7f),
+                blurRadius = 5f
+            )
+        ), modifier = Modifier.align(Alignment.Center))
+        Text(text = text, style = TextStyle(
+            fontSize = (maxHeight.value*0.3f).toInt().sp,
+            color = Color.White,
+            shadow = Shadow(
+                color = Color.Black,
+                blurRadius = 5f
+            )
+        ), modifier = Modifier.align(Alignment.Center))
     }
 }
 
@@ -171,21 +264,68 @@ fun RunningExercise(modifier: Modifier, runningExercise:Exercise, currentTimeSec
 fun PausedExercise(modifier: Modifier, runningExercise:Exercise, currentTimeSec: Int, onResume:()->Unit){
     val isRest = runningExercise.timeSec < currentTimeSec
     val text = "PAUSED"
-    val progress = if (isRest) {
+    val timeText = if(isRest)
+        "${(runningExercise.restSec + runningExercise.timeSec) - currentTimeSec}"
+    else
+        "${runningExercise.timeSec - currentTimeSec}"
+
+    val localProgress: Float = if (isRest) {
         (currentTimeSec-runningExercise.timeSec).toFloat() / runningExercise.restSec.toFloat()
     }else{
-        currentTimeSec.toFloat() / runningExercise.restSec.toFloat()
+        currentTimeSec.toFloat() / runningExercise.timeSec.toFloat()
     }
+
+    val totalProgress: Float = currentTimeSec.toFloat() / (runningExercise.restSec + runningExercise.timeSec).toFloat()
     val color = if(isRest) MaterialTheme.colors.primary else MaterialTheme.colors.secondary
-    Box(modifier = modifier.clickable { onResume() }) {
-        Text(text = text, modifier = Modifier
-            .align(Alignment.TopCenter))
-        CircularProgressIndicator(progress = progress, color = color,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(64.dp)
-                .align(Alignment.Center)
-        )
+    val backgroundColor = if(isRest) MaterialTheme.colors.secondaryVariant else MaterialTheme.colors.secondary
+
+    BoxWithConstraints(modifier = modifier.clickable { onResume() }) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val padding = 8.dp.toPx()
+            inset(left = padding, right = padding, top = padding, bottom = padding) {
+                val canvasWidth = size.width
+                val canvasHeight = size.height
+                val center = Offset(x = canvasWidth / 2, y = canvasHeight / 2)
+                val radius = canvasHeight / 2f
+                clipRect(0F, localProgress * canvasHeight, canvasWidth, canvasHeight) {
+                    drawCircle(
+                        color = backgroundColor,
+                        center = center,
+                        radius = radius,
+                    )
+                }
+                inset(
+                    left = (canvasWidth / 2) - radius,
+                    right = (canvasWidth / 2) - radius,
+                    top = 0f,
+                    bottom = 0f
+                ) {
+                    drawArc(
+                        color = color,
+                        useCenter = false,
+                        startAngle = 270f,
+                        sweepAngle = totalProgress * 360f,
+                        style = Stroke(5.dp.toPx()),
+                    )
+                }
+            }
+        }
+        Text(text = timeText, style = TextStyle(
+            fontSize = (maxHeight.value*0.7f).toInt().sp,
+            color = Color(1f,1f,1f,0.7f),
+            shadow = Shadow(
+                color =  Color(0f,0f,0f,0.7f),
+                blurRadius = 5f
+            )
+        ), modifier = Modifier.align(Alignment.Center))
+        Text(text = text, style = TextStyle(
+            fontSize = (maxHeight.value*0.3f).toInt().sp,
+            color = Color.White,
+            shadow = Shadow(
+                color = Color.Black,
+                blurRadius = 5f
+            )
+        ), modifier = Modifier.align(Alignment.Center))
     }
 }
 
@@ -206,10 +346,31 @@ fun FinishedTraining(modifier: Modifier, onRestart:()->Unit){
 @Preview(name = "Light Mode")
 @Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)
 @Composable
+fun PlaybackPreview() {
+    IntervalTrainingTheme {
+        Surface(color = MaterialTheme.colors.background) {
+            RunningExercise(
+                Modifier
+                    .width(300.dp)
+                    .height(100.dp),
+                Exercise("Test",ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
+                currentTimeMilis = 5000,
+                onPause = {}
+            )
+        }
+    }
+}
+
+@ExperimentalFoundationApi
+@Preview(name = "Light Mode")
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)
+@Composable
 fun PlayerPreview() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colors.background) {
-            PlayExerciseTableView(training = Training("",0,0), items = emptyList())
+            PlayExerciseTableView(
+                training = Training("test",30,5),
+                items = emptyList())
         }
     }
 }

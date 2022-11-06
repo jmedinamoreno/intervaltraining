@@ -29,6 +29,7 @@ import com.medina.intervaltraining.data.viewmodel.TrainingViewModelFactory
 import com.medina.intervaltraining.screens.EditExerciseTableScreen
 import com.medina.intervaltraining.screens.IntervalTrainingScreen
 import com.medina.intervaltraining.screens.PlayExerciseTableScreen
+import com.medina.intervaltraining.ui.components.test.SortListTestApp
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
