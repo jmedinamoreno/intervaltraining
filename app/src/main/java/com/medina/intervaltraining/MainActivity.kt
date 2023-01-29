@@ -1,7 +1,5 @@
 package com.medina.intervaltraining
 
-import android.content.Context
-import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,7 +9,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -29,7 +26,6 @@ import com.medina.intervaltraining.data.viewmodel.TrainingViewModelFactory
 import com.medina.intervaltraining.screens.EditExerciseTableScreen
 import com.medina.intervaltraining.screens.IntervalTrainingScreen
 import com.medina.intervaltraining.screens.PlayExerciseTableScreen
-import com.medina.intervaltraining.ui.components.test.SortListTestApp
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -102,7 +98,6 @@ fun IntervalTrainingNavHost(
         composable(IntervalTrainingScreens.Welcome.name) {
             IntervalTrainingScreen(
                 trainingViewModel = trainingViewModel,
-                trainedHours = 1.5f,
                 onNewTraining = {
                     navController.navigate("${IntervalTrainingScreens.Editor.name}/${UUID.randomUUID()}")
                 },
@@ -135,6 +130,9 @@ fun IntervalTrainingNavHost(
                 onBack = { navController.popBackStack() },
                 onEdit = {
                     navController.navigate("${IntervalTrainingScreens.Editor.name}/${training}")
+                },
+                updateSession = { session ->
+                    trainingViewModel.saveSession(session)
                 }
             )
         }

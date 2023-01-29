@@ -13,6 +13,26 @@ import kotlinx.coroutines.launch
 import java.util.*
 
 @Entity(
+    tableName = "session_table",
+    foreignKeys = [
+        ForeignKey(
+            entity = TrainingItem::class,
+            parentColumns = ["id"],
+            childColumns = ["training"],
+            onUpdate = ForeignKey.NO_ACTION,
+            onDelete = ForeignKey.NO_ACTION
+        )
+    ]
+)
+data class SessionItem(
+    val training: UUID,
+    var dateTimeStart:Long = 0L,
+    var dateTimeEnd:Long = 0L,
+    var complete:Boolean = false,
+    @PrimaryKey val id: UUID = UUID.randomUUID()
+)
+
+@Entity(
     tableName = "training_table",
 )
 data class TrainingItem(
@@ -72,15 +92,6 @@ interface TrainingDao {
     @Query("SELECT SUM(timeSec + restSec) FROM exercise_table WHERE training = :id")
     fun getTotalTimeSecForTrainingByIdAsFlow(id: UUID): Flow<Int?>
 
-    @Query("SELECT SUM(timeSec + restSec) FROM exercise_table WHERE training = :id")
-    suspend fun getTotalTimeSecForTrainingById(id: UUID): Int?
-
-    @Query("SELECT SUM(timeSec) FROM exercise_table WHERE training = :id")
-    suspend fun getTotalWorkTimeForTrainingById(id: UUID): Int
-
-    @Query("SELECT SUM(restSec) FROM exercise_table WHERE training = :id")
-    suspend fun getTotalRestTimeForTrainingById(id: UUID): Int
-
     @Query("SELECT * FROM exercise_table WHERE training = :id ORDER BY position ASC")
     fun getExercisesForTrainingByIdAsFlow(id: UUID): Flow<List<ExerciseItem>>
 
@@ -101,10 +112,23 @@ interface TrainingDao {
 
     @Query("DELETE FROM exercise_table WHERE id = :exercise")
     suspend fun deleteExercise(exercise: UUID)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(entity: SessionItem)
+
+    @Query("DELETE FROM session_table WHERE id = :session")
+    suspend fun deleteSession(session: UUID)
+
+    @Query("SELECT SUM(dateTimeEnd - dateTimeStart) FROM session_table WHERE training = :id")
+    fun getTotalSessionTimeMilsForTrainingByIdAsFlow(id: UUID): Flow<Long?>
+
+    @Query("SELECT SUM(dateTimeEnd - dateTimeStart) FROM session_table WHERE dateTimeStart > :startDatetime AND dateTimeStart < :endDatetime")
+    fun getTotalSessionTimeMilsForDaterangeAsFlow(startDatetime: Long, endDatetime: Long): Flow<Long?>
+
 }
 
 @Database(
-    entities = [TrainingItem::class, ExerciseItem::class],
+    entities = [TrainingItem::class, ExerciseItem::class, SessionItem::class],
     version = 1,
     exportSchema = false
 )

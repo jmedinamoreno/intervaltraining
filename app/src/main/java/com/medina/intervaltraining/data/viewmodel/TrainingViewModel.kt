@@ -2,6 +2,7 @@ package com.medina.intervaltraining.data.viewmodel
 
 import androidx.lifecycle.*
 import com.medina.intervaltraining.data.repository.TrainingRepository
+import com.medina.intervaltraining.data.room.SessionItem
 import com.medina.intervaltraining.data.room.TrainingItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
@@ -14,6 +15,14 @@ data class Training(
     var defaultRestSec:Int,
     val id: UUID = UUID.randomUUID(),
     var draft:Boolean = false
+)
+
+data class Session(
+    val training: UUID,
+    var dateTimeStart:Long = 0L,
+    var dateTimeEnd:Long = 0L,
+    var complete:Boolean = false,
+    val id: UUID = UUID.randomUUID()
 )
 
 class TrainingViewModel(val repository: TrainingRepository):ViewModel(){
@@ -49,6 +58,36 @@ class TrainingViewModel(val repository: TrainingRepository):ViewModel(){
                 defaultTimeSec = training.defaultTimeSec,
                 defaultRestSec = training.defaultRestSec,
                 lastUsed = Date().time
+            ))
+        }
+    }
+
+    fun getTrainedThisWeek():LiveData<Float>{
+        val weekstart = Calendar.getInstance().apply {
+            set(Calendar.DAY_OF_WEEK, firstDayOfWeek)
+            set(Calendar.HOUR,0)
+            set(Calendar.MINUTE,0)
+            set(Calendar.SECOND,0)
+        }
+        val weekend = Calendar.getInstance().apply {
+            set(Calendar.DAY_OF_WEEK, (firstDayOfWeek+6)%7)
+            set(Calendar.HOUR,23)
+            set(Calendar.MINUTE,59)
+            set(Calendar.SECOND,59)
+        }
+        return repository.getTotalSessionTimeSecForDaterange(weekstart.timeInMillis,weekend.timeInMillis).map {
+            it / 3600f
+        }.asLiveData()
+    }
+
+    fun saveSession(session: Session) {
+        viewModelScope.launch {
+            repository.insert(SessionItem(
+                id = session.id,
+                training = session.training,
+                complete = session.complete,
+                dateTimeEnd = session.dateTimeEnd,
+                dateTimeStart = session.dateTimeStart
             ))
         }
     }

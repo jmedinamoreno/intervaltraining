@@ -28,7 +28,6 @@ import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 fun IntervalTrainingScreen(
     onNewTraining: () -> Unit = {},
     onPlay: (training: Training, immediate:Boolean) -> Unit = { _, _->},
-    trainedHours: Float,
     trainingViewModel: TrainingViewModel
 ){
     Scaffold(floatingActionButton = {
@@ -37,7 +36,7 @@ fun IntervalTrainingScreen(
         }}
         ) {
         Column() {
-            TrainedHoursComponent(hours = trainedHours,
+            TrainedHoursComponent(trainingViewModel = trainingViewModel,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(all = 16.dp))
@@ -53,8 +52,9 @@ fun IntervalTrainingScreen(
 }
 
 @Composable
-fun TrainedHoursComponent(hours:Float, modifier: Modifier){
+fun TrainedHoursComponent(trainingViewModel:TrainingViewModel, modifier: Modifier){
     Column(modifier = modifier) {
+        val hours:Float by trainingViewModel.getTrainedThisWeek().observeAsState(initial = 0f)
         Text(stringResource(id = R.string.welcome_trained_time_first_line),
             style = MaterialTheme.typography.h3,
             modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -129,7 +129,6 @@ fun TrainingListPreview() {
 @Composable
 fun InternalTrainingScreenPreview() {
     IntervalTrainingTheme {
-        IntervalTrainingScreen(trainedHours = 1.5f,
-            trainingViewModel = viewModel())
+        IntervalTrainingScreen(trainingViewModel = viewModel())
     }
 }

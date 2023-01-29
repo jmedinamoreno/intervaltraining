@@ -2,6 +2,7 @@ package com.medina.intervaltraining.data.viewmodel
 
 
 import androidx.lifecycle.*
+import androidx.room.PrimaryKey
 import com.medina.intervaltraining.data.repository.TrainingRepository
 import com.medina.intervaltraining.data.room.ExerciseItem
 import com.medina.intervaltraining.data.room.TrainingItem
@@ -26,7 +27,9 @@ enum class ExerciseIcon{NONE,RUN,JUMP,LEFT_ARM,RIGHT_ARM,SIT_UP,PUSH_UPS,FLEX}
 
 class ExerciseViewModel(
     private val repository: TrainingRepository,
-    private val trainingId: UUID) : ViewModel() {
+    val trainingId: UUID) : ViewModel() {
+
+    val session = Session(training = trainingId)
 
     val training: LiveData<Training> = repository.getTrainingFlow(trainingId).map { it?.let { Training(
         id = it.id,
@@ -50,18 +53,6 @@ class ExerciseViewModel(
                             id = item.id,
                         ) }
     }.asLiveData()
-
-    fun saveTraining(training: Training) {
-        viewModelScope.launch {
-            val ti = TrainingItem(
-                name = training.name,
-                defaultRestSec = training.defaultRestSec,
-                defaultTimeSec = training.defaultTimeSec,
-                lastUsed = Date().time
-            )
-            repository.insert(ti)
-        }
-    }
 
     fun saveExerciseList(newList: List<Exercise>) {
         val toDelete = exercises.value?.filter { !newList.contains(it) }

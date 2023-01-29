@@ -25,37 +25,51 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.medina.intervaltraining.R
+import com.medina.intervaltraining.data.room.SessionItem
+import com.medina.intervaltraining.data.viewmodel.*
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
-import com.medina.intervaltraining.data.viewmodel.Exercise
-import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
-import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
-import com.medina.intervaltraining.data.viewmodel.Training
 import com.medina.intervaltraining.ui.components.ContentAwareLazyColumn
 import kotlinx.coroutines.delay
+import java.util.*
 
 @Composable
 fun PlayExerciseTableScreen(
     exerciseViewModel: ExerciseViewModel,
     immediate: Boolean = false,
     onBack:()->Unit,
-    onEdit:()->Unit
+    onEdit:()->Unit,
+    updateSession: (session:Session) -> Unit = {_->},
 ) {
     val items: List<Exercise> by exerciseViewModel.exercises.observeAsState(listOf())
-    val training: Training by exerciseViewModel.training.observeAsState(Training("",0,0))
-    PlayExerciseTableView(training = training, onBack = onBack, onEdit = onEdit, items = items)
+    val training: Training? by exerciseViewModel.training.observeAsState()
+    val session: Session = exerciseViewModel.session
+    PlayExerciseTableView(
+        training = training,
+        session = session,
+        onBack = onBack,
+        onEdit = onEdit,
+        items = items,
+        updateSession = updateSession
+    )
 }
 
 @Composable
 fun PlayExerciseTableView(
-    training: Training,
+    training: Training?,
+    session: Session,
     items: List<Exercise>,
     startState:PlayExerciseTableState = PlayExerciseTableState.READY,
+    updateSession: (session:Session) -> Unit = {_->},
     onBack:()->Unit = {},
     onEdit:()->Unit = {},){
     // create variable for value
     var currentExercise by remember {
         mutableStateOf(0)
     }
+
+    // create session to track
+    val currentSessionItem by remember { mutableStateOf(session) }
+
     // create variable for current time
     var currentTimeMilis by remember {
         mutableStateOf(0)
@@ -64,6 +78,7 @@ fun PlayExerciseTableView(
     var playState by remember {
         mutableStateOf(startState)
     }
+
     LaunchedEffect(key1 = currentTimeMilis, key2 = playState) {
         if(playState == PlayExerciseTableState.RUNNING) {
             delay(25L)
@@ -72,10 +87,14 @@ fun PlayExerciseTableView(
             if(currentTimeSec == items[currentExercise].timeSec + items[currentExercise].restSec){
                 currentTimeMilis = 0
                 currentExercise += 1
+                currentSessionItem.dateTimeEnd = Calendar.getInstance().timeInMillis
+                updateSession(currentSessionItem)
             }
             if(currentExercise>=items.size){
                 currentExercise = items.size-1
                 playState = PlayExerciseTableState.COMPLETE
+                currentSessionItem.complete = true
+                updateSession(currentSessionItem)
             }
         }
     }
@@ -91,6 +110,9 @@ fun PlayExerciseTableView(
             onStart = {
                 playState = PlayExerciseTableState.RUNNING
                 currentTimeMilis = 0
+                currentSessionItem.dateTimeStart = Calendar.getInstance().timeInMillis
+                currentSessionItem.dateTimeEnd = Calendar.getInstance().timeInMillis
+                updateSession(currentSessionItem)
             },
             onPause = {playState = PlayExerciseTableState.PAUSED},
             onResume = {playState = PlayExerciseTableState.RUNNING},
@@ -101,9 +123,9 @@ fun PlayExerciseTableView(
 }
 
 @Composable
-fun PlayExerciseTableScreenTopBar(training: Training, onBack:()->Unit, onEdit:()->Unit ){
+fun PlayExerciseTableScreenTopBar(training: Training?, onBack:()->Unit, onEdit:()->Unit ){
     TopAppBar(
-        title = { Text(training.name) },
+        title = { Text(training?.name?:"") },
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(Icons.Filled.ArrowBack, contentDescription = null)
@@ -132,24 +154,25 @@ fun PlayExerciseTableBody(
     onSkip:(toIndex:Int)->Unit,
     onRestart:()->Unit,
 ) {
+    val constPlayerSize = 0.6f
     Column() {
         when(playState){
             PlayExerciseTableState.READY -> BigPlayButton(
                 Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.3f), onStart = onStart)
+                    .fillMaxHeight(constPlayerSize), onStart = onStart)
             PlayExerciseTableState.RUNNING -> RunningExercise(
                 Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.3f), items[currentExercise], onPause = onPause, currentTimeMilis = currentTimeMilis)
+                    .fillMaxHeight(constPlayerSize), items[currentExercise], onPause = onPause, currentTimeMilis = currentTimeMilis)
             PlayExerciseTableState.PAUSED -> PausedExercise(
                 Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.3f), items[currentExercise], onResume = onResume, currentTimeSec = currentTimeMilis/1000)
+                    .fillMaxHeight(constPlayerSize), items[currentExercise], onResume = onResume, currentTimeSec = currentTimeMilis/1000)
             PlayExerciseTableState.COMPLETE -> FinishedTraining(
                 Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.3f), onRestart = onRestart)
+                    .fillMaxHeight(constPlayerSize), onRestart = onRestart)
         }
         ContentAwareLazyColumn(lazyColumnBody = {
             items(items) { exercise ->
@@ -370,6 +393,7 @@ fun PlayerPreview() {
         Surface(color = MaterialTheme.colors.background) {
             PlayExerciseTableView(
                 training = Training("test",30,5),
+                session = Session(UUID.randomUUID()),
                 items = emptyList())
         }
     }
