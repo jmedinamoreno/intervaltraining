@@ -2,6 +2,8 @@ package com.medina.intervaltraining.screens
 
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -104,13 +106,15 @@ private fun EditExerciseTableView(
             onDelete = onDelete)
     })
     { padding ->
-        Column {
-            LazyColumn(
-                content = {
+        LazyColumn(
+            modifier = Modifier.padding(padding),
+            content = {
+                if (training.name.isNotEmpty()) {
                     items(exerciseList) { exercise ->
                         val pos = exerciseList.indexOf(exercise)
                         if (pos == currentIndex) {
-                            EditExerciseTableItemView(exercise = exercise,
+                            EditExerciseTableItemView(
+                                exercise = exercise,
                                 onEdit = {
                                     dialogState.value = true
                                     dialogExercise.value = exercise
@@ -132,16 +136,23 @@ private fun EditExerciseTableView(
                             )
                         }
                     }
-                }
-            )
-            if(training.name.isNotEmpty()){
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { dialogState.value = true }) {
-                    Text(text = "#AddExercise")
+                    item {
+                        Button(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = { dialogState.value = true }) {
+                            Text(text = "#AddExercise")
+                        }
+                    }
+                } else {
+                    item {
+                        Text(
+                            modifier = Modifier.fillMaxWidth().fillParentMaxHeight(),
+                            text = "#ThinkANameForTheTraining",
+                        )
+                    }
                 }
             }
-        }
+        )
         if (dialogState.value) {
             Dialog(
                 onDismissRequest = { dialogState.value = false },
@@ -175,7 +186,7 @@ private fun EditExerciseTableView(
 }
 
 @Composable
-fun EditExerciseTableItemView(exercise: Exercise, onEdit:()->Unit, onDuplicate:()->Unit, onRemove:()->Unit){
+fun EditExerciseTableItemView(exercise: Exercise, modifier: Modifier = Modifier, onEdit:()->Unit, onDuplicate:()->Unit, onRemove:()->Unit){
     Row() {
         ExerciseLabel(exercise,
             Modifier
@@ -385,7 +396,7 @@ fun PreviewExerciseInputDialog() = EditExerciseDialogBody(onItemComplete = { }, 
 
 @Preview
 @Composable
-fun PreviewExerciseListItem() = EditExerciseTableItemView(Exercise("Exercise"),{},{},{})
+fun PreviewExerciseListItem() = EditExerciseTableItemView(Exercise("Exercise"), Modifier,{},{},{})
 
 
 @Preview(name = "Light Mode")

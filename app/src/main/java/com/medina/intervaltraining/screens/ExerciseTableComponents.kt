@@ -49,8 +49,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester.Companion.Cancel
+import androidx.compose.ui.focus.FocusRequester.Companion.Default
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
@@ -222,12 +229,20 @@ fun ItemInputBackground(
  * @param modifier the modifier for this element
  * @param placeholder text to show when the entry is empty
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SavableInputText(entryText: String, onSave:(String)->Unit, timeoutMill:Long,
                      modifier: Modifier = Modifier,
                      placeholder: String = "",){
 
     val (text, setText) = remember(entryText) { mutableStateOf(entryText) }
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+        keyboardController?.show()
+    }
     LaunchedEffect(text){
         delay(timeoutMill)
         onSave(text)
@@ -237,8 +252,10 @@ fun SavableInputText(entryText: String, onSave:(String)->Unit, timeoutMill:Long,
         onTextChange = {
             setText(it)
         },
-        modifier = modifier,
-        placeholder = placeholder
+        modifier = modifier
+            .focusRequester(focusRequester)
+            .focusProperties { enter = { if (focusRequester.restoreFocusedChild()) Cancel else Default } }
+        ,placeholder = placeholder
     )
 }
 /**

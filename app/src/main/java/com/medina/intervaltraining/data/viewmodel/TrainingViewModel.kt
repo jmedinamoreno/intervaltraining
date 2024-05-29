@@ -48,13 +48,11 @@ class TrainingViewModel(val repository: TrainingRepository):ViewModel(){
             try {
                 repository.deleteAllExercises(training)
             }catch (e:Exception){
-                Log.d("JMMLOG", "TrainingViewModel: Fails to deleteAllExercises -> ");
                 e.printStackTrace()
             }
             try {
                 repository.deleteTraining(training)
             }catch (e:Exception){
-                Log.d("JMMLOG", "TrainingViewModel: Fails to deleteTraining -> ");
                 e.printStackTrace()
             }
         }
