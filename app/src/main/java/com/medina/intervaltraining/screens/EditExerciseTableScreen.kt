@@ -5,11 +5,21 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
@@ -21,10 +31,10 @@ import com.medina.intervaltraining.data.viewmodel.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
 import com.medina.intervaltraining.data.viewmodel.Training
-import com.medina.intervaltraining.ui.components.ContentAwareLazyColumn
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditExerciseTableScreenTopBar(trainingTitle: String, onSave:(String)->Unit, onBack:()->Unit, onDelete:()->Unit ){
     TopAppBar(
@@ -38,7 +48,7 @@ fun EditExerciseTableScreenTopBar(trainingTitle: String, onSave:(String)->Unit, 
         },
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = null)
+                Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = null)
             }
         },
         actions = {
@@ -93,41 +103,45 @@ private fun EditExerciseTableView(
              },
             onDelete = onDelete)
     })
-    {
-        ContentAwareLazyColumn(
-            lazyColumnBody = {
-                items(exerciseList) { exercise ->
-                    val pos = exerciseList.indexOf(exercise)
-                    if (pos == currentIndex) {
-                        EditExerciseTableItemView(exercise = exercise,
-                            onEdit = {
-                                dialogState.value = true
-                                dialogExercise.value = exercise
-                            },
-                            onDuplicate = {
-                                exerciseList.add(pos, exercise.copy())
-                                onExerciseListUpdated(exerciseList)
-                            },
-                            onRemove = {
-                                exerciseList.remove(exercise)
-                                onExerciseListUpdated(exerciseList)
-                            })
-                    } else {
-                        ExerciseLabel(
-                            exercise = exercise,
-                            modifier = Modifier
-                                .clickable { setIndex(pos) }
-                                .padding(2.dp)
-                        )
+    { padding ->
+        Column {
+            LazyColumn(
+                content = {
+                    items(exerciseList) { exercise ->
+                        val pos = exerciseList.indexOf(exercise)
+                        if (pos == currentIndex) {
+                            EditExerciseTableItemView(exercise = exercise,
+                                onEdit = {
+                                    dialogState.value = true
+                                    dialogExercise.value = exercise
+                                },
+                                onDuplicate = {
+                                    exerciseList.add(pos, exercise.copy())
+                                    onExerciseListUpdated(exerciseList)
+                                },
+                                onRemove = {
+                                    exerciseList.remove(exercise)
+                                    onExerciseListUpdated(exerciseList)
+                                })
+                        } else {
+                            ExerciseLabel(
+                                exercise = exercise,
+                                modifier = Modifier
+                                    .clickable { setIndex(pos) }
+                                    .padding(2.dp)
+                            )
+                        }
                     }
                 }
-            }, footerContent = {
+            )
+            if(training.name.isNotEmpty()){
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { dialogState.value = true }) {
                     Text(text = "#AddExercise")
                 }
-            }, showFooter = training.name.isNotEmpty())
+            }
+        }
         if (dialogState.value) {
             Dialog(
                 onDismissRequest = { dialogState.value = false },
@@ -175,7 +189,7 @@ fun EditExerciseTableItemView(exercise: Exercise, onEdit:()->Unit, onDuplicate:(
         }
         IconButton(onClick = onDuplicate,) {
             Icon(
-                imageVector = Icons.Default.FileCopy,
+                imageVector = Icons.Default.Add,
                 contentDescription = "#Duplicate"
             )
         }
@@ -227,7 +241,7 @@ fun EditExerciseDialogBody(
                     onClick = {
                         iconsVisible = true
                     },) {
-                    ExerciseTableIcon(icon = icon, MaterialTheme.colors.primary)
+                    ExerciseTableIcon(icon = icon, MaterialTheme.colorScheme.primary)
                 }
                 InputText(text,setText,
                     Modifier
@@ -264,7 +278,7 @@ fun EditExerciseDialogBody(
                     Row {
                        Text(text = "#Cancel")
                         Icon(
-                            imageVector = Icons.Default.Cancel,
+                            imageVector = Icons.Default.Clear,
                             contentDescription = "#Cancel"
                         )
                     }
@@ -317,7 +331,7 @@ fun ExerciseItemInput(onItemComplete: (Exercise) -> Unit, currentExercise: Exerc
                 onClick = {
                     iconsVisible = true
                 },) {
-                ExerciseTableIcon(icon = icon, MaterialTheme.colors.primary)
+                ExerciseTableIcon(icon = icon, MaterialTheme.colorScheme.primary)
             }
             InputText(text,setText,
                 Modifier
@@ -374,13 +388,12 @@ fun PreviewExerciseInputDialog() = EditExerciseDialogBody(onItemComplete = { }, 
 fun PreviewExerciseListItem() = EditExerciseTableItemView(Exercise("Exercise"),{},{},{})
 
 
-@ExperimentalMaterialApi
 @Preview(name = "Light Mode")
 @Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)
 @Composable
 fun EditorPreview() {
     IntervalTrainingTheme {
-        Surface(color = MaterialTheme.colors.background) {
+        Surface(color = MaterialTheme.colorScheme.background) {
             EditExerciseTableView(training = Training("Test",0,0), items = listOf(Exercise("Exercise 1"), Exercise("Exercise 2")))
         }
     }

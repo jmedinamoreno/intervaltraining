@@ -2,22 +2,53 @@ package com.medina.intervaltraining.screens
 
 
 import android.content.res.Configuration
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.TweenSpec
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -53,7 +84,6 @@ import kotlinx.coroutines.delay
  * @param modifier modifier for this element
  * @param visible (state) if the icon should be shown
  */
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AnimatedIconRow(
     icon: ExerciseIcon,
@@ -90,13 +120,13 @@ fun IconRow(
     modifier: Modifier = Modifier
 ) {
     Row(modifier) {
-        for (i in ExerciseIcon.values()) {
+        for (i in ExerciseIcon.entries) {
             SelectableIconButton(
                 iconSelectable = { tint, modifier ->
                     if(i == ExerciseIcon.NONE){
                         Icon(
-                            imageVector = Icons.Default.Cancel,
-                            contentDescription = stringResource(id = androidx.appcompat.R.string.abc_menu_delete_shortcut_label),
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = stringResource(id = R.string.ic_description_delete),
                             tint = tint,
                             modifier = modifier
                         )
@@ -121,15 +151,15 @@ fun IconRow(
  */
 @Composable
 private fun SelectableIconButton(
-    iconSelectable: @Composable() (tint:Color, modifier: Modifier) -> Unit,
+    iconSelectable: @Composable (tint:Color, modifier: Modifier) -> Unit,
     onIconSelected: () -> Unit,
     isSelected: Boolean,
     modifier: Modifier = Modifier
 ) {
     val tint = if (isSelected) {
-        MaterialTheme.colors.primary
+        MaterialTheme.colorScheme.primary
     } else {
-        MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
     }
     TextButton(
         onClick = { onIconSelected() },
@@ -167,10 +197,13 @@ fun ItemInputBackground(
     modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit
 ) {
-    val animatedElevation by animateDpAsState(if (elevate) 1.dp else 0.dp, TweenSpec(500))
+    val animatedElevation by animateDpAsState(
+        targetValue = if (elevate) 1.dp else 0.dp, TweenSpec(500),
+        label = "AnimatedElevation"
+    )
     Surface(
-        color = MaterialTheme.colors.onSurface.copy(alpha = 0.05f),
-        elevation = animatedElevation,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
+        shadowElevation = animatedElevation,
         shape = RectangleShape,
     ) {
         Row(
@@ -217,7 +250,6 @@ fun SavableInputText(entryText: String, onSave:(String)->Unit, timeoutMill:Long,
  * @param onImeAction (event) notify caller of [ImeAction.Done] events
  * @param placeholder text to show when the entry is empty
  */
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun InputText(
     text: String,
@@ -230,7 +262,7 @@ fun InputText(
     TextField(
         value = text,
         onValueChange = onTextChange,
-        colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
+        colors = TextFieldDefaults.colors(),
         maxLines = 1,
         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = {
@@ -250,7 +282,6 @@ fun InputText(
  * @param modifier the modifier for this element
  * @param onNumberChange (event) notify value changed
  */
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun InputNumber(
     modifier: Modifier = Modifier,
@@ -282,7 +313,7 @@ fun InputNumber(
                     modifier = Modifier
                         .widthIn(min = 48.dp)
                         .heightIn(min = 24.dp),
-                    imageVector = Icons.Default.ExpandLess,
+                    imageVector = Icons.Default.KeyboardArrowUp,
                     contentDescription = "#More"
                 )
             }
@@ -293,7 +324,7 @@ fun InputNumber(
                     modifier = Modifier
                         .widthIn(min = 48.dp)
                         .heightIn(min = 24.dp),
-                    imageVector = Icons.Default.ExpandMore,
+                    imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = "#Less"
                 )
             }
@@ -302,7 +333,7 @@ fun InputNumber(
 }
 
 @Composable
-fun ExerciseTableIcon(icon: ExerciseIcon, tint:Color, modifier: Modifier = Modifier,){
+fun ExerciseTableIcon(icon: ExerciseIcon, tint:Color, modifier: Modifier = Modifier){
     Icon(
         modifier = modifier,
         imageVector = when (icon) {
@@ -321,28 +352,28 @@ fun ExerciseLabelBody(exercise: Exercise, modifier: Modifier = Modifier) {
     Row(modifier = modifier) {
         Image(
             painter = painterResource(id = Utils.iconToDrawableResource(exercise.icon)),
-            colorFilter = ColorFilter.tint(MaterialTheme.colors.secondary.copy(alpha = 0.6f)),
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f)),
             contentDescription = exercise.name,
             modifier = Modifier
                 .padding(2.dp)
                 .align(Alignment.CenterVertically)
                 .size(40.dp)
                 .clip(CircleShape)
-                .border(1.5.dp, MaterialTheme.colors.secondary, CircleShape)
+                .border(1.5.dp, MaterialTheme.colorScheme.secondary, CircleShape)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier
             .weight(0.2f)
             .align(Alignment.CenterVertically)) {
             Text(text = exercise.name ,
-                style = MaterialTheme.typography.h3.copy(
+                style = MaterialTheme.typography.headlineMedium.copy(
                     fontSize = 18.sp
                 ),
             )
             Row {
                 Text(text = "#Time/Rest: ${exercise.timeSec}/${exercise.restSec}" ,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
-                    style = MaterialTheme.typography.h3.copy(
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    style = MaterialTheme.typography.headlineMedium.copy(
                         fontSize = 14.sp
                     ),
                 )
@@ -353,28 +384,37 @@ fun ExerciseLabelBody(exercise: Exercise, modifier: Modifier = Modifier) {
 
 @Composable
 fun ExerciseLabel(exercise: Exercise, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, elevation = 1.dp) {
+    Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, shadowElevation = 1.dp) {
         ExerciseLabelBody(exercise = exercise)
     }
 }
 
 @Composable
-fun ExerciseRunningLabel(exercise: Exercise, currentTimeMilis:Int, modifier: Modifier = Modifier) {
-    val totalProgress: Float by animateFloatAsState(currentTimeMilis / ((exercise.restSec + exercise.timeSec)*1000).toFloat())
-    val isRest = exercise.timeSec*1000 < currentTimeMilis
-    val color = if(isRest) MaterialTheme.colors.primary else MaterialTheme.colors.secondary
+fun ExerciseRunningLabel(exercise: Exercise, currentTimeMillis:Int, modifier: Modifier = Modifier) {
+    val totalProgress: Float by animateFloatAsState(
+        targetValue = currentTimeMillis / ((exercise.restSec + exercise.timeSec)*1000).toFloat(),
+        label = "TotalProgress"
+    )
+    val isRest = exercise.timeSec*1000 < currentTimeMillis
+    val color = if(isRest) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
 
     when{
-        currentTimeMilis == 0 ->  ExerciseLabel(exercise = exercise,modifier = modifier)
-        currentTimeMilis < 0 ->
-            Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, elevation = 1.dp) {
-                Box(modifier = Modifier.height(2.dp).fillMaxWidth().background(Color(0x80808080)))
+        currentTimeMillis == 0 ->  ExerciseLabel(exercise = exercise,modifier = modifier)
+        currentTimeMillis < 0 ->
+            Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, shadowElevation = 1.dp) {
+                Box(modifier = Modifier
+                    .height(2.dp)
+                    .fillMaxWidth()
+                    .background(Color(0x80808080)))
                 Box(modifier = Modifier.background(Color(0x40808080))) {
                     ExerciseLabelBody(exercise = exercise, modifier = modifier.padding(2.dp))
                 }
             }
-        else -> Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, elevation = 1.dp) {
-            Box(modifier = Modifier.height(2.dp).fillMaxWidth(totalProgress).background(color))
+        else -> Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, shadowElevation = 1.dp) {
+            Box(modifier = Modifier
+                .height(2.dp)
+                .fillMaxWidth(totalProgress)
+                .background(color))
             ExerciseLabelBody(exercise = exercise, modifier = modifier.padding(2.dp))
         }
     }
@@ -382,7 +422,7 @@ fun ExerciseRunningLabel(exercise: Exercise, currentTimeMilis:Int, modifier: Mod
 
 
 @Preview(name = "Light Mode")
-@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 fun RowPreview() {
     IntervalTrainingTheme {
@@ -445,7 +485,7 @@ fun PreviewIconRow() {
 @Preview
 @Composable
 fun PreviewIcon() {
-    ExerciseTableIcon(icon = ExerciseIcon.NONE, tint = MaterialTheme.colors.primary)
+    ExerciseTableIcon(icon = ExerciseIcon.NONE, tint = MaterialTheme.colorScheme.primary)
 }
 
 @Preview
@@ -454,5 +494,5 @@ fun PreviewInputNumber() {
     InputNumber(modifier = Modifier
         .padding(horizontal = 8.dp, vertical = 8.dp)
         .width(160.dp)
-        .height(48.dp), 0, {})
+        .height(48.dp), 0){}
 }

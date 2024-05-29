@@ -1,19 +1,12 @@
 package com.medina.intervaltraining.data.repository
 
 import androidx.annotation.WorkerThread
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Update
 import com.medina.intervaltraining.data.room.ExerciseItem
 import com.medina.intervaltraining.data.room.SessionItem
 import com.medina.intervaltraining.data.room.TrainingDao
 import com.medina.intervaltraining.data.room.TrainingItem
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import java.util.*
 
 interface TrainingRepository{
@@ -44,7 +37,7 @@ interface TrainingRepository{
 
     fun getTotalSessionTimeSecForTrainingById(id: UUID): Flow<Float>
 
-    fun getTotalSessionTimeSecForDaterange(startDatetime: Long, endDatetime: Long): Flow<Float>
+    fun getTotalSessionTimeSecForDateRange(startDatetime: Long, endDatetime: Long): Flow<Float>
 }
 class TrainingRoomRepository(
     private val trainingDao: TrainingDao
@@ -65,15 +58,12 @@ class TrainingRoomRepository(
 
     override suspend fun deleteExercise(exercise: UUID) = trainingDao.deleteExercise(exercise)
 
-    @Suppress("RedundantSuspendModifier")
     @WorkerThread
     override suspend fun insert(training: TrainingItem) = trainingDao.insert(training)
 
-    @Suppress("RedundantSuspendModifier")
     @WorkerThread
     override suspend fun insert(exercise: ExerciseItem) = trainingDao.insert(exercise)
 
-    @Suppress("RedundantSuspendModifier")
     @WorkerThread
     override suspend fun insert(session: SessionItem) = trainingDao.insert(session)
 
@@ -82,7 +72,7 @@ class TrainingRoomRepository(
     override fun getTotalSessionTimeSecForTrainingById(id: UUID) =
         trainingDao.getTotalSessionTimeMilsForTrainingByIdAsFlow(id).map { (it?:0) / 1000f }
 
-    override fun getTotalSessionTimeSecForDaterange(startDatetime: Long, endDatetime: Long) =
-        trainingDao.getTotalSessionTimeMilsForDaterangeAsFlow(startDatetime,endDatetime).map { (it?:0) / 1000f }
+    override fun getTotalSessionTimeSecForDateRange(startDatetime: Long, endDatetime: Long) =
+        trainingDao.getTotalSessionTimeMilsForDateRangeAsFlow(startDatetime,endDatetime).map { (it?:0) / 1000f }
 }
 

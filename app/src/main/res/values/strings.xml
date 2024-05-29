@@ -6,5 +6,6 @@
     <string name="welcome_trained_time_second_line">%1$s</string>
     <string name="welcome_trained_time_third_line">hours this week.</string>
     <string name="welcome_training_min">%1$s\'</string>
+    <string name="ic_description_delete">Delete</string>
 
 </resources>

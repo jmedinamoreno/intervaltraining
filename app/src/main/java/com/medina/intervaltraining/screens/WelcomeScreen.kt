@@ -5,10 +5,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -19,7 +25,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.medina.intervaltraining.R
-import com.medina.intervaltraining.data.room.TrainingItem
 import com.medina.intervaltraining.data.viewmodel.Training
 import com.medina.intervaltraining.data.viewmodel.TrainingViewModel
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
@@ -34,8 +39,8 @@ fun IntervalTrainingScreen(
         FloatingActionButton(onClick = onNewTraining) {
             Icon(imageVector = Icons.Default.Add, contentDescription = "New")
         }}
-        ) {
-        Column() {
+        ) { padding ->
+        Column(modifier = Modifier.padding(padding)) {
             TrainedHoursComponent(trainingViewModel = trainingViewModel,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -56,13 +61,13 @@ fun TrainedHoursComponent(trainingViewModel:TrainingViewModel, modifier: Modifie
     Column(modifier = modifier) {
         val hours:Float by trainingViewModel.getTrainedThisWeek().observeAsState(initial = 0f)
         Text(stringResource(id = R.string.welcome_trained_time_first_line),
-            style = MaterialTheme.typography.h3,
+            style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.align(Alignment.CenterHorizontally))
         Text(stringResource(id = R.string.welcome_trained_time_second_line,hours),
-            style = MaterialTheme.typography.h1,
+            style = MaterialTheme.typography.headlineLarge,
             modifier = Modifier.align(Alignment.CenterHorizontally))
         Text(stringResource(id = R.string.welcome_trained_time_third_line),
-            style = MaterialTheme.typography.h3,
+            style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.align(Alignment.CenterHorizontally))
     }
 }
@@ -84,11 +89,11 @@ fun TrainingListComponent(
 
 @Composable
 fun TrainingItemComponent(training: Training, timeMin: Int, modifier: Modifier, onClick:()->Unit, onPlay:()->Unit){
-    Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, elevation = 1.dp) {
+    Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, shadowElevation = 1.dp) {
         Row (modifier = Modifier.fillMaxWidth()){
             Text(stringResource(id = R.string.welcome_training_min,timeMin),
-                color = MaterialTheme.colors.primary,
-                style = MaterialTheme.typography.button,
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier
                     .padding(start = 8.dp, end = 4.dp)
                     .align(Alignment.CenterVertically),
@@ -99,7 +104,7 @@ fun TrainingItemComponent(training: Training, timeMin: Int, modifier: Modifier, 
                 .align(Alignment.CenterVertically)
                 .clickable { onClick() },)
             IconButton(onClick = onPlay, modifier = Modifier.align(Alignment.CenterVertically) ) {
-                Icon(imageVector = Icons.Default.PlayCircle, contentDescription = stringResource(id = R.string.ic_description_play_icon))
+                Icon(imageVector = Icons.Default.PlayArrow, contentDescription = stringResource(id = R.string.ic_description_play_icon))
             }
         }
     }
@@ -107,7 +112,7 @@ fun TrainingItemComponent(training: Training, timeMin: Int, modifier: Modifier, 
 
 // PREVIEWS
 @Preview(name = "Light Mode")
-@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 fun TrainingListPreview() {
     IntervalTrainingTheme {
@@ -125,7 +130,7 @@ fun TrainingListPreview() {
 
 // PREVIEWS
 @Preview(name = "Light Mode")
-@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 fun InternalTrainingScreenPreview() {
     IntervalTrainingTheme {

@@ -2,15 +2,41 @@ package com.medina.intervaltraining.screens
 
 import android.content.res.Configuration
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -25,12 +51,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.medina.intervaltraining.R
-import com.medina.intervaltraining.data.room.SessionItem
-import com.medina.intervaltraining.data.viewmodel.*
+import com.medina.intervaltraining.data.viewmodel.Exercise
+import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
+import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
+import com.medina.intervaltraining.data.viewmodel.Session
+import com.medina.intervaltraining.data.viewmodel.Training
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
-import com.medina.intervaltraining.ui.components.ContentAwareLazyColumn
 import kotlinx.coroutines.delay
-import java.util.*
+import java.util.Calendar
+import java.util.UUID
+import kotlin.math.min
 
 @Composable
 fun PlayExerciseTableScreen(
@@ -64,28 +94,28 @@ fun PlayExerciseTableView(
     onEdit:()->Unit = {},){
     // create variable for value
     var currentExercise by remember {
-        mutableStateOf(0)
+        mutableIntStateOf(0)
     }
 
     // create session to track
     val currentSessionItem by remember { mutableStateOf(session) }
 
     // create variable for current time
-    var currentTimeMilis by remember {
-        mutableStateOf(0)
+    var currentTimeMillis by remember {
+        mutableIntStateOf(0)
     }
     // create variable for isTimerRunning
     var playState by remember {
         mutableStateOf(startState)
     }
 
-    LaunchedEffect(key1 = currentTimeMilis, key2 = playState) {
+    LaunchedEffect(key1 = currentTimeMillis, key2 = playState) {
         if(playState == PlayExerciseTableState.RUNNING) {
             delay(25L)
-            currentTimeMilis += 25
-            val currentTimeSec = currentTimeMilis/1000
+            currentTimeMillis += 25
+            val currentTimeSec = currentTimeMillis/1000
             if(currentTimeSec == items[currentExercise].timeSec + items[currentExercise].restSec){
-                currentTimeMilis = 0
+                currentTimeMillis = 0
                 currentExercise += 1
                 currentSessionItem.dateTimeEnd = Calendar.getInstance().timeInMillis
                 updateSession(currentSessionItem)
@@ -101,15 +131,16 @@ fun PlayExerciseTableView(
     Scaffold(topBar = {
         PlayExerciseTableScreenTopBar(training = training, onBack = onBack, onEdit = onEdit)
     })
-    {
+    { contentPadding ->
         PlayExerciseTableBody(
+            modifier = Modifier.padding(contentPadding),
             items = items,
             playState = playState,
             currentExercise = currentExercise,
-            currentTimeMilis = currentTimeMilis,
+            currentTimeMillis = currentTimeMillis,
             onStart = {
                 playState = PlayExerciseTableState.RUNNING
-                currentTimeMilis = 0
+                currentTimeMillis = 0
                 currentSessionItem.dateTimeStart = Calendar.getInstance().timeInMillis
                 currentSessionItem.dateTimeEnd = Calendar.getInstance().timeInMillis
                 updateSession(currentSessionItem)
@@ -122,13 +153,14 @@ fun PlayExerciseTableView(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayExerciseTableScreenTopBar(training: Training?, onBack:()->Unit, onEdit:()->Unit ){
     TopAppBar(
         title = { Text(training?.name?:"") },
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = null)
+                Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = null)
             }
         },
         actions = {
@@ -144,54 +176,47 @@ enum class PlayExerciseTableState{ READY,RUNNING,PAUSED,COMPLETE}
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PlayExerciseTableBody(
+    modifier: Modifier,
     items: List<Exercise>,
     playState: PlayExerciseTableState,
     currentExercise: Int,
-    currentTimeMilis: Int,
+    currentTimeMillis: Int,
     onStart:()->Unit,
     onPause:()->Unit,
     onResume:()->Unit,
     onSkip:(toIndex:Int)->Unit,
     onRestart:()->Unit,
 ) {
-    val constPlayerSize = 0.6f
-    Column() {
-        when(playState){
-            PlayExerciseTableState.READY -> BigPlayButton(
-                Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(constPlayerSize), onStart = onStart)
-            PlayExerciseTableState.RUNNING -> RunningExercise(
-                Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(constPlayerSize), items[currentExercise], onPause = onPause, currentTimeMilis = currentTimeMilis)
-            PlayExerciseTableState.PAUSED -> PausedExercise(
-                Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(constPlayerSize), items[currentExercise], onResume = onResume, currentTimeSec = currentTimeMilis/1000)
-            PlayExerciseTableState.COMPLETE -> FinishedTraining(
-                Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(constPlayerSize), onRestart = onRestart)
-        }
-        ContentAwareLazyColumn(lazyColumnBody = {
-            items(items) { exercise ->
-                ExerciseRunningLabel(
-                    exercise = exercise,
-                    currentTimeMilis = when{
-                        items.indexOf(exercise) > currentExercise -> 0
-                        items.indexOf(exercise) < currentExercise -> -1
-                        else -> currentTimeMilis
-                    },
-                    modifier = Modifier
-                        .padding(2.dp)
-                        .combinedClickable(
-                            onLongClick = { onSkip(items.indexOf(exercise)) },
-                            onClick = {},
-                            enabled = true
-                        ))
+    val constPlayerSize = 0.3f
+    LazyColumn(modifier = modifier) {
+        stickyHeader {
+            when(playState){
+                PlayExerciseTableState.READY -> BigPlayButton(
+                    Modifier.fillParentMaxHeight(constPlayerSize).fillMaxWidth(), onStart = onStart)
+                PlayExerciseTableState.RUNNING -> RunningExercise(
+                    Modifier.fillParentMaxHeight(constPlayerSize).fillMaxWidth(), items.getOrNull(currentExercise), onPause = onPause, currentTimeMillis = currentTimeMillis)
+                PlayExerciseTableState.PAUSED -> PausedExercise(
+                    Modifier.fillParentMaxHeight(constPlayerSize).fillMaxWidth(), items.getOrNull(currentExercise), onResume = onResume, currentTimeSec = currentTimeMillis/1000)
+                PlayExerciseTableState.COMPLETE -> FinishedTraining(
+                    Modifier.fillParentMaxHeight(constPlayerSize).fillMaxWidth(), onRestart = onRestart)
             }
-        })
+        }
+        items(items) { exercise ->
+            ExerciseRunningLabel(
+                exercise = exercise,
+                currentTimeMillis = when{
+                    items.indexOf(exercise) > currentExercise -> 0
+                    items.indexOf(exercise) < currentExercise -> -1
+                    else -> currentTimeMillis
+                },
+                modifier = Modifier
+                    .padding(2.dp)
+                    .combinedClickable(
+                        onLongClick = { onSkip(items.indexOf(exercise)) },
+                        onClick = {},
+                        enabled = true
+                    ))
+        }
     }
 }
 
@@ -199,7 +224,7 @@ fun PlayExerciseTableBody(
 fun BigPlayButton(modifier: Modifier, onStart:()->Unit){
     Box(modifier = modifier.clickable { onStart() }) {
         Icon(
-            imageVector = Icons.Default.PlayCircleFilled,
+            imageVector = Icons.Default.PlayArrow,
             contentDescription = stringResource(id = R.string.ic_description_play_icon),
             Modifier
                 .size(84.dp)
@@ -209,29 +234,31 @@ fun BigPlayButton(modifier: Modifier, onStart:()->Unit){
 }
 
 @Composable
-fun RunningExercise(modifier: Modifier, runningExercise:Exercise, currentTimeMilis: Int, onPause:()->Unit){
-    val runTimeMilis = runningExercise.timeSec * 1000
-    val restTimeMilis = runningExercise.restSec * 1000
-    val totalTimeMilis = runTimeMilis + restTimeMilis
-    val isRest = runTimeMilis < currentTimeMilis
+fun RunningExercise(modifier: Modifier, runningExercise:Exercise?, currentTimeMillis: Int, onPause:()->Unit){
+    if(runningExercise == null) return
+    val runTimeMillis = runningExercise.timeSec * 1000
+    val restTimeMillis = runningExercise.restSec * 1000
+    val totalTimeMillis = runTimeMillis + restTimeMillis
+    val isRest = runTimeMillis < currentTimeMillis
     val text = if(isRest) "#Rest" else runningExercise.name
     val timeText = if(isRest)
-        "${(runningExercise.restSec + runningExercise.timeSec) - currentTimeMilis/1000}"
+        "${(runningExercise.restSec + runningExercise.timeSec) - currentTimeMillis/1000}"
     else
-        "${runningExercise.timeSec - currentTimeMilis/1000}"
+        "${runningExercise.timeSec - currentTimeMillis/1000}"
 
-    val localProgress: Float by animateFloatAsState( if (isRest) {
-        1 - ((currentTimeMilis-runTimeMilis).toFloat() / restTimeMilis.toFloat())
+    val localProgress: Float by animateFloatAsState( targetValue = if (isRest) {
+        1 - ((currentTimeMillis-runTimeMillis).toFloat() / restTimeMillis.toFloat())
     }else{
-        currentTimeMilis.toFloat() / runTimeMilis.toFloat()
-    })
+        currentTimeMillis.toFloat() / runTimeMillis.toFloat()
+    }, label = "localProgress"
+    )
 
     val totalProgress: Float by animateFloatAsState(
-        currentTimeMilis.toFloat() / totalTimeMilis.toFloat()
+        targetValue = currentTimeMillis.toFloat() / totalTimeMillis.toFloat(), label = "localProgress"
        )
 
-    val backgroundColor = if(isRest) MaterialTheme.colors.secondaryVariant else MaterialTheme.colors.secondary
-    val color = if(isRest) MaterialTheme.colors.primaryVariant else MaterialTheme.colors.primary
+    val backgroundColor = if(isRest) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.secondary
+    val color = if(isRest) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.primary
 
     BoxWithConstraints(modifier = modifier.clickable { onPause() }) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -239,8 +266,9 @@ fun RunningExercise(modifier: Modifier, runningExercise:Exercise, currentTimeMil
             inset(left = padding, right = padding, top = padding, bottom = padding) {
                 val canvasWidth = size.width
                 val canvasHeight = size.height
+                val size = min(canvasHeight,canvasWidth)
                 val center = Offset(x = canvasWidth / 2, y = canvasHeight / 2)
-                val radius = canvasHeight / 2f
+                val radius = size / 2f
                 clipRect(0F, localProgress * canvasHeight, canvasWidth, canvasHeight) {
                     drawCircle(
                         color = backgroundColor,
@@ -249,10 +277,10 @@ fun RunningExercise(modifier: Modifier, runningExercise:Exercise, currentTimeMil
                     )
                 }
                 inset(
-                    left = (canvasWidth / 2) - radius,
-                    right = (canvasWidth / 2) - radius,
-                    top = 0f,
-                    bottom = 0f
+                    left =  (canvasWidth-size)/2,
+                    right =  (canvasWidth-size)/2,
+                    top = (canvasHeight-size)/2,
+                    bottom = (canvasHeight-size)/2,
                 ) {
                     drawArc(
                         color = color,
@@ -265,7 +293,7 @@ fun RunningExercise(modifier: Modifier, runningExercise:Exercise, currentTimeMil
             }
         }
         Text(text = timeText, style = TextStyle(
-            fontSize = (maxHeight.value*0.7f).toInt().sp,
+            fontSize = (min(maxHeight.value,maxWidth.value)*0.7f).toInt().sp,
             color = Color(1f,1f,1f,0.7f),
             shadow = Shadow(
                 color =  Color(0f,0f,0f,0.7f),
@@ -273,7 +301,7 @@ fun RunningExercise(modifier: Modifier, runningExercise:Exercise, currentTimeMil
             )
         ), modifier = Modifier.align(Alignment.Center))
         Text(text = text, style = TextStyle(
-            fontSize = (maxHeight.value*0.3f).toInt().sp,
+            fontSize = (min(maxHeight.value,maxWidth.value)*0.3f).toInt().sp,
             color = Color.White,
             shadow = Shadow(
                 color = Color.Black,
@@ -284,7 +312,8 @@ fun RunningExercise(modifier: Modifier, runningExercise:Exercise, currentTimeMil
 }
 
 @Composable
-fun PausedExercise(modifier: Modifier, runningExercise:Exercise, currentTimeSec: Int, onResume:()->Unit){
+fun PausedExercise(modifier: Modifier, runningExercise:Exercise?, currentTimeSec: Int, onResume:()->Unit){
+    if(runningExercise == null) return
     val isRest = runningExercise.timeSec < currentTimeSec
     val text = "PAUSED"
     val timeText = if(isRest)
@@ -299,8 +328,8 @@ fun PausedExercise(modifier: Modifier, runningExercise:Exercise, currentTimeSec:
     }
 
     val totalProgress: Float = currentTimeSec.toFloat() / (runningExercise.restSec + runningExercise.timeSec).toFloat()
-    val color = if(isRest) MaterialTheme.colors.primary else MaterialTheme.colors.secondary
-    val backgroundColor = if(isRest) MaterialTheme.colors.secondaryVariant else MaterialTheme.colors.secondary
+    val color = if(isRest) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+    val backgroundColor = if(isRest) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.secondary
 
     BoxWithConstraints(modifier = modifier.clickable { onResume() }) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -308,8 +337,9 @@ fun PausedExercise(modifier: Modifier, runningExercise:Exercise, currentTimeSec:
             inset(left = padding, right = padding, top = padding, bottom = padding) {
                 val canvasWidth = size.width
                 val canvasHeight = size.height
+                val size = min(canvasHeight,canvasWidth)
                 val center = Offset(x = canvasWidth / 2, y = canvasHeight / 2)
-                val radius = canvasHeight / 2f
+                val radius = size / 2f
                 clipRect(0F, localProgress * canvasHeight, canvasWidth, canvasHeight) {
                     drawCircle(
                         color = backgroundColor,
@@ -318,10 +348,10 @@ fun PausedExercise(modifier: Modifier, runningExercise:Exercise, currentTimeSec:
                     )
                 }
                 inset(
-                    left = (canvasWidth / 2) - radius,
-                    right = (canvasWidth / 2) - radius,
-                    top = 0f,
-                    bottom = 0f
+                    left =  (canvasWidth-size)/2,
+                    right =  (canvasWidth-size)/2,
+                    top = (canvasHeight-size)/2,
+                    bottom = (canvasHeight-size)/2,
                 ) {
                     drawArc(
                         color = color,
@@ -334,7 +364,7 @@ fun PausedExercise(modifier: Modifier, runningExercise:Exercise, currentTimeSec:
             }
         }
         Text(text = timeText, style = TextStyle(
-            fontSize = (maxHeight.value*0.7f).toInt().sp,
+            fontSize = (min(maxHeight.value,maxWidth.value)*0.7f).toInt().sp,
             color = Color(1f,1f,1f,0.7f),
             shadow = Shadow(
                 color =  Color(0f,0f,0f,0.7f),
@@ -342,7 +372,7 @@ fun PausedExercise(modifier: Modifier, runningExercise:Exercise, currentTimeSec:
             )
         ), modifier = Modifier.align(Alignment.Center))
         Text(text = text, style = TextStyle(
-            fontSize = (maxHeight.value*0.3f).toInt().sp,
+            fontSize = (min(maxHeight.value,maxWidth.value)*0.3f).toInt().sp,
             color = Color.White,
             shadow = Shadow(
                 color = Color.Black,
@@ -356,7 +386,7 @@ fun PausedExercise(modifier: Modifier, runningExercise:Exercise, currentTimeSec:
 fun FinishedTraining(modifier: Modifier, onRestart:()->Unit){
     Box(modifier = modifier.clickable { onRestart() }) {
         Icon(
-            imageVector = Icons.Default.Replay,
+            imageVector = Icons.Default.Refresh,
             contentDescription = stringResource(id = R.string.ic_description_play_icon),
             Modifier
                 .size(84.dp)
@@ -367,17 +397,17 @@ fun FinishedTraining(modifier: Modifier, onRestart:()->Unit){
 
 @ExperimentalFoundationApi
 @Preview(name = "Light Mode")
-@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 fun PlaybackPreview() {
     IntervalTrainingTheme {
-        Surface(color = MaterialTheme.colors.background) {
+        Surface(color = MaterialTheme.colorScheme.background) {
             RunningExercise(
                 Modifier
-                    .width(300.dp)
-                    .height(100.dp),
+                    .width(200.dp)
+                    .height(150.dp),
                 Exercise("Test",ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
-                currentTimeMilis = 5000,
+                currentTimeMillis = 18000,
                 onPause = {}
             )
         }
@@ -386,11 +416,11 @@ fun PlaybackPreview() {
 
 @ExperimentalFoundationApi
 @Preview(name = "Light Mode")
-@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 fun PlayerPreview() {
     IntervalTrainingTheme {
-        Surface(color = MaterialTheme.colors.background) {
+        Surface(color = MaterialTheme.colorScheme.background) {
             PlayExerciseTableView(
                 training = Training("test",30,5),
                 session = Session(UUID.randomUUID()),

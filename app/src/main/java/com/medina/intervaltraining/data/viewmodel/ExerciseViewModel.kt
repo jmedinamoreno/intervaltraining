@@ -2,13 +2,10 @@ package com.medina.intervaltraining.data.viewmodel
 
 
 import androidx.lifecycle.*
-import androidx.room.PrimaryKey
+import androidx.lifecycle.asLiveData
 import com.medina.intervaltraining.data.repository.TrainingRepository
 import com.medina.intervaltraining.data.room.ExerciseItem
-import com.medina.intervaltraining.data.room.TrainingItem
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-
 import kotlinx.coroutines.launch
 import java.util.*
 

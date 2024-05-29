@@ -1,14 +1,12 @@
 package com.medina.intervaltraining.data.room
 
 import android.content.Context
-import androidx.annotation.WorkerThread
 import androidx.room.*
+import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
-import com.medina.intervaltraining.data.viewmodel.Training
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -20,7 +18,7 @@ import java.util.*
             parentColumns = ["id"],
             childColumns = ["training"],
             onUpdate = ForeignKey.NO_ACTION,
-            onDelete = ForeignKey.NO_ACTION
+            onDelete = ForeignKey.CASCADE
         )
     ]
 )
@@ -55,7 +53,7 @@ data class TrainingItem(
             parentColumns = ["id"],
             childColumns = ["training"],
             onUpdate = ForeignKey.NO_ACTION,
-            onDelete = ForeignKey.NO_ACTION
+            onDelete = ForeignKey.CASCADE
         )
     ]
 )
@@ -123,13 +121,13 @@ interface TrainingDao {
     fun getTotalSessionTimeMilsForTrainingByIdAsFlow(id: UUID): Flow<Long?>
 
     @Query("SELECT SUM(dateTimeEnd - dateTimeStart) FROM session_table WHERE dateTimeStart > :startDatetime AND dateTimeStart < :endDatetime")
-    fun getTotalSessionTimeMilsForDaterangeAsFlow(startDatetime: Long, endDatetime: Long): Flow<Long?>
+    fun getTotalSessionTimeMilsForDateRangeAsFlow(startDatetime: Long, endDatetime: Long): Flow<Long?>
 
 }
 
 @Database(
     entities = [TrainingItem::class, ExerciseItem::class, SessionItem::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class TrainingRoomDatabase : RoomDatabase() {
@@ -150,6 +148,7 @@ abstract class TrainingRoomDatabase : RoomDatabase() {
                     TrainingRoomDatabase::class.java,
                     "training_database"
                 )
+                    .fallbackToDestructiveMigration()
                     .addCallback(TrainingDatabaseCallback(scope))
                     .build()
                 INSTANCE = instance
@@ -161,7 +160,7 @@ abstract class TrainingRoomDatabase : RoomDatabase() {
 
     private class TrainingDatabaseCallback(
         private val scope: CoroutineScope
-    ) : RoomDatabase.Callback() {
+    ) : Callback() {
 
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)

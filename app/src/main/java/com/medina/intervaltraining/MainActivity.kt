@@ -5,9 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.runtime.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -29,23 +33,10 @@ import com.medina.intervaltraining.screens.PlayExerciseTableScreen
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import java.util.*
-
+import java.util.UUID
 
 class MainActivity : ComponentActivity() {
-    // No need to cancel this scope as it'll be torn down with the process
-    val applicationScope = CoroutineScope(SupervisorJob())
-
-    // Using by lazy so the database and the repository are only created when they're needed
-    // rather than when the application starts
-//    private val database by lazy { WordRoomDatabase.getDatabase(this, applicationScope) }
-//    private val repository by lazy { WordRepository(database.wordDao()) }
-//    private val wordViewModel: WordViewModel by viewModels {
-//        WordViewModelFactory(repository)
-//    }
-
-    // Using by lazy so the database and the repository are only created when they're needed
-    // rather than when the application starts
+    private val applicationScope = CoroutineScope(SupervisorJob())
     private val database by lazy { TrainingRoomDatabase.getDatabase(this, applicationScope) }
     private val repository by lazy { TrainingRoomRepository(database.trainingDao()) }
     private val trainingViewModel: TrainingViewModel by viewModels {
@@ -59,7 +50,7 @@ class MainActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colors.background
+                    color = MaterialTheme.colorScheme.background
                 ) {
                     IntervalTrainingApp(trainingViewModel)
                 }
@@ -119,7 +110,7 @@ fun IntervalTrainingNavHost(
         ) { entry ->
             val immediate = entry.arguments?.getBoolean(IMMEDIATE_FLAG)?:false
             val training = entry.arguments?.getString(TRAINING_KEY)
-            val viewModel:ExerciseViewModel = viewModel(
+            val viewModel: ExerciseViewModel = viewModel(
                 key = "exercise_model_for_$training",
                 factory = viewModelProviderFactoryOf { ExerciseViewModel(
                     repository = trainingViewModel.repository, UUID.fromString(training)
@@ -146,7 +137,7 @@ fun IntervalTrainingNavHost(
             ),
         ) { entry ->
             val training = entry.arguments?.getString(TRAINING_KEY)?.let { UUID.fromString(it) } ?: UUID.randomUUID()
-            val viewModel:ExerciseViewModel = viewModel(
+            val viewModel: ExerciseViewModel = viewModel(
                 key = "exercise_model_for_$training",
                 factory = viewModelProviderFactoryOf { ExerciseViewModel(
                     repository = trainingViewModel.repository, training
@@ -162,5 +153,5 @@ fun IntervalTrainingNavHost(
     }
 }
 
-const val TRAINING_KEY = "trainingkey"
-const val IMMEDIATE_FLAG = "inmediate"
+const val TRAINING_KEY = "training_key"
+const val IMMEDIATE_FLAG = "immediate"

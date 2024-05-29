@@ -1,10 +1,10 @@
 package com.medina.intervaltraining.data.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.*
 import com.medina.intervaltraining.data.repository.TrainingRepository
 import com.medina.intervaltraining.data.room.SessionItem
 import com.medina.intervaltraining.data.room.TrainingItem
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
@@ -45,20 +45,34 @@ class TrainingViewModel(val repository: TrainingRepository):ViewModel(){
 
     fun delete(training: UUID) {
         viewModelScope.launch {
-            repository.deleteAllExercises(training)
-            repository.deleteTraining(training)
+            try {
+                repository.deleteAllExercises(training)
+            }catch (e:Exception){
+                Log.d("JMMLOG", "TrainingViewModel: Fails to deleteAllExercises -> ");
+                e.printStackTrace()
+            }
+            try {
+                repository.deleteTraining(training)
+            }catch (e:Exception){
+                Log.d("JMMLOG", "TrainingViewModel: Fails to deleteTraining -> ");
+                e.printStackTrace()
+            }
         }
     }
 
     fun update(training: Training) {
         viewModelScope.launch {
-            repository.insert(TrainingItem(
-                id = training.id,
-                name = training.name,
-                defaultTimeSec = training.defaultTimeSec,
-                defaultRestSec = training.defaultRestSec,
-                lastUsed = Date().time
-            ))
+            try {
+                repository.insert(TrainingItem(
+                    id = training.id,
+                    name = training.name,
+                    defaultTimeSec = training.defaultTimeSec,
+                    defaultRestSec = training.defaultRestSec,
+                    lastUsed = Date().time
+                ))
+            }catch (e:Exception){
+                e.printStackTrace()
+            }
         }
     }
 
@@ -75,20 +89,26 @@ class TrainingViewModel(val repository: TrainingRepository):ViewModel(){
             set(Calendar.MINUTE,59)
             set(Calendar.SECOND,59)
         }
-        return repository.getTotalSessionTimeSecForDaterange(weekstart.timeInMillis,weekend.timeInMillis).map {
+        return repository.getTotalSessionTimeSecForDateRange(weekstart.timeInMillis,weekend.timeInMillis).map {
             it / 3600f
         }.asLiveData()
     }
 
     fun saveSession(session: Session) {
         viewModelScope.launch {
-            repository.insert(SessionItem(
-                id = session.id,
-                training = session.training,
-                complete = session.complete,
-                dateTimeEnd = session.dateTimeEnd,
-                dateTimeStart = session.dateTimeStart
-            ))
+            try {
+                repository.insert(
+                    SessionItem(
+                        id = session.id,
+                        training = session.training,
+                        complete = session.complete,
+                        dateTimeEnd = session.dateTimeEnd,
+                        dateTimeStart = session.dateTimeStart
+                    )
+                )
+            }catch (e:Exception){
+                e.printStackTrace()
+            }
         }
     }
 }
