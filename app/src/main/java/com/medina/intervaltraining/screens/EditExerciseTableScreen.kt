@@ -1,14 +1,18 @@
 package com.medina.intervaltraining.screens
 
 import android.content.res.Configuration
+import android.util.Log
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -25,6 +29,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -33,7 +38,11 @@ import com.medina.intervaltraining.data.viewmodel.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
 import com.medina.intervaltraining.data.viewmodel.Training
+import com.medina.intervaltraining.ui.dragdroplist.DraggableItem
+import com.medina.intervaltraining.ui.dragdroplist.rememberDragDropState
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,22 +79,62 @@ fun EditExerciseTableScreen(
     onUpdateTraining: (newTraining: Training) -> Unit,
     onExerciseListUpdated: (newItems: List<Exercise>) -> Unit = {},
 ) {
-    val items: List<Exercise> by exerciseViewModel.exercises.observeAsState(listOf())
+    val exerciseList: List<Exercise> by exerciseViewModel.exercises.observeAsState(listOf())
     val training: Training by exerciseViewModel.training.observeAsState(Training("", 0, 0))
-    EditExerciseTableView(training, items, onBack, onDelete, onUpdateTraining, onExerciseListUpdated)
+    EditExerciseTableView(
+        training = training,
+        exerciseList = exerciseList,
+        onBack = onBack,
+        onDeleteTraining = onDelete,
+        onUpdateTrainingName = {newName ->
+            if(newName.isNotBlank() && newName != training.name) {
+                training.name = newName
+                onUpdateTraining(training)
+            }
+        },
+        onUpdateExercise = { newExercise ->
+            val newList = exerciseList.toMutableList()
+            val pos = exerciseList.indexOfFirst { e -> e.id == newExercise.id }
+            if (pos >= 0) {
+                newList[pos] = newExercise
+            }else{
+                newList.add(newExercise)
+            }
+            onExerciseListUpdated(newList)
+        },
+        onDuplicateExercise = {index ->
+            val newList = exerciseList.toMutableList()
+            newList.add(index+1, newList[index].newCopy())
+            onExerciseListUpdated(newList)
+        },
+        onDeleteExercise = {index ->
+            val newList = exerciseList.toMutableList()
+            newList.removeAt(index)
+            onExerciseListUpdated(newList)
+        },
+        onMoveExercise = { oldIndex, toNewIndex ->
+            val newList = exerciseList.toMutableList()
+            val exercise = newList[oldIndex]
+            newList.removeAt(oldIndex)
+            newList.add(toNewIndex.coerceAtMost(newList.size-1),exercise)
+            onExerciseListUpdated(newList)
+        }
+    )
 }
 
 @Composable
-private fun EditExerciseTableView(
+fun EditExerciseTableView(
     training: Training,
-    items: List<Exercise>,
+    exerciseList: List<Exercise>,
     onBack: () -> Unit = {},
-    onDelete: () -> Unit = {},
-    onUpdateTraining: (newTraining: Training) -> Unit = {},
-    onExerciseListUpdated: (newItems: List<Exercise>) -> Unit = {},
+    onDeleteTraining: () -> Unit = {},
+    onUpdateTrainingName: (trainingName: String) -> Unit = {},
+    onUpdateExercise:(Exercise)->Unit = {},
+    onDeleteExercise:(Int)->Unit = {},
+    onDuplicateExercise:(Int)->Unit = {},
+    onMoveExercise:(Int, Int)->Unit = { _, _ ->},
 ) {
-    val exerciseList = ArrayList(items)
-    val (currentIndex, setIndex) = remember { mutableStateOf(-1) }
+    Log.d("JMMLOG", "EditExerciseTableScreen: exerciseList -> $exerciseList")
 
     // Dialog state Manager
     val dialogState: MutableState<Boolean> = remember {
@@ -94,64 +143,24 @@ private fun EditExerciseTableView(
     val dialogExercise: MutableState<Exercise?> = remember {
         mutableStateOf(null)
     }
-
     Scaffold(topBar = {
         EditExerciseTableScreenTopBar(trainingTitle = training.name, onBack = onBack,
-            onSave = {
-                if(it.isNotBlank()) {
-                    training.name = it
-                    onUpdateTraining(training)
-                }
-             },
-            onDelete = onDelete)
+            onSave = onUpdateTrainingName,
+            onDelete = onDeleteTraining)
     })
     { padding ->
-        LazyColumn(
+        ExerciseTableEditableList(
             modifier = Modifier.padding(padding),
-            content = {
-                if (training.name.isNotEmpty()) {
-                    items(exerciseList) { exercise ->
-                        val pos = exerciseList.indexOf(exercise)
-                        if (pos == currentIndex) {
-                            EditExerciseTableItemView(
-                                exercise = exercise,
-                                onEdit = {
-                                    dialogState.value = true
-                                    dialogExercise.value = exercise
-                                },
-                                onDuplicate = {
-                                    exerciseList.add(pos, exercise.copy())
-                                    onExerciseListUpdated(exerciseList)
-                                },
-                                onRemove = {
-                                    exerciseList.remove(exercise)
-                                    onExerciseListUpdated(exerciseList)
-                                })
-                        } else {
-                            ExerciseLabel(
-                                exercise = exercise,
-                                modifier = Modifier
-                                    .clickable { setIndex(pos) }
-                                    .padding(2.dp)
-                            )
-                        }
-                    }
-                    item {
-                        Button(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = { dialogState.value = true }) {
-                            Text(text = "#AddExercise")
-                        }
-                    }
-                } else {
-                    item {
-                        Text(
-                            modifier = Modifier.fillMaxWidth().fillParentMaxHeight(),
-                            text = "#ThinkANameForTheTraining",
-                        )
-                    }
-                }
-            }
+            items = exerciseList,
+            training = training,
+            onEdit = {
+                dialogState.value = true
+                dialogExercise.value = exerciseList.getOrNull(it)
+            },
+            onDuplicate = onDuplicateExercise,
+            onRemove = onDeleteExercise,
+            onMove = onMoveExercise,
+            onNew = { dialogState.value = true }
         )
         if (dialogState.value) {
             Dialog(
@@ -162,19 +171,12 @@ private fun EditExerciseTableView(
                     EditExerciseDialogBody(
                         exerciseToEdit,
                         onItemComplete = { newExercise ->
-                        val pos = exerciseList.indexOfFirst { e -> e.id.equals(newExercise.id) }
-                        if (pos >= 0) {
-                            exerciseList.set(pos, newExercise)
-                        } else {
-                            exerciseList.add(newExercise)
-                        }
-                        onExerciseListUpdated(exerciseList)
-                        setIndex(-1)
-                        dialogState.value = false
-                    },
-                    {
-                        dialogState.value = false
-                    })
+                            onUpdateExercise(newExercise)
+                            dialogState.value = false
+                        },
+                        {
+                            dialogState.value = false
+                        })
                 },
                 properties = DialogProperties(
                     dismissOnBackPress = false,
@@ -185,9 +187,124 @@ private fun EditExerciseTableView(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun ExerciseTableEditableList(
+    modifier: Modifier=Modifier,
+    training: Training,
+    items: List<Exercise>,
+    onNew:()->Unit = {},
+    onEdit: (Int) -> Unit = {},
+    onDuplicate: (Int) -> Unit = {},
+    onRemove: (Int) -> Unit = {},
+    onMove: (Int, Int) -> Unit = { _, _->},
+){
+    val (selectedIndex, setSelectedIndex) = remember { mutableStateOf(-1) }
+    var overscrollJob by remember { mutableStateOf<Job?>(null) }
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val dragDropState = rememberDragDropState(listState,
+        onMove = onMove,
+        onHover = { fromIndex, toIndex, delta ->
+            setSelectedIndex(-1)
+        }
+    )
+
+    LazyColumn(
+        modifier = modifier
+            .padding(5.dp)
+            .pointerInput(dragDropState) {
+                detectDragGesturesAfterLongPress(
+                    onDrag = { change, offset ->
+                        change.consume()
+                        dragDropState.onDrag(offset = offset)
+
+                        if (overscrollJob?.isActive == true)
+                            return@detectDragGesturesAfterLongPress
+
+                        dragDropState
+                            .checkForOverScroll()
+                            .takeIf { it != 0f }
+                            ?.let {
+                                overscrollJob =
+                                    scope.launch {
+                                        dragDropState.state.animateScrollBy(
+                                            it*1.3f, tween(easing = FastOutLinearInEasing)
+                                        )
+                                    }
+                            }
+                            ?: run { overscrollJob?.cancel() }
+                    },
+                    onDragStart = {
+                            offset -> dragDropState.onDragStart(offset)
+                    },
+                    onDragEnd = {
+                        dragDropState.onDragInterrupted()
+                        overscrollJob?.cancel()
+                    },
+                    onDragCancel = {
+                        dragDropState.onDragInterrupted()
+                        overscrollJob?.cancel()
+                    }
+                )
+            },
+        state = listState,
+        content = {
+            if (training.name.isNotEmpty()) {
+                itemsIndexed(
+                    items = items,
+                    key = {_: Int, exercise: Exercise -> exercise.id.toString() }
+                ) {  index, exercise ->
+                    DraggableItem(
+                        dragDropState = dragDropState,
+                        index = index
+                    ) { isDragging ->
+                        val pos = items.indexOf(exercise)
+                        if(index==pos) {
+                            if (!isDragging && pos == selectedIndex) {
+                                EditExerciseTableItemView(
+                                    exercise = exercise,
+                                    onEdit = { onEdit(pos) },
+                                    onDuplicate = { onDuplicate(pos) },
+                                    onRemove = { onRemove(pos) }
+                                )
+                            } else {
+                                ExerciseLabel(
+                                    shadowElevation = if(isDragging) 6.dp else 1.dp,
+                                    exercise = exercise,
+                                    modifier = Modifier
+                                        .clickable { setSelectedIndex(pos) }
+                                        .padding(2.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+                item {
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = onNew
+                    ) {
+                        Text(text = "#AddExercise")
+                    }
+                }
+            } else {
+                item {
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillParentMaxHeight(),
+                        text = "#ThinkANameForTheTraining",
+                    )
+                }
+            }
+        }
+    )
+}
+
 @Composable
 fun EditExerciseTableItemView(exercise: Exercise, modifier: Modifier = Modifier, onEdit:()->Unit, onDuplicate:()->Unit, onRemove:()->Unit){
-    Row() {
+    Row(modifier = modifier) {
         ExerciseLabel(exercise,
             Modifier
                 .padding(2.dp)
@@ -398,14 +515,14 @@ fun PreviewExerciseInputDialog() = EditExerciseDialogBody(onItemComplete = { }, 
 @Composable
 fun PreviewExerciseListItem() = EditExerciseTableItemView(Exercise("Exercise"), Modifier,{},{},{})
 
-
+@OptIn(ExperimentalFoundationApi::class)
 @Preview(name = "Light Mode")
 @Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true,)
 @Composable
 fun EditorPreview() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            EditExerciseTableView(training = Training("Test",0,0), items = listOf(Exercise("Exercise 1"), Exercise("Exercise 2")))
+            EditExerciseTableView(training = Training("Test",0,0), exerciseList = listOf(Exercise("Exercise 1"), Exercise("Exercise 2"), Exercise("Exercise 3"), Exercise("Exercise 4"), Exercise("Exercise 5")))
         }
     }
 }

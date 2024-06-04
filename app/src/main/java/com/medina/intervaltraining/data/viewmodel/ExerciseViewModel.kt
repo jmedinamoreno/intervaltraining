@@ -1,6 +1,7 @@
 package com.medina.intervaltraining.data.viewmodel
 
 
+import android.util.Log
 import androidx.lifecycle.*
 import androidx.lifecycle.asLiveData
 import com.medina.intervaltraining.data.repository.TrainingRepository
@@ -17,7 +18,7 @@ data class Exercise(
     // since the user may generate identical tasks, give them each a unique ID
     val id: UUID = UUID.randomUUID()
 ){
-    fun copy() = this.copy(id = UUID.randomUUID())
+    fun newCopy() = this.copy(id = UUID.randomUUID())
 }
 
 enum class ExerciseIcon{NONE,RUN,JUMP,LEFT_ARM,RIGHT_ARM,SIT_UP,PUSH_UPS,FLEX}
@@ -52,13 +53,19 @@ class ExerciseViewModel(
     }.asLiveData()
 
     fun saveExerciseList(newList: List<Exercise>) {
+        if(newList.isEmpty()){
+            Log.e("JMMLOG", "ExerciseViewModel: error saving the list")
+            return
+        }
         val toDelete = exercises.value?.filter { !newList.contains(it) }
         toDelete?.forEach {
             viewModelScope.launch {
                 repository.deleteExercise(it.id)
             }
         }
+        Log.d("JMMLOG", "ExerciseViewModel: saveList:  $newList")
         newList.forEachIndexed{ index, exercise ->
+            Log.d("JMMLOG", "ExerciseViewModel: saveList:  $index -> $exercise")
             saveExercise(exercise = exercise, position = index)
         }
     }
