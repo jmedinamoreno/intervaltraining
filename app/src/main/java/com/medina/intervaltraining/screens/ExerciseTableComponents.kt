@@ -48,6 +48,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -78,7 +79,9 @@ import com.medina.intervaltraining.data.viewmodel.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import com.medina.intervaltraining.ui.theme.Utils
+import com.medina.intervaltraining.ui.theme.stringForButtonDescription
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Draws a row of [ExerciseTableIcon] with visibility changes animated.
@@ -191,36 +194,6 @@ private fun SelectableIconButton(
 }
 
 /**
- * Draw a background based on MaterialTheme.colors.onSurface that animates resizing and elevation
- * changes.
- *
- * @param elevate draw a shadow, changes to this will be animated
- * @param modifier modifier for this element
- * @param content (slot) content to draw in the background
- */
-@Composable
-fun ItemInputBackground(
-    elevate: Boolean,
-    modifier: Modifier = Modifier,
-    content: @Composable RowScope.() -> Unit
-) {
-    val animatedElevation by animateDpAsState(
-        targetValue = if (elevate) 1.dp else 0.dp, TweenSpec(500),
-        label = "AnimatedElevation"
-    )
-    Surface(
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
-        shadowElevation = animatedElevation,
-        shape = RectangleShape,
-    ) {
-        Row(
-            modifier = modifier.animateContentSize(animationSpec = TweenSpec(300)),
-            content = content
-        )
-    }
-}
-
-/**
  * Styled [TextField] for inputting a text
  *
  * @param entryText (state) current text to display
@@ -238,23 +211,29 @@ fun SavableInputText(entryText: String, onSave:(String)->Unit, timeoutMill:Long,
     val (text, setText) = remember(entryText) { mutableStateOf(entryText) }
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
+    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-        keyboardController?.show()
+    LaunchedEffect(text) {
+        if(text.isEmpty()) {
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        }
     }
-    LaunchedEffect(text){
-        delay(timeoutMill)
-        onSave(text)
-    }
+
     InputText(
         text = text,
         onTextChange = {
             setText(it)
+            scope.launch {
+                delay(timeoutMill)
+                onSave(it)
+            }
         },
         modifier = modifier
             .focusRequester(focusRequester)
-            .focusProperties { enter = { if (focusRequester.restoreFocusedChild()) Cancel else Default } }
+            .focusProperties {
+                enter = { if (focusRequester.restoreFocusedChild()) Cancel else Default }
+            }
         ,placeholder = placeholder
     )
 }
@@ -331,7 +310,7 @@ fun InputNumber(
                         .widthIn(min = 48.dp)
                         .heightIn(min = 24.dp),
                     imageVector = Icons.Default.KeyboardArrowUp,
-                    contentDescription = "#More"
+                    contentDescription = stringForButtonDescription(id = R.string.input_number_more)
                 )
             }
             IconButton(modifier = Modifier
@@ -342,7 +321,7 @@ fun InputNumber(
                         .widthIn(min = 48.dp)
                         .heightIn(min = 24.dp),
                     imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = "#Less"
+                    contentDescription = stringForButtonDescription(id = R.string.input_number_less)
                 )
             }
         }
@@ -388,7 +367,8 @@ fun ExerciseLabelBody(exercise: Exercise, modifier: Modifier = Modifier) {
                 ),
             )
             Row {
-                Text(text = "#Time/Rest: ${exercise.timeSec}/${exercise.restSec}" ,
+                Text(
+                    text = stringResource(id = R.string.exercise_label_time_and_rest, exercise.timeSec, exercise.restSec),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontSize = 14.sp

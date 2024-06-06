@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -45,7 +46,6 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.inset
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -57,6 +57,8 @@ import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
 import com.medina.intervaltraining.data.viewmodel.Session
 import com.medina.intervaltraining.data.viewmodel.Training
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
+import com.medina.intervaltraining.ui.theme.stringForIconDescription
+import com.medina.intervaltraining.ui.theme.stringRandom
 import kotlinx.coroutines.delay
 import java.util.Calendar
 import java.util.UUID
@@ -190,16 +192,18 @@ fun PlayExerciseTableBody(
     val constPlayerSize = 0.3f
     LazyColumn(modifier = modifier) {
         stickyHeader {
-            when(playState){
-                PlayExerciseTableState.READY -> BigPlayButton(
-                    Modifier.fillParentMaxHeight(constPlayerSize).fillMaxWidth(), onStart = onStart)
-                PlayExerciseTableState.RUNNING -> RunningExercise(
-                    Modifier.fillParentMaxHeight(constPlayerSize).fillMaxWidth(), items.getOrNull(currentExercise), onPause = onPause, currentTimeMillis = currentTimeMillis)
-                PlayExerciseTableState.PAUSED -> PausedExercise(
-                    Modifier.fillParentMaxHeight(constPlayerSize).fillMaxWidth(), items.getOrNull(currentExercise), onResume = onResume, currentTimeSec = currentTimeMillis/1000)
-                PlayExerciseTableState.COMPLETE -> FinishedTraining(
-                    Modifier.fillParentMaxHeight(constPlayerSize).fillMaxWidth(), onRestart = onRestart)
-            }
+            ExercisePlayer(
+                modifier = Modifier
+                    .fillParentMaxHeight(constPlayerSize)
+                    .fillMaxWidth(),
+                playState = playState,
+                runningExercise = items.getOrNull(currentExercise),
+                currentTimeMillis = currentTimeMillis,
+                onStart = onStart,
+                onPause = onPause,
+                onResume = onResume,
+                onRestart = onRestart
+            )
         }
         items(items) { exercise ->
             ExerciseRunningLabel(
@@ -221,11 +225,54 @@ fun PlayExerciseTableBody(
 }
 
 @Composable
+fun ExercisePlayer(
+    modifier: Modifier,
+    playState: PlayExerciseTableState,
+    runningExercise: Exercise?,
+    currentTimeMillis: Int,
+    onStart:()->Unit,
+    onPause:()->Unit,
+    onResume:()->Unit,
+    onRestart: () -> Unit,){
+    Surface(modifier = modifier.then(
+        Modifier.background(
+            MaterialTheme.colorScheme.background
+        )
+    )) {
+        when (playState) {
+            PlayExerciseTableState.READY -> BigPlayButton(
+                Modifier.fillMaxSize(),
+                onStart = onStart
+            )
+
+            PlayExerciseTableState.RUNNING -> RunningExercise(
+                Modifier.fillMaxSize(),
+                runningExercise,
+                onPause = onPause,
+                currentTimeMillis = currentTimeMillis
+            )
+
+            PlayExerciseTableState.PAUSED -> PausedExercise(
+                Modifier.fillMaxSize(),
+                runningExercise,
+                onResume = onResume,
+                currentTimeSec = currentTimeMillis / 1000
+            )
+
+            PlayExerciseTableState.COMPLETE -> FinishedTraining(
+                Modifier.fillMaxSize(),
+                onRestart = onRestart
+            )
+        }
+    }
+}
+
+@Composable
 fun BigPlayButton(modifier: Modifier, onStart:()->Unit){
     Box(modifier = modifier.clickable { onStart() }) {
         Icon(
             imageVector = Icons.Default.PlayArrow,
-            contentDescription = stringResource(id = R.string.ic_description_play_icon),
+            contentDescription = stringForIconDescription(id = R.string.running_training_play),
             Modifier
                 .size(84.dp)
                 .align(Alignment.Center)
@@ -240,7 +287,7 @@ fun RunningExercise(modifier: Modifier, runningExercise:Exercise?, currentTimeMi
     val restTimeMillis = runningExercise.restSec * 1000
     val totalTimeMillis = runTimeMillis + restTimeMillis
     val isRest = runTimeMillis < currentTimeMillis
-    val text = if(isRest) "#Rest" else runningExercise.name
+    val text = if(isRest) stringRandom(id = R.array.running_exercise_rest_list) else runningExercise.name
     val timeText = if(isRest)
         "${(runningExercise.restSec + runningExercise.timeSec) - currentTimeMillis/1000}"
     else
@@ -387,7 +434,7 @@ fun FinishedTraining(modifier: Modifier, onRestart:()->Unit){
     Box(modifier = modifier.clickable { onRestart() }) {
         Icon(
             imageVector = Icons.Default.Refresh,
-            contentDescription = stringResource(id = R.string.ic_description_play_icon),
+            contentDescription = stringForIconDescription(id = R.string.running_training_restart),
             Modifier
                 .size(84.dp)
                 .align(Alignment.Center)
@@ -424,7 +471,7 @@ fun PlayerPreview() {
             PlayExerciseTableView(
                 training = Training("test",30,5),
                 session = Session(UUID.randomUUID()),
-                items = emptyList())
+                items = (1 until 15).toList().map{Exercise("Exercise $it")})
         }
     }
 }

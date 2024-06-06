@@ -3,9 +3,42 @@
     <string name="ic_description_exercise_icon">Exercise Icon</string>
     <string name="ic_description_play_icon">Play Icon</string>
     <string name="welcome_trained_time_first_line">You have trained</string>
-    <string name="welcome_trained_time_second_line">%1$s</string>
+    <string name="welcome_trained_time_second_line" translatable="false">%1$s</string>
     <string name="welcome_trained_time_third_line">hours this week.</string>
-    <string name="welcome_training_min">%1$s\'</string>
+    <string name="welcome_training_min" translatable="false">%1$s\'</string>
     <string name="ic_description_delete">Delete</string>
-
+    <string name="new_training_button_icon">New training button</string>
+    <string name="new_training_button_label">New training</string>
+    <string name="edit_exercise_dialog_cancel">Cancel</string>
+    <string name="edit_exercise_dialog_save">Save</string>
+    <string name="edit_exercise_table_edit">Edit</string>
+    <string name="edit_exercise_table_duplicate">Duplicate</string>
+    <string name="edit_exercise_table_delete">Delete</string>
+    <string name="edit_exercise_table_new_exercise">New exercise</string>
+    <string name="button_description_template">%1$s button</string>
+    <string name="icon_description_template">%1$s icon</string>
+    <string-array name="think_name_training_list">
+        <item>Choose a name that motivates you for this workout routine.</item>
+        <item>What will you call this collection of exercises and fitness goals?</item>
+        <item>Give your training plan a unique name so you can easily track your progress.</item>
+        <item>Pick a name that reflects the intensity and focus of your workout routine.</item>
+        <item>Get creative! A memorable name will help you stay committed to your fitness journey.</item>
+    </string-array>
+    <string-array name="training_name_hint_list">
+        <item>Workout Title</item> <!-- Simple and direct -->
+        <item>Routine Name</item> <!-- Emphasizes the structured nature -->
+        <item>Fitness Plan</item> <!-- Suggests a broader plan -->
+        <item>Give it a name!</item> <!-- Friendly and encouraging -->
+    </string-array>
+    <string name="edit_training_delete">Delete training</string>
+    <string name="input_number_less">Less</string>
+    <string name="input_number_more">More</string>
+    <string name="exercise_label_time_and_rest">Time/Rest: %1$s/%2$s\"</string>
+    <string-array name="running_exercise_rest_list">
+        <item>Pause</item>
+        <item>Break</item>
+        <item>Rest</item>
+    </string-array>
+    <string name="running_training_play">Play</string>
+    <string name="running_training_restart">Restart</string>
 </resources>

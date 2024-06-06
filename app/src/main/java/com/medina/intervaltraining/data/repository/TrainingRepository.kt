@@ -5,9 +5,12 @@ import com.medina.intervaltraining.data.room.ExerciseItem
 import com.medina.intervaltraining.data.room.SessionItem
 import com.medina.intervaltraining.data.room.TrainingDao
 import com.medina.intervaltraining.data.room.TrainingItem
+import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
-import java.util.*
+import java.util.Date
+import java.util.UUID
 
 interface TrainingRepository{
 
@@ -74,5 +77,58 @@ class TrainingRoomRepository(
 
     override fun getTotalSessionTimeSecForDateRange(startDatetime: Long, endDatetime: Long) =
         trainingDao.getTotalSessionTimeMilsForDateRangeAsFlow(startDatetime,endDatetime).map { (it?:0) / 1000f }
+}
+
+class TrainingDummyRepository :TrainingRepository {
+    override val trainingsFlow: Flow<List<TrainingItem>>
+        get() = MutableStateFlow(emptyList())
+
+    override fun timeForTrainingMinAsFlow(training: UUID): Flow<Int> = MutableStateFlow(10)
+
+    override fun getTrainingFlow(uuid: UUID): Flow<TrainingItem?> = MutableStateFlow(dummyTraining)
+
+    override fun exercisesFlow(training: UUID): Flow<List<ExerciseItem>> = MutableStateFlow(dummyExercises)
+
+    override suspend fun exercises(training: UUID): List<ExerciseItem> = dummyExercises
+
+    override suspend fun insert(training: TrainingItem) { }
+
+    override suspend fun insert(exercise: ExerciseItem) { }
+
+    override suspend fun insert(session: SessionItem) { }
+
+    override suspend fun deleteTraining(training: UUID) { }
+
+    override suspend fun deleteAllExercises(training: UUID) { }
+
+    override suspend fun deleteExercise(exercise: UUID) { }
+
+    override suspend fun deleteSession(session: UUID) { }
+
+    override fun getTotalSessionTimeSecForTrainingById(id: UUID): Flow<Float> = MutableStateFlow(3600f)
+
+    override fun getTotalSessionTimeSecForDateRange(
+        startDatetime: Long,
+        endDatetime: Long
+    ): Flow<Float> = MutableStateFlow(3600f)
+
+    private val dummyTraining = TrainingItem(
+        name = "Example training",
+        lastUsed = Date().time,
+        defaultTimeSec = 45,
+        defaultRestSec = 15,
+    )
+
+    private fun dummyExercise(position:Int) = ExerciseItem(
+        training = dummyTraining.id,
+        name = "Exercise $position",
+        icon = ExerciseIcon.RUN,
+        position = position,
+        timeSec = dummyTraining.defaultTimeSec,
+        restSec = dummyTraining.defaultRestSec
+    )
+
+    private val dummyExercises: List<ExerciseItem> = (1 until 3).toList().map{ dummyExercise(it) }
+
 }
 
