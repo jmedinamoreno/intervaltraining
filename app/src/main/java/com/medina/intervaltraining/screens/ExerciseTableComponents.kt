@@ -3,11 +3,9 @@ package com.medina.intervaltraining.screens
 
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.TweenSpec
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -17,7 +15,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,14 +24,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -60,12 +61,14 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -78,10 +81,57 @@ import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.viewmodel.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
-import com.medina.intervaltraining.ui.theme.Utils
+import com.medina.intervaltraining.ui.theme.drawableId
+import com.medina.intervaltraining.ui.theme.iconName
+import com.medina.intervaltraining.ui.theme.iconToDrawableResource
+import com.medina.intervaltraining.ui.theme.iconToStringResource
 import com.medina.intervaltraining.ui.theme.stringForButtonDescription
+import com.medina.intervaltraining.ui.theme.stringForIconDescription
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+/**
+ * Draws button with.
+ *
+ * When not visible, will collapse to 16.dp high by default. You can enlarge this with the passed
+ * modifier.
+ *
+ * @param icon (state) the current selected icon
+ * @param onIconChange (event) request the selected icon change
+ * @param modifier modifier for this element
+ * @param visible (state) if the icon should be shown
+ */
+@Composable
+fun DialogIconButton(
+    modifier: Modifier = Modifier,
+    text: String,
+    icon: ImageVector,
+    iconDescription: String,
+    enabled : Boolean = true,
+    onClick: ()->Unit,
+){
+    Button(
+        modifier = modifier.height(40.dp),
+        enabled = enabled,
+        onClick = onClick
+    ) {
+        Row {
+            Icon(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .size(24.dp),
+                imageVector = icon,
+                contentDescription = iconDescription
+            )
+            Text(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .padding(horizontal = 8.dp),
+                text = text
+            )
+        }
+    }
+}
 
 /**
  * Draws a row of [ExerciseTableIcon] with visibility changes animated.
@@ -129,23 +179,30 @@ fun IconRow(
     onIconChange: (ExerciseIcon) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(modifier) {
-        for (i in ExerciseIcon.entries) {
+    Row(modifier.semantics { this.testTag = "IconRow" }
+        .selectableGroup()
+    ) {
+        for (exerciseIcon in ExerciseIcon.entries) {
             SelectableIconButton(
+                modifier = Modifier.selectable(exerciseIcon == icon){ onIconChange(exerciseIcon) },
                 iconSelectable = { tint, modifier ->
-                    if(i == ExerciseIcon.NONE){
+                    if(exerciseIcon == ExerciseIcon.NONE){
                         Icon(
                             imageVector = Icons.Default.Clear,
-                            contentDescription = stringResource(id = R.string.ic_description_delete),
+                            modifier = modifier.semantics { iconName = Icons.Default.Clear.name },
+                            contentDescription = stringForButtonDescription(id = R.string.exercise_icon_delete),
                             tint = tint,
-                            modifier = modifier
                         )
                     }else {
-                        ExerciseTableIcon(icon = i, tint = tint, modifier = modifier)
+                        ExerciseTableIcon(
+                            icon = exerciseIcon,
+                            modifier = modifier,
+                            tint = tint
+                        )
                     }    
                                  },
-                onIconSelected = { onIconChange(i) },
-                isSelected = i == icon
+                onIconSelected = { onIconChange(exerciseIcon) },
+                isSelected = exerciseIcon == icon
             )
         }
     }
@@ -330,15 +387,12 @@ fun InputNumber(
 
 @Composable
 fun ExerciseTableIcon(icon: ExerciseIcon, tint:Color, modifier: Modifier = Modifier){
+    val drawableId = iconToDrawableResource(icon)
     Icon(
-        modifier = modifier,
-        imageVector = when (icon) {
-            ExerciseIcon.RUN -> ImageVector.vectorResource(R.drawable.ic_exercise_run)
-            ExerciseIcon.JUMP -> ImageVector.vectorResource(R.drawable.ic_exercise_jump)
-            else -> ImageVector.vectorResource(R.drawable.ic_exercise_none)
-        },
+        modifier = modifier.semantics { this.iconName = icon.name; this.drawableId = drawableId },
+        imageVector = ImageVector.vectorResource(drawableId),
         tint = tint,
-        contentDescription = stringResource(id = R.string.ic_description_exercise_icon),
+        contentDescription = stringForIconDescription(id = iconToStringResource(icon)),
     )
 }
 
@@ -347,7 +401,7 @@ fun ExerciseTableIcon(icon: ExerciseIcon, tint:Color, modifier: Modifier = Modif
 fun ExerciseLabelBody(exercise: Exercise, modifier: Modifier = Modifier) {
     Row(modifier = modifier) {
         Image(
-            painter = painterResource(id = Utils.iconToDrawableResource(exercise.icon)),
+            painter = painterResource(id = iconToDrawableResource(exercise.icon)),
             colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f)),
             contentDescription = exercise.name,
             modifier = Modifier
@@ -492,4 +546,18 @@ fun PreviewInputNumber() {
         .padding(horizontal = 8.dp, vertical = 8.dp)
         .width(160.dp)
         .height(48.dp), 0){}
+}
+
+@Preview
+@Composable
+fun PreviewDialogIconButton() {
+    DialogIconButton(modifier = Modifier
+        .padding(horizontal = 8.dp, vertical = 8.dp)
+        .width(160.dp)
+        .height(48.dp),
+        text = "Button",
+        icon = Icons.Default.Edit,
+        iconDescription = "Edit",
+        onClick = {}
+    )
 }

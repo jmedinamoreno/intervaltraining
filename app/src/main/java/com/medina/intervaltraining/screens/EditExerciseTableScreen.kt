@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.medina.intervaltraining.R
+import com.medina.intervaltraining.data.generation.suggestExercise
 import com.medina.intervaltraining.data.viewmodel.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
@@ -422,6 +424,7 @@ fun EditExerciseDialogBody(
         setRest(currentExercise.restSec)
         setId(currentExercise.id)
     }
+    val suggestedExercise = suggestExercise()
 
     Card(
         modifier = Modifier
@@ -429,6 +432,26 @@ fun EditExerciseDialogBody(
         shape = RoundedCornerShape(8.dp)
     ) {
         Column {
+            if(text.isBlank()){
+                DialogIconButton(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 16.dp)
+                        .fillMaxWidth(),
+                    text = stringResource(id = R.string.edit_exercise_dialog_suggest),
+                    icon = Icons.Default.Star,
+                    iconDescription = stringForButtonDescription(id = R.string.edit_exercise_dialog_suggest),
+                    onClick = {
+                        suggestedExercise.let {
+                            setText(it.name)
+                            setIcon(it.icon)
+                            setTime(it.timeSec)
+                            setRest(it.restSec)
+                            setId(it.id)
+                        }
+                    }
+                )
+            }
             Row(
                 Modifier
                     .padding(horizontal = 16.dp)
@@ -436,15 +459,19 @@ fun EditExerciseDialogBody(
                     .height(54.dp)
             ) {
                 IconButton(
+                    modifier = Modifier.align(Alignment.CenterVertically),
                     onClick = {
                         iconsVisible = true
                     },) {
                     ExerciseTableIcon(icon = icon, MaterialTheme.colorScheme.primary)
                 }
-                InputText(text,setText,
-                    Modifier
+                InputText(
+                    modifier = Modifier
                         .weight(1f)
-                        .padding(end = 8.dp)
+                        .padding(end = 8.dp),
+                    text = text,
+                    onTextChange = setText,
+                    placeholder = stringResource(id = R.string.new_exercise_name_hint)
                 )
             }
             if (iconsVisible) {
@@ -472,29 +499,23 @@ fun EditExerciseDialogBody(
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Button(modifier = Modifier.weight(0.5f), onClick = onCancel) {
-                    Row {
-                       Text(text = stringResource(id = R.string.edit_exercise_dialog_cancel))
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = stringForButtonDescription(id = R.string.edit_exercise_dialog_cancel)
-                        )
-                    }
-                }
-                Button( modifier = Modifier.weight(0.5f),
+                DialogIconButton(
+                    modifier = Modifier.weight(0.5f).padding(end =4.dp),
+                    text = stringResource(id = R.string.edit_exercise_dialog_cancel),
+                    icon = Icons.Default.Clear,
+                    iconDescription = stringForButtonDescription(id = R.string.edit_exercise_dialog_cancel),
+                    enabled = text.isNotBlank(),
+                    onClick = onCancel
+                )
+                DialogIconButton(
+                    modifier = Modifier.weight(0.5f).padding(start = 4.dp),
+                    text = stringResource(id = R.string.edit_exercise_dialog_save),
+                    icon = Icons.Default.Check,
+                    iconDescription = stringForButtonDescription(id = R.string.edit_exercise_dialog_save),
                     onClick = {
                         onItemComplete(Exercise(text, icon, time, rest, id = id))
                     },
-                    enabled = text.isNotBlank(),
-                ) {
-                    Row {
-                        Text(text = stringResource(id = R.string.edit_exercise_dialog_save))
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = stringForButtonDescription(id = R.string.edit_exercise_dialog_save)
-                        )
-                    }
-                }
+                )
             }
         }
     }

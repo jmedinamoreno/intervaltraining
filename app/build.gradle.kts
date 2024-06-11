@@ -53,6 +53,7 @@ android {
 }
 
 dependencies {
+    testImplementation("junit:junit:4.12")
     ksp(libs.androidx.room.compiler)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.core.ktx)
@@ -89,6 +90,7 @@ dependencies {
     implementation(libs.glide)
     implementation(libs.accompanist.systemuicontroller)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.test.manifest)
 
     // Testing dependencies
     debugImplementation(libs.androidx.monitor)
@@ -107,4 +109,5 @@ dependencies {
     androidTestImplementation(libs.accessibility.test.framework)
     androidTestImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.junit)
+
 }

@@ -21,7 +21,7 @@ data class Exercise(
     fun newCopy() = this.copy(id = UUID.randomUUID())
 }
 
-enum class ExerciseIcon{NONE,RUN,JUMP,LEFT_ARM,RIGHT_ARM,SIT_UP,PUSH_UPS,FLEX}
+enum class ExerciseIcon{NONE,RUN,JUMP,LEFT_ARM,RIGHT_ARM,SIT_UP,PUSH_UPS,FLEX,KNEES}
 
 class ExerciseViewModel(
     private val repository: TrainingRepository,

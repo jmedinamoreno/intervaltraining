@@ -6,7 +6,7 @@
     <string name="welcome_trained_time_second_line" translatable="false">%1$s</string>
     <string name="welcome_trained_time_third_line">hours this week.</string>
     <string name="welcome_training_min" translatable="false">%1$s\'</string>
-    <string name="ic_description_delete">Delete</string>
+    <string name="exercise_icon_delete">Delete</string>
     <string name="new_training_button_icon">New training button</string>
     <string name="new_training_button_label">New training</string>
     <string name="edit_exercise_dialog_cancel">Cancel</string>
@@ -41,4 +41,44 @@
     </string-array>
     <string name="running_training_play">Play</string>
     <string name="running_training_restart">Restart</string>
+    <string name="new_exercise_name_hint">New exercise</string>
+    <string name="edit_exercise_dialog_suggest">Suggest</string>
+    <string name="ic_name_exercise_run">Run</string>
+    <string name="ic_name_exercise_jump">Jump</string>
+    <string name="ic_name_exercise_none">No icon</string>
+    <string name="ic_name_exercise_knees">Knees</string>
+    <string name="ic_name_exercise_sit_up">Sit up</string>
+    <string name="ic_name_exercise_push_ups">Push ups</string>
+    <string name="ic_name_exercise_flex">Flex</string>
+    <string name="ic_name_exercise_left">Left</string>
+    <string name="ic_name_exercise_right">Right</string>
+    <string-array name="suggested_training_name_list">
+        <item>Daily Strength Boost</item>
+        <item>Cardio Blast Workout</item>
+        <item>Full Body Conditioning</item>
+        <item>Flexibility &amp; Mobility</item>
+        <item>Weekend Warrior Routine</item>
+    </string-array>
+    <string-array name="suggested_exercise_plank_like_list">
+        <item>Mountain Climbers</item>
+        <item>Plank</item>
+        <item>Push-Ups</item>
+    </string-array>
+    <string-array name="suggested_exercise_crunches_like_list">
+        <item>Crunches</item>
+        <item>Bicycle Crunches</item>
+    </string-array>
+    <string-array name="suggested_exercise_burpees_like_list">
+        <item>Jumping Jacks</item>
+        <item>Burpees</item>
+    </string-array>
+    <string-array name="suggested_exercise_knees_like_list">
+        <item>High Knees</item>
+    </string-array>
+    <string-array name="suggested_exercise_squats_like_list">
+        <item>Squats</item>
+    </string-array>
+    <string-array name="suggested_exercise_lunges_like_list">
+        <item>Lunges</item>
+    </string-array>
 </resources>

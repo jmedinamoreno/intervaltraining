@@ -5,16 +5,39 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 
-object Utils {
-    fun iconToDrawableResource(icon: ExerciseIcon):Int = when(icon){
-        ExerciseIcon.RUN -> R.drawable.ic_exercise_run
-        ExerciseIcon.JUMP -> R.drawable.ic_exercise_jump
-        else -> R.drawable.ic_exercise_none
-    }
+fun iconToDrawableResource(icon: ExerciseIcon):Int = when(icon){
+    ExerciseIcon.RUN -> R.drawable.ic_exercise_run
+    ExerciseIcon.JUMP -> R.drawable.ic_exercise_jump
+    ExerciseIcon.KNEES -> R.drawable.ic_exercise_knees
+    ExerciseIcon.SIT_UP -> R.drawable.ic_exercise_sit_up
+    ExerciseIcon.PUSH_UPS -> R.drawable.ic_exercise_push_ups
+    ExerciseIcon.FLEX -> R.drawable.ic_exercise_flex
+    ExerciseIcon.LEFT_ARM -> R.drawable.ic_exercise_left_arm
+    ExerciseIcon.RIGHT_ARM -> R.drawable.ic_exercise_right_arm
+    else -> R.drawable.ic_exercise_none
 }
+
+fun iconToStringResource(icon: ExerciseIcon):Int = when(icon){
+    ExerciseIcon.RUN -> R.string.ic_name_exercise_run
+    ExerciseIcon.JUMP -> R.string.ic_name_exercise_jump
+    ExerciseIcon.KNEES -> R.string.ic_name_exercise_knees
+    ExerciseIcon.SIT_UP -> R.string.ic_name_exercise_sit_up
+    ExerciseIcon.PUSH_UPS -> R.string.ic_name_exercise_push_ups
+    ExerciseIcon.FLEX -> R.string.ic_name_exercise_flex
+    ExerciseIcon.LEFT_ARM -> R.string.ic_name_exercise_left
+    ExerciseIcon.RIGHT_ARM -> R.string.ic_name_exercise_right
+    else -> R.string.ic_name_exercise_none
+}
+
+val SemanticsKeyIconName = SemanticsPropertyKey<String>("IconName")
+var SemanticsPropertyReceiver.iconName by SemanticsKeyIconName
+val SemanticsKeyDrawableId = SemanticsPropertyKey<Int>("DrawableResId")
+var SemanticsPropertyReceiver.drawableId by SemanticsKeyDrawableId
 
 @Composable
 fun stringForButtonDescription(@StringRes id: Int) =
