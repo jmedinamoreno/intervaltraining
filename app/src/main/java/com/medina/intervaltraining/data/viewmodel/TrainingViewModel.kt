@@ -1,7 +1,8 @@
 package com.medina.intervaltraining.data.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.*
+import com.medina.intervaltraining.data.Clock
+import com.medina.intervaltraining.data.RealClock
 import com.medina.intervaltraining.data.repository.TrainingRepository
 import com.medina.intervaltraining.data.room.SessionItem
 import com.medina.intervaltraining.data.room.TrainingItem
@@ -25,7 +26,10 @@ data class Session(
     val id: UUID = UUID.randomUUID()
 )
 
-class TrainingViewModel(val repository: TrainingRepository):ViewModel(){
+class TrainingViewModel(
+    val repository: TrainingRepository,
+    private val clock: Clock = RealClock()
+):ViewModel(){
 
     private val trainingListFlow = repository.trainingsFlow.map {
         it.map { trainingItem ->
@@ -66,7 +70,7 @@ class TrainingViewModel(val repository: TrainingRepository):ViewModel(){
                     name = training.name,
                     defaultTimeSec = training.defaultTimeSec,
                     defaultRestSec = training.defaultRestSec,
-                    lastUsed = Date().time
+                    lastUsed = clock.timestapm()
                 ))
             }catch (e:Exception){
                 e.printStackTrace()
@@ -80,12 +84,14 @@ class TrainingViewModel(val repository: TrainingRepository):ViewModel(){
             set(Calendar.HOUR,0)
             set(Calendar.MINUTE,0)
             set(Calendar.SECOND,0)
+            set(Calendar.MILLISECOND,0)
         }
         val weekend = Calendar.getInstance().apply {
             set(Calendar.DAY_OF_WEEK, (firstDayOfWeek+6)%7)
             set(Calendar.HOUR,23)
             set(Calendar.MINUTE,59)
             set(Calendar.SECOND,59)
+            set(Calendar.MILLISECOND,0)
         }
         return repository.getTotalSessionTimeSecForDateRange(weekstart.timeInMillis,weekend.timeInMillis).map {
             it / 3600f

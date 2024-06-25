@@ -53,7 +53,6 @@ android {
 }
 
 dependencies {
-    testImplementation("junit:junit:4.12")
     ksp(libs.androidx.room.compiler)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.core.ktx)
@@ -108,6 +107,12 @@ dependencies {
     androidTestImplementation(libs.hilt.android.testing)
     androidTestImplementation(libs.accessibility.test.framework)
     androidTestImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.arch.core.testing)
     testImplementation(libs.junit)
-
+    testImplementation(libs.mockk)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.androidx.runner)
+    testImplementation(libs.byte.buddy)
 }

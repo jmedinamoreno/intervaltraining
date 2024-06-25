@@ -8,6 +8,7 @@ import com.medina.intervaltraining.data.room.TrainingItem
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.util.Date
 import java.util.UUID
@@ -80,14 +81,37 @@ class TrainingRoomRepository(
 }
 
 class TrainingDummyRepository :TrainingRepository {
+
+    var trainingList: List<TrainingItem> = emptyList()
+    var timeForTrainingMin: Int = 10
+
+    var dummyTraining = TrainingItem(
+        name = "Example training",
+        lastUsed = Date().time,
+        defaultTimeSec = 45,
+        defaultRestSec = 15,
+    )
+
+    val dummyExercises: List<ExerciseItem> = (1 until 3).toList().map{ dummyExercise(it) }
+
+    private fun dummyExercise(position:Int) = ExerciseItem(
+        training = dummyTraining.id,
+        name = "Exercise $position",
+        icon = ExerciseIcon.RUN,
+        position = position,
+        timeSec = dummyTraining.defaultTimeSec,
+        restSec = dummyTraining.defaultRestSec
+    )
+
+
     override val trainingsFlow: Flow<List<TrainingItem>>
-        get() = MutableStateFlow(emptyList())
+        get() = flowOf(trainingList)
 
-    override fun timeForTrainingMinAsFlow(training: UUID): Flow<Int> = MutableStateFlow(10)
+    override fun timeForTrainingMinAsFlow(training: UUID): Flow<Int> = flowOf(timeForTrainingMin)
 
-    override fun getTrainingFlow(uuid: UUID): Flow<TrainingItem?> = MutableStateFlow(dummyTraining)
+    override fun getTrainingFlow(uuid: UUID): Flow<TrainingItem?> = flowOf(dummyTraining)
 
-    override fun exercisesFlow(training: UUID): Flow<List<ExerciseItem>> = MutableStateFlow(dummyExercises)
+    override fun exercisesFlow(training: UUID): Flow<List<ExerciseItem>> = flowOf(dummyExercises)
 
     override suspend fun exercises(training: UUID): List<ExerciseItem> = dummyExercises
 
@@ -110,25 +134,8 @@ class TrainingDummyRepository :TrainingRepository {
     override fun getTotalSessionTimeSecForDateRange(
         startDatetime: Long,
         endDatetime: Long
-    ): Flow<Float> = MutableStateFlow(3600f)
+    ): Flow<Float> = flowOf(endDatetime.toFloat()-startDatetime.toFloat())
 
-    private val dummyTraining = TrainingItem(
-        name = "Example training",
-        lastUsed = Date().time,
-        defaultTimeSec = 45,
-        defaultRestSec = 15,
-    )
-
-    private fun dummyExercise(position:Int) = ExerciseItem(
-        training = dummyTraining.id,
-        name = "Exercise $position",
-        icon = ExerciseIcon.RUN,
-        position = position,
-        timeSec = dummyTraining.defaultTimeSec,
-        restSec = dummyTraining.defaultRestSec
-    )
-
-    private val dummyExercises: List<ExerciseItem> = (1 until 3).toList().map{ dummyExercise(it) }
 
 }
 
