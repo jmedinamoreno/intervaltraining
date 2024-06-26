@@ -134,7 +134,7 @@ class TrainingDummyRepository :TrainingRepository {
     override fun getTotalSessionTimeSecForDateRange(
         startDatetime: Long,
         endDatetime: Long
-    ): Flow<Float> = flowOf(endDatetime.toFloat()-startDatetime.toFloat())
+    ): Flow<Float> = flowOf((endDatetime.toFloat()-startDatetime.toFloat())/24000f)
 
 
 }

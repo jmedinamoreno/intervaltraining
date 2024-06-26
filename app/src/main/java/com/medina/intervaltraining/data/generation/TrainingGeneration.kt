@@ -6,8 +6,7 @@ import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.viewmodel.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.data.viewmodel.Training
-import com.medina.intervaltraining.ui.theme.stringRandom
-import java.util.Date
+import com.medina.intervaltraining.ui.stringRandom
 
 @Composable
 fun suggestTraining(): Training = Training(

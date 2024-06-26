@@ -9,12 +9,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.lifecycle.asLiveData
-import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
-import com.medina.intervaltraining.ui.theme.SemanticsKeyDrawableId
-import com.medina.intervaltraining.ui.theme.SemanticsKeyIconName
-import com.medina.intervaltraining.ui.theme.iconToDrawableResource
+import com.medina.intervaltraining.ui.SemanticsKeyDrawableId
+import com.medina.intervaltraining.ui.SemanticsKeyIconName
+import com.medina.intervaltraining.ui.iconToDrawableResource
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.*
 import org.junit.Rule

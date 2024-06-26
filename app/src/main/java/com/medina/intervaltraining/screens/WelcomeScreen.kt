@@ -30,6 +30,7 @@ import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.repository.TrainingDummyRepository
 import com.medina.intervaltraining.data.viewmodel.Training
 import com.medina.intervaltraining.data.viewmodel.TrainingViewModel
+import com.medina.intervaltraining.ui.floatToHours
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 
 @Composable
@@ -69,7 +70,7 @@ fun TrainedHoursComponent(trainingViewModel:TrainingViewModel, modifier: Modifie
         Text(stringResource(id = R.string.welcome_trained_time_first_line),
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.align(Alignment.CenterHorizontally))
-        Text(stringResource(id = R.string.welcome_trained_time_second_line,hours),
+        Text(stringResource(id = R.string.welcome_trained_time_second_line, floatToHours(float = hours)),
             style = MaterialTheme.typography.headlineLarge,
             modifier = Modifier.align(Alignment.CenterHorizontally))
         Text(stringResource(id = R.string.welcome_trained_time_third_line),

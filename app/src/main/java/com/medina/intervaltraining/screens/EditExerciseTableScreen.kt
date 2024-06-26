@@ -28,7 +28,6 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -67,8 +66,8 @@ import com.medina.intervaltraining.data.viewmodel.Training
 import com.medina.intervaltraining.ui.dragdroplist.DraggableItem
 import com.medina.intervaltraining.ui.dragdroplist.rememberDragDropState
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
-import com.medina.intervaltraining.ui.theme.stringForButtonDescription
-import com.medina.intervaltraining.ui.theme.stringRandom
+import com.medina.intervaltraining.ui.stringForButtonDescription
+import com.medina.intervaltraining.ui.stringRandom
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -243,6 +242,7 @@ fun ExerciseTableEditableList(
     }
     Box(modifier = modifier) {
         LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(2.dp),
             modifier = Modifier
                 .pointerInput(dragDropState) {
                     detectDragGesturesAfterLongPress(

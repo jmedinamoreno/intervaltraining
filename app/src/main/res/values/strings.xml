@@ -1,14 +1,18 @@
 <resources>
     <string name="app_name">IntervalTraining</string>
+    <string name="app_action_back">Back</string>
     <string name="ic_description_exercise_icon">Exercise Icon</string>
     <string name="ic_description_play_icon">Play Icon</string>
     <string name="welcome_trained_time_first_line">You have trained</string>
     <string name="welcome_trained_time_second_line" translatable="false">%1$s</string>
-    <string name="welcome_trained_time_third_line">hours this week.</string>
+    <string name="welcome_trained_time_third_line">this week.</string>
     <string name="welcome_training_min" translatable="false">%1$s\'</string>
+    <string name="label_hours_and_minutes">%1$s hours and %2$s minutes</string>
+    <string name="label_hours">%1$s hours</string>
     <string name="exercise_icon_delete">Delete</string>
     <string name="new_training_button_icon">New training button</string>
     <string name="new_training_button_label">New training</string>
+    <string name="play_exercise_edit_training">Edit training</string>
     <string name="edit_exercise_dialog_cancel">Cancel</string>
     <string name="edit_exercise_dialog_save">Save</string>
     <string name="edit_exercise_table_edit">Edit</string>

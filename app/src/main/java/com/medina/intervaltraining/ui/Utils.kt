@@ -1,4 +1,4 @@
-package com.medina.intervaltraining.ui.theme
+package com.medina.intervaltraining.ui
 
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
@@ -9,6 +9,23 @@ import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
+import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
+
+/**
+ * Input a float with the number of hours
+ * Output a string with the number of hours in hours and minutes
+ */
+@Composable
+fun floatToHours(float: Float):String{
+    val hours = float.roundToInt()
+    val minutes = ((float - hours) * 60).toInt()
+    return if(minutes==0){
+        stringResource(id = R.string.label_hours,hours)
+    }else {
+        stringResource(id = R.string.label_hours_and_minutes, hours, minutes)
+    }
+}
 
 fun iconToDrawableResource(icon: ExerciseIcon):Int = when(icon){
     ExerciseIcon.RUN -> R.drawable.ic_exercise_run
@@ -48,3 +65,8 @@ fun stringForIconDescription(@StringRes id: Int) =
 
 @Composable
 fun stringRandom(@ArrayRes id: Int) = stringArrayResource(id = id).random()
+
+@Composable
+fun stringChosen(@ArrayRes id: Int, chosen: Int) = stringArrayResource(id = id).let {
+    it[chosen.absoluteValue%(it.size-1)]
+}

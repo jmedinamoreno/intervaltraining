@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
@@ -66,7 +68,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.text.TextStyle
@@ -81,12 +82,12 @@ import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.viewmodel.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
-import com.medina.intervaltraining.ui.theme.drawableId
-import com.medina.intervaltraining.ui.theme.iconName
-import com.medina.intervaltraining.ui.theme.iconToDrawableResource
-import com.medina.intervaltraining.ui.theme.iconToStringResource
-import com.medina.intervaltraining.ui.theme.stringForButtonDescription
-import com.medina.intervaltraining.ui.theme.stringForIconDescription
+import com.medina.intervaltraining.ui.drawableId
+import com.medina.intervaltraining.ui.iconName
+import com.medina.intervaltraining.ui.iconToDrawableResource
+import com.medina.intervaltraining.ui.iconToStringResource
+import com.medina.intervaltraining.ui.stringForButtonDescription
+import com.medina.intervaltraining.ui.stringForIconDescription
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -97,9 +98,7 @@ import kotlinx.coroutines.launch
  * modifier.
  *
  * @param icon (state) the current selected icon
- * @param onIconChange (event) request the selected icon change
  * @param modifier modifier for this element
- * @param visible (state) if the icon should be shown
  */
 @Composable
 fun DialogIconButton(
@@ -226,7 +225,7 @@ private fun SelectableIconButton(
     val tint = if (isSelected) {
         MaterialTheme.colorScheme.primary
     } else {
-        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        MaterialTheme.colorScheme.secondary
     }
     TextButton(
         onClick = { onIconSelected() },
@@ -399,33 +398,35 @@ fun ExerciseTableIcon(icon: ExerciseIcon, tint:Color, modifier: Modifier = Modif
 
 @Composable
 fun ExerciseLabelBody(exercise: Exercise, modifier: Modifier = Modifier) {
-    Row(modifier = modifier) {
+    Row(modifier = modifier.padding(4.dp)) {
         Image(
             painter = painterResource(id = iconToDrawableResource(exercise.icon)),
-            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f)),
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
             contentDescription = exercise.name,
             modifier = Modifier
                 .padding(2.dp)
                 .align(Alignment.CenterVertically)
-                .size(40.dp)
+                .size(48.dp)
+                .aspectRatio(1f)
                 .clip(CircleShape)
                 .border(1.5.dp, MaterialTheme.colorScheme.secondary, CircleShape)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier
-            .weight(0.2f)
+            .weight(1f)
             .align(Alignment.CenterVertically)) {
-            Text(text = exercise.name ,
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontSize = 18.sp
+            Text(
+                text = exercise.name ,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 24.sp
                 ),
             )
             Row {
                 Text(
                     text = stringResource(id = R.string.exercise_label_time_and_rest, exercise.timeSec, exercise.restSec),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontSize = 14.sp
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 16.sp
                     ),
                 )
             }

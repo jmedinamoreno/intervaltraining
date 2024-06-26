@@ -1,14 +1,19 @@
 package com.medina.intervaltraining.screens
 
 import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -37,6 +42,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +52,8 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.inset
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -56,9 +64,10 @@ import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
 import com.medina.intervaltraining.data.viewmodel.Session
 import com.medina.intervaltraining.data.viewmodel.Training
+import com.medina.intervaltraining.ui.stringChosen
+import com.medina.intervaltraining.ui.stringForButtonDescription
+import com.medina.intervaltraining.ui.stringForIconDescription
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
-import com.medina.intervaltraining.ui.theme.stringForIconDescription
-import com.medina.intervaltraining.ui.theme.stringRandom
 import kotlinx.coroutines.delay
 import java.util.Calendar
 import java.util.UUID
@@ -75,6 +84,7 @@ fun PlayExerciseTableScreen(
     val items: List<Exercise> by exerciseViewModel.exercises.observeAsState(listOf())
     val training: Training? by exerciseViewModel.training.observeAsState()
     val session: Session = exerciseViewModel.session
+    Log.d("JMMLOG", "PlayExerciseTableScreen");
     PlayExerciseTableView(
         training = training,
         session = session,
@@ -94,36 +104,39 @@ fun PlayExerciseTableView(
     updateSession: (session:Session) -> Unit = {_->},
     onBack:()->Unit = {},
     onEdit:()->Unit = {},){
+
     // create variable for value
-    var currentExercise by remember {
+    var currentExerciseIndex by rememberSaveable {
         mutableIntStateOf(0)
     }
 
-    // create session to track
-    val currentSessionItem by remember { mutableStateOf(session) }
-
     // create variable for current time
-    var currentTimeMillis by remember {
+    var currentTimeMillis by rememberSaveable {
         mutableIntStateOf(0)
     }
     // create variable for isTimerRunning
-    var playState by remember {
+    var playState by rememberSaveable {
         mutableStateOf(startState)
     }
+    Log.d("JMMLOG", "PlayExerciseTableScreen: $currentExerciseIndex -> $currentTimeMillis");
+
+    // create session to track
+    val currentSessionItem by remember { mutableStateOf(session) }
 
     LaunchedEffect(key1 = currentTimeMillis, key2 = playState) {
         if(playState == PlayExerciseTableState.RUNNING) {
             delay(25L)
             currentTimeMillis += 25
             val currentTimeSec = currentTimeMillis/1000
-            if(currentTimeSec == items[currentExercise].timeSec + items[currentExercise].restSec){
+            val exercise = items.getOrNull(currentExerciseIndex)
+            if(currentTimeSec == exercise?.let { it.timeSec + it.restSec }){
                 currentTimeMillis = 0
-                currentExercise += 1
+                currentExerciseIndex += 1
                 currentSessionItem.dateTimeEnd = Calendar.getInstance().timeInMillis
                 updateSession(currentSessionItem)
             }
-            if(currentExercise>=items.size){
-                currentExercise = items.size-1
+            if(currentExerciseIndex>=items.size){
+                currentExerciseIndex = items.size-1
                 playState = PlayExerciseTableState.COMPLETE
                 currentSessionItem.complete = true
                 updateSession(currentSessionItem)
@@ -138,7 +151,7 @@ fun PlayExerciseTableView(
             modifier = Modifier.padding(contentPadding),
             items = items,
             playState = playState,
-            currentExercise = currentExercise,
+            currentExercise = currentExerciseIndex,
             currentTimeMillis = currentTimeMillis,
             onStart = {
                 playState = PlayExerciseTableState.RUNNING
@@ -149,7 +162,7 @@ fun PlayExerciseTableView(
             },
             onPause = {playState = PlayExerciseTableState.PAUSED},
             onResume = {playState = PlayExerciseTableState.RUNNING},
-            onSkip = { toIndex -> currentExercise = toIndex},
+            onSkip = { toIndex -> currentExerciseIndex = toIndex},
             onRestart = {playState = PlayExerciseTableState.READY}
         )
     }
@@ -162,13 +175,19 @@ fun PlayExerciseTableScreenTopBar(training: Training?, onBack:()->Unit, onEdit:(
         title = { Text(training?.name?:"") },
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = null)
+                Icon(
+                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                    contentDescription = stringResource(id = R.string.app_action_back)
+                )
             }
         },
         actions = {
             // RowScope here, so these icons will be placed horizontally
             IconButton(onClick = onEdit) {
-                Icon(Icons.Filled.Edit, contentDescription = "Edit training")
+                Icon(
+                    imageVector = Icons.Filled.Edit,
+                    contentDescription = stringResource(id = R.string.play_exercise_edit_training)
+                )
             }
         }
     )
@@ -189,13 +208,57 @@ fun PlayExerciseTableBody(
     onSkip:(toIndex:Int)->Unit,
     onRestart:()->Unit,
 ) {
-    val constPlayerSize = 0.3f
-    LazyColumn(modifier = modifier) {
+    val orientation = LocalConfiguration.current.orientation
+    if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        PlayExerciseTableBodyHorizontal(
+            modifier = modifier,
+            items = items,
+            playState = playState,
+            currentExercise = currentExercise,
+            currentTimeMillis = currentTimeMillis,
+            onStart = onStart,
+            onPause = onPause,
+            onResume = onResume,
+            onSkip = onSkip,
+            onRestart = onRestart
+        )
+    } else {
+        PlayExerciseTableBodyVertical(
+            modifier = modifier,
+            items = items,
+            playState = playState,
+            currentExercise = currentExercise,
+            currentTimeMillis = currentTimeMillis,
+            onStart = onStart,
+            onPause = onPause,
+            onResume = onResume,
+            onSkip = onSkip,
+            onRestart = onRestart
+        )
+    }
+
+}
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun PlayExerciseTableBodyVertical(
+    modifier: Modifier,
+    items: List<Exercise>,
+    playState: PlayExerciseTableState,
+    currentExercise: Int,
+    currentTimeMillis: Int,
+    onStart:()->Unit,
+    onPause:()->Unit,
+    onResume:()->Unit,
+    onSkip:(toIndex:Int)->Unit,
+    onRestart:()->Unit,
+) {
+    LazyColumn(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
         stickyHeader {
             ExercisePlayer(
-                modifier = Modifier
-                    .fillParentMaxHeight(constPlayerSize)
-                    .fillMaxWidth(),
+                modifier = Modifier.aspectRatio(4f/3f),
                 playState = playState,
                 runningExercise = items.getOrNull(currentExercise),
                 currentTimeMillis = currentTimeMillis,
@@ -221,6 +284,54 @@ fun PlayExerciseTableBody(
                         enabled = true
                     ))
         }
+    }
+}
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun PlayExerciseTableBodyHorizontal(
+    modifier: Modifier,
+    items: List<Exercise>,
+    playState: PlayExerciseTableState,
+    currentExercise: Int,
+    currentTimeMillis: Int,
+    onStart:()->Unit,
+    onPause:()->Unit,
+    onResume:()->Unit,
+    onSkip:(toIndex:Int)->Unit,
+    onRestart:()->Unit,
+) {
+    Row (modifier = modifier.fillMaxWidth()){
+        LazyColumn(modifier = Modifier
+            .fillMaxHeight()
+            .weight(1f)
+        ) {
+            items(items) { exercise ->
+                ExerciseRunningLabel(
+                    exercise = exercise,
+                    currentTimeMillis = when{
+                        items.indexOf(exercise) > currentExercise -> 0
+                        items.indexOf(exercise) < currentExercise -> -1
+                        else -> currentTimeMillis
+                    },
+                    modifier = Modifier
+                        .padding(2.dp)
+                        .combinedClickable(
+                            onLongClick = { onSkip(items.indexOf(exercise)) },
+                            onClick = {},
+                            enabled = true
+                        ))
+            }
+        }
+        ExercisePlayer(
+            modifier = Modifier.aspectRatio(1f),
+            playState = playState,
+            runningExercise = items.getOrNull(currentExercise),
+            currentTimeMillis = currentTimeMillis,
+            onStart = onStart,
+            onPause = onPause,
+            onResume = onResume,
+            onRestart = onRestart
+        )
     }
 }
 
@@ -287,7 +398,11 @@ fun RunningExercise(modifier: Modifier, runningExercise:Exercise?, currentTimeMi
     val restTimeMillis = runningExercise.restSec * 1000
     val totalTimeMillis = runTimeMillis + restTimeMillis
     val isRest = runTimeMillis < currentTimeMillis
-    val text = if(isRest) stringRandom(id = R.array.running_exercise_rest_list) else runningExercise.name
+    val text = if(isRest)
+        stringChosen(id = R.array.running_exercise_rest_list,runningExercise.name.hashCode())
+    else
+        runningExercise.name
+
     val timeText = if(isRest)
         "${(runningExercise.restSec + runningExercise.timeSec) - currentTimeMillis/1000}"
     else
@@ -466,6 +581,20 @@ fun PlaybackPreview() {
 @Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 fun PlayerPreview() {
+    IntervalTrainingTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            PlayExerciseTableView(
+                training = Training("test",30,5),
+                session = Session(UUID.randomUUID()),
+                items = (1 until 15).toList().map{Exercise("Exercise $it")})
+        }
+    }
+}
+
+@ExperimentalFoundationApi
+@Preview(name = "Light Mode", widthDp = 720, heightDp = 360, uiMode = Configuration.ORIENTATION_LANDSCAPE)
+@Composable
+fun PlaybackHorizontalPreview() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             PlayExerciseTableView(
