@@ -36,12 +36,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,6 +55,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.inset
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -64,11 +67,14 @@ import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
 import com.medina.intervaltraining.data.viewmodel.Session
 import com.medina.intervaltraining.data.viewmodel.Training
+import com.medina.intervaltraining.ui.components.FXSoundPool
 import com.medina.intervaltraining.ui.stringChosen
 import com.medina.intervaltraining.ui.stringForButtonDescription
 import com.medina.intervaltraining.ui.stringForIconDescription
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.whileSelect
 import java.util.Calendar
 import java.util.UUID
 import kotlin.math.min
@@ -105,6 +111,12 @@ fun PlayExerciseTableView(
     onBack:()->Unit = {},
     onEdit:()->Unit = {},){
 
+    val context = LocalContext.current
+    var soundPool by remember { mutableStateOf<FXSoundPool?>(null) }
+    // Initialize SoundPool & dispose it when the composable leaves the composition
+    LaunchedEffect(key1 = context) { soundPool = FXSoundPool(context).build() }
+    DisposableEffect(Unit) {onDispose {soundPool?.release();soundPool = null}}
+
     // create variable for value
     var currentExerciseIndex by rememberSaveable {
         mutableIntStateOf(0)
@@ -123,23 +135,34 @@ fun PlayExerciseTableView(
     // create session to track
     val currentSessionItem by remember { mutableStateOf(session) }
 
-    LaunchedEffect(key1 = currentTimeMillis, key2 = playState) {
-        if(playState == PlayExerciseTableState.RUNNING) {
-            delay(25L)
-            currentTimeMillis += 25
-            val currentTimeSec = currentTimeMillis/1000
-            val exercise = items.getOrNull(currentExerciseIndex)
-            if(currentTimeSec == exercise?.let { it.timeSec + it.restSec }){
-                currentTimeMillis = 0
-                currentExerciseIndex += 1
-                currentSessionItem.dateTimeEnd = Calendar.getInstance().timeInMillis
-                updateSession(currentSessionItem)
-            }
-            if(currentExerciseIndex>=items.size){
-                currentExerciseIndex = items.size-1
-                playState = PlayExerciseTableState.COMPLETE
-                currentSessionItem.complete = true
-                updateSession(currentSessionItem)
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(key1 = playState) {
+        scope.launch {
+            if (playState == PlayExerciseTableState.RUNNING){
+                var startTime = Calendar.getInstance().timeInMillis - currentTimeMillis
+                soundPool?.playSound(FXSoundPool.FX.PUIN)
+                do {
+                    delay(25L)
+                    currentTimeMillis = (Calendar.getInstance().timeInMillis - startTime).toInt()
+                    val currentTimeSec = currentTimeMillis / 1000
+                    val exercise = items.getOrNull(currentExerciseIndex)
+                    if (currentTimeSec == exercise?.let { it.timeSec + it.restSec }) {
+                        soundPool?.playSound(FXSoundPool.FX.TIN)
+                        currentTimeMillis = 0
+                        currentExerciseIndex += 1
+                        startTime = Calendar.getInstance().timeInMillis
+                        currentSessionItem.dateTimeEnd = Calendar.getInstance().timeInMillis
+                        updateSession(currentSessionItem)
+                    }
+                    if (currentExerciseIndex >= items.size) {
+                        soundPool?.playSound(FXSoundPool.FX.TINTINONIN)
+                        currentExerciseIndex = items.size - 1
+                        playState = PlayExerciseTableState.COMPLETE
+                        currentSessionItem.complete = true
+                        updateSession(currentSessionItem)
+                    }
+                } while (playState == PlayExerciseTableState.RUNNING)
             }
         }
     }

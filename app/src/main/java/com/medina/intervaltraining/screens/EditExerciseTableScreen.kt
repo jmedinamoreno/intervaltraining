@@ -63,6 +63,9 @@ import com.medina.intervaltraining.data.viewmodel.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
 import com.medina.intervaltraining.data.viewmodel.Training
+import com.medina.intervaltraining.ui.components.InputNumber
+import com.medina.intervaltraining.ui.components.InputText
+import com.medina.intervaltraining.ui.components.SavableInputText
 import com.medina.intervaltraining.ui.dragdroplist.DraggableItem
 import com.medina.intervaltraining.ui.dragdroplist.rememberDragDropState
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme

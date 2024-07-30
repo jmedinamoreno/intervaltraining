@@ -30,6 +30,7 @@ import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.repository.TrainingDummyRepository
 import com.medina.intervaltraining.data.viewmodel.Training
 import com.medina.intervaltraining.data.viewmodel.TrainingViewModel
+import com.medina.intervaltraining.ui.components.ButtonPlaySound
 import com.medina.intervaltraining.ui.floatToHours
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 

@@ -81,6 +81,7 @@ import androidx.compose.ui.unit.sp
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.viewmodel.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
+import com.medina.intervaltraining.ui.components.SelectableIconButton
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import com.medina.intervaltraining.ui.drawableId
 import com.medina.intervaltraining.ui.iconName
@@ -207,182 +208,6 @@ fun IconRow(
     }
 }
 
-/**
- * Displays a single icon that can be selected.
- *
- * @param iconSelectable the icon to draw
- * @param onIconSelected (event) request this icon be selected
- * @param isSelected (state) selection state
- * @param modifier modifier for this element
- */
-@Composable
-private fun SelectableIconButton(
-    iconSelectable: @Composable (tint:Color, modifier: Modifier) -> Unit,
-    onIconSelected: () -> Unit,
-    isSelected: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val tint = if (isSelected) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.secondary
-    }
-    TextButton(
-        onClick = { onIconSelected() },
-        shape = CircleShape,
-        modifier = modifier
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            iconSelectable(tint,Modifier)
-            if (isSelected) {
-                Box(
-                    Modifier
-                        .padding(top = 3.dp)
-                        .width(24.dp)
-                        .height(1.dp)
-                        .background(tint)
-                )
-            } else {
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-        }
-    }
-}
-
-/**
- * Styled [TextField] for inputting a text
- *
- * @param entryText (state) current text to display
- * @param onSave (event) request to save the value
- * @param timeoutMill millisecond before calling onSave after a change
- * @param modifier the modifier for this element
- * @param placeholder text to show when the entry is empty
- */
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-fun SavableInputText(entryText: String, onSave:(String)->Unit, timeoutMill:Long,
-                     modifier: Modifier = Modifier,
-                     placeholder: String = "",){
-
-    val (text, setText) = remember(entryText) { mutableStateOf(entryText) }
-    val focusRequester = remember { FocusRequester() }
-    val keyboardController = LocalSoftwareKeyboardController.current
-    val scope = rememberCoroutineScope()
-
-    LaunchedEffect(text) {
-        if(text.isEmpty()) {
-            focusRequester.requestFocus()
-            keyboardController?.show()
-        }
-    }
-
-    InputText(
-        text = text,
-        onTextChange = {
-            setText(it)
-            scope.launch {
-                delay(timeoutMill)
-                onSave(it)
-            }
-        },
-        modifier = modifier
-            .focusRequester(focusRequester)
-            .focusProperties {
-                enter = { if (focusRequester.restoreFocusedChild()) Cancel else Default }
-            }
-        ,placeholder = placeholder
-    )
-}
-/**
- * Styled [TextField] for inputting a text
- *
- * @param text (state) current text to display
- * @param onTextChange (event) request the text change state
- * @param modifier the modifier for this element
- * @param onImeAction (event) notify caller of [ImeAction.Done] events
- * @param placeholder text to show when the entry is empty
- */
-@Composable
-fun InputText(
-    text: String,
-    onTextChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    onImeAction: () -> Unit = {},
-    placeholder: String = "",
-) {
-    val keyboardController = LocalSoftwareKeyboardController.current
-    TextField(
-        value = text,
-        onValueChange = onTextChange,
-        colors = TextFieldDefaults.colors(),
-        maxLines = 1,
-        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = {
-            onImeAction()
-            keyboardController?.hide()
-        }),
-        modifier = modifier,
-        placeholder = {Text(placeholder)},
-        singleLine = true
-    )
-}
-
-/**
- * Styled [TextField] for inputting a number
- *
- * @param value current number to display
- * @param modifier the modifier for this element
- * @param onNumberChange (event) notify value changed
- */
-@Composable
-fun InputNumber(
-    modifier: Modifier = Modifier,
-    value: Int = 0,
-    onNumberChange: (Int) -> Unit
-) {
-    val keyboardController = LocalSoftwareKeyboardController.current
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        BasicTextField(
-            value = value.toString(),
-            onValueChange = { if(it.isNotEmpty()){ onNumberChange(it.toInt()) } },
-            maxLines = 1,
-            textStyle = TextStyle(textAlign = TextAlign.Center),
-            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done, keyboardType = KeyboardType.Number),
-            keyboardActions = KeyboardActions(onDone = {
-                keyboardController?.hide()
-            }),
-            modifier = Modifier
-                .weight(0.1f)
-                .padding(0.dp),
-            singleLine = true
-        )
-        Column(modifier = Modifier
-            .padding(0.dp)) {
-            IconButton(modifier = Modifier
-                .weight(0.1f)
-                .padding(0.dp), onClick = { onNumberChange(value+1) }) {
-                Icon(
-                    modifier = Modifier
-                        .widthIn(min = 48.dp)
-                        .heightIn(min = 24.dp),
-                    imageVector = Icons.Default.KeyboardArrowUp,
-                    contentDescription = stringForButtonDescription(id = R.string.input_number_more)
-                )
-            }
-            IconButton(modifier = Modifier
-                .weight(0.1f)
-                .padding(0.dp), onClick = { onNumberChange(value-1) }) {
-                Icon(
-                    modifier = Modifier
-                        .widthIn(min = 48.dp)
-                        .heightIn(min = 24.dp),
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = stringForButtonDescription(id = R.string.input_number_less)
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun ExerciseTableIcon(icon: ExerciseIcon, tint:Color, modifier: Modifier = Modifier){
@@ -540,14 +365,6 @@ fun PreviewIcon() {
     ExerciseTableIcon(icon = ExerciseIcon.NONE, tint = MaterialTheme.colorScheme.primary)
 }
 
-@Preview
-@Composable
-fun PreviewInputNumber() {
-    InputNumber(modifier = Modifier
-        .padding(horizontal = 8.dp, vertical = 8.dp)
-        .width(160.dp)
-        .height(48.dp), 0){}
-}
 
 @Preview
 @Composable
