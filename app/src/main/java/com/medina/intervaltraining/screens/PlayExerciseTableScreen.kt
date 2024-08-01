@@ -157,7 +157,6 @@ fun PlayExerciseTableView(
                     }
                     if (currentExerciseIndex >= items.size) {
                         soundPool?.playSound(FXSoundPool.FX.TINTINONIN)
-                        currentExerciseIndex = items.size - 1
                         playState = PlayExerciseTableState.COMPLETE
                         currentSessionItem.complete = true
                         updateSession(currentSessionItem)
