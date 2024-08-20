@@ -63,14 +63,14 @@ import com.medina.intervaltraining.data.viewmodel.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
 import com.medina.intervaltraining.data.viewmodel.Training
+import com.medina.intervaltraining.ui.components.DraggableItem
 import com.medina.intervaltraining.ui.components.InputNumber
 import com.medina.intervaltraining.ui.components.InputText
 import com.medina.intervaltraining.ui.components.SavableInputText
-import com.medina.intervaltraining.ui.dragdroplist.DraggableItem
-import com.medina.intervaltraining.ui.dragdroplist.rememberDragDropState
-import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
+import com.medina.intervaltraining.ui.components.rememberDragDropState
 import com.medina.intervaltraining.ui.stringForButtonDescription
 import com.medina.intervaltraining.ui.stringRandom
+import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -146,7 +146,11 @@ fun EditExerciseTableScreen(
             val newList = exerciseList.toMutableList()
             val exercise = newList[oldIndex]
             newList.removeAt(oldIndex)
-            newList.add(toNewIndex.coerceAtMost(newList.size-1),exercise)
+            if(toNewIndex>=newList.size){
+                newList.add(exercise)
+            }else {
+                newList.add(toNewIndex, exercise)
+            }
             onExerciseListUpdated(newList)
         }
     )
@@ -503,7 +507,9 @@ fun EditExerciseDialogBody(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 DialogIconButton(
-                    modifier = Modifier.weight(0.5f).padding(end =4.dp),
+                    modifier = Modifier
+                        .weight(0.5f)
+                        .padding(end = 4.dp),
                     text = stringResource(id = R.string.edit_exercise_dialog_cancel),
                     icon = Icons.Default.Clear,
                     iconDescription = stringForButtonDescription(id = R.string.edit_exercise_dialog_cancel),
@@ -511,7 +517,9 @@ fun EditExerciseDialogBody(
                     onClick = onCancel
                 )
                 DialogIconButton(
-                    modifier = Modifier.weight(0.5f).padding(start = 4.dp),
+                    modifier = Modifier
+                        .weight(0.5f)
+                        .padding(start = 4.dp),
                     text = stringResource(id = R.string.edit_exercise_dialog_save),
                     icon = Icons.Default.Check,
                     iconDescription = stringForButtonDescription(id = R.string.edit_exercise_dialog_save),

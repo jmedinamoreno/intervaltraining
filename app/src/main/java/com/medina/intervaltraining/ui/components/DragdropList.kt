@@ -1,4 +1,4 @@
-package com.medina.intervaltraining.ui.dragdroplist
+package com.medina.intervaltraining.ui.components
 
 
 import android.content.res.Configuration
@@ -175,7 +175,7 @@ class DragDropState internal constructor(
             val startOffset = topOffset + draggedDistance
             val endOffset = bottomOffset + draggedDistance
             currentElement?.let { draggedElement ->
-                state.layoutInfo.visibleItemsInfo
+                val hoveredElement = state.layoutInfo.visibleItemsInfo
                     .filterNot { item -> (item.offsetEnd-item.size/2) < startOffset || (item.offset+item.size/2) > endOffset }
                     .firstOrNull { item ->
                         val delta = (startOffset - draggedElement.offset)
@@ -183,22 +183,20 @@ class DragDropState internal constructor(
                             delta > 0 -> (endOffset > item.offset)
                             else -> (startOffset < item.offsetEnd)
                         } && item.index != draggedElement.index
-                    }.also { hoveredElement ->
-                        if(hoveredElement!=null) {
-                            currentIndexOfDraggedItem?.let { current ->
-                                scope.launch {
-                                    onHover.invoke(
-                                        current,
-                                        hoveredElement.index,
-                                        0f
-                                    )
-                                }
-                            }
-                            currentIndexOfHoveredItem = hoveredElement.index
-                        }else{
-                            currentIndexOfHoveredItem = null
+                    }
+
+                if(hoveredElement!=null) {
+                    currentIndexOfHoveredItem = hoveredElement.index
+                    currentIndexOfDraggedItem?.let { current ->
+                        scope.launch {
+                            onHover.invoke(
+                                current,
+                                hoveredElement.index,
+                                0f
+                            )
                         }
                     }
+                }
             }
         }
     }
