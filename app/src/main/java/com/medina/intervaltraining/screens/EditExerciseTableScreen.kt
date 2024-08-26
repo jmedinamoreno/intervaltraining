@@ -59,11 +59,15 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.generation.suggestExercise
+import com.medina.intervaltraining.data.model.Training
 import com.medina.intervaltraining.data.viewmodel.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
-import com.medina.intervaltraining.data.viewmodel.Training
+import com.medina.intervaltraining.ui.components.AnimatedIconRow
+import com.medina.intervaltraining.ui.components.DialogIconButton
 import com.medina.intervaltraining.ui.components.DraggableItem
+import com.medina.intervaltraining.ui.components.ExerciseLabel
+import com.medina.intervaltraining.ui.components.ExerciseTableIcon
 import com.medina.intervaltraining.ui.components.InputNumber
 import com.medina.intervaltraining.ui.components.InputText
 import com.medina.intervaltraining.ui.components.SavableInputText

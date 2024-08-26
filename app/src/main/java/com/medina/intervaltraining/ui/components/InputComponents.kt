@@ -1,24 +1,34 @@
 package com.medina.intervaltraining.ui.components
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,9 +36,12 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -36,6 +49,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -45,6 +60,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.ui.stringForButtonDescription
+import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -130,7 +146,8 @@ fun SavableInputText(entryText: String, onSave:(String)->Unit, timeoutMill:Long,
         modifier = modifier
             .focusRequester(focusRequester)
             .focusProperties {
-                enter = { if (focusRequester.restoreFocusedChild()) FocusRequester.Cancel else FocusRequester.Default }
+                enter =
+                    { if (focusRequester.restoreFocusedChild()) FocusRequester.Cancel else FocusRequester.Default }
             }
         ,placeholder = placeholder
     )
@@ -183,28 +200,34 @@ fun InputNumber(
     onNumberChange: (Int) -> Unit
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = modifier
+        .height(48.dp)
+        .width(84.dp)
+        , verticalAlignment = Alignment.CenterVertically) {
         BasicTextField(
             value = value.toString(),
             onValueChange = { if(it.isNotEmpty()){ onNumberChange(it.toInt()) } },
             maxLines = 1,
-            textStyle = TextStyle(textAlign = TextAlign.Center),
+            textStyle = TextStyle.Default.copy(
+                textAlign = TextAlign.End,
+            ),
             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done, keyboardType = KeyboardType.Number),
             keyboardActions = KeyboardActions(onDone = {
                 keyboardController?.hide()
             }),
             modifier = Modifier
-                .weight(0.1f)
-                .padding(0.dp),
+                .weight(1f)
+                .padding(end = 8.dp),
             singleLine = true
         )
-        Column(modifier = Modifier
-            .padding(0.dp)) {
+        Column {
             IconButton(modifier = Modifier
-                .weight(0.1f)
-                .padding(0.dp), onClick = { onNumberChange(value+1) }) {
+                .weight(1f)
+                .padding(0.dp),
+                onClick = { onNumberChange(value+1) }) {
                 Icon(
                     modifier = Modifier
+                        .fillMaxSize()
                         .widthIn(min = 48.dp)
                         .heightIn(min = 24.dp),
                     imageVector = Icons.Default.KeyboardArrowUp,
@@ -212,10 +235,12 @@ fun InputNumber(
                 )
             }
             IconButton(modifier = Modifier
-                .weight(0.1f)
-                .padding(0.dp), onClick = { onNumberChange(value-1) }) {
+                .weight(1f)
+                .padding(0.dp),
+                onClick = { onNumberChange(value-1) }) {
                 Icon(
                     modifier = Modifier
+                        .fillMaxSize()
                         .widthIn(min = 48.dp)
                         .heightIn(min = 24.dp),
                     imageVector = Icons.Default.KeyboardArrowDown,
@@ -226,12 +251,98 @@ fun InputNumber(
     }
 }
 
+/**
+ * Draws button with.
+ *
+ * When not visible, will collapse to 16.dp high by default. You can enlarge this with the passed
+ * modifier.
+ *
+ * @param icon (state) the current selected icon
+ * @param modifier modifier for this element
+ */
+@Composable
+fun DialogIconButton(
+    modifier: Modifier = Modifier,
+    text: String,
+    icon: ImageVector,
+    iconDescription: String,
+    enabled : Boolean = true,
+    onClick: ()->Unit,
+){
+    Button(
+        modifier = modifier.height(40.dp),
+        enabled = enabled,
+        onClick = onClick
+    ) {
+        Row {
+            Icon(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .size(24.dp),
+                imageVector = icon,
+                contentDescription = iconDescription
+            )
+            Text(
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .padding(horizontal = 8.dp),
+                text = text
+            )
+        }
+    }
+}
+
+@Preview(name = "Light Mode")
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+fun PreviewInputNumber() {
+    IntervalTrainingTheme {
+        InputNumber(
+            modifier = Modifier
+                .padding(horizontal = 8.dp, vertical = 8.dp), 0
+        ) {}
+    }
+}
+@Preview(name = "Light Mode")
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+fun PreviewInputNumber2() {
+    IntervalTrainingTheme {
+        InputNumber(
+            modifier = Modifier
+                .height(100.dp)
+                .width(100.dp)
+                .padding(horizontal = 8.dp, vertical = 8.dp), 0
+        ) {}
+    }
+}
+
+@Preview(name = "Light Mode")
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+fun PreviewInputNumber3() {
+    IntervalTrainingTheme {
+        Card {
+            InputNumber(
+                modifier = Modifier
+                    .height(100.dp)
+                    .width(100.dp)
+                    .padding(horizontal = 8.dp, vertical = 8.dp), 0
+            ) {}
+        }
+    }
+}
 
 @Preview
 @Composable
-fun PreviewInputNumber() {
-    InputNumber(modifier = Modifier
+fun PreviewDialogIconButton() {
+    DialogIconButton(modifier = Modifier
         .padding(horizontal = 8.dp, vertical = 8.dp)
         .width(160.dp)
-        .height(48.dp), 0){}
+        .height(48.dp),
+        text = "Button",
+        icon = Icons.Default.Edit,
+        iconDescription = "Edit",
+        onClick = {}
+    )
 }

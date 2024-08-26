@@ -9,60 +9,112 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.medina.intervaltraining.R
-import com.medina.intervaltraining.data.repository.TrainingDummyRepository
-import com.medina.intervaltraining.data.viewmodel.Training
+import com.medina.intervaltraining.data.model.Training
 import com.medina.intervaltraining.data.viewmodel.TrainingViewModel
-import com.medina.intervaltraining.ui.components.ButtonPlaySound
 import com.medina.intervaltraining.ui.floatToHours
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 
+enum class IntervalTrainingSections { TRAININGS, STATS, SETTINGS }
 @Composable
 fun IntervalTrainingScreen(
     onNewTraining: () -> Unit = {},
     onPlay: (training: Training, immediate:Boolean) -> Unit = { _, _->},
     trainingViewModel: TrainingViewModel
 ){
-    Scaffold(floatingActionButton = {
-        ExtendedFloatingActionButton(
-            onClick = onNewTraining,
-            icon = { Icon(Icons.Default.Add, stringResource(id = R.string.new_training_button_icon)) },
-            text = { Text(text = stringResource(id = R.string.new_training_button_label)) },
-        )
-    }
-        ) { padding ->
+    var navSelectedItem by rememberSaveable { mutableStateOf(IntervalTrainingSections.TRAININGS) }
+    Scaffold(
+        floatingActionButton = {
+            if(navSelectedItem == IntervalTrainingSections.TRAININGS) {
+                ExtendedFloatingActionButton(
+                    onClick = onNewTraining,
+                    icon = {
+                        Icon(
+                            Icons.Default.Add,
+                            stringResource(id = R.string.new_training_button_icon)
+                        )
+                    },
+                    text = { Text(text = stringResource(id = R.string.new_training_button_label)) },
+                )
+            }
+        },
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = navSelectedItem == IntervalTrainingSections.TRAININGS,
+                    onClick = { navSelectedItem = IntervalTrainingSections.TRAININGS },
+                    icon = { Icon(Icons.Default.AccountBox, null) },
+                    label = { Text(stringResource(id = R.string.bottom_bar_trainings_label)) }
+                )
+//                NavigationBarItem(
+//                    selected =  navSelectedItem ==  IntervalTrainingSections.STATS,
+//                    onClick = { navSelectedItem = IntervalTrainingSections.STATS },
+//                    icon = { Icon(Icons.Default.DateRange, null) },
+//                    label = { Text(stringResource(id = R.string.bottom_bar_stats_label)) }
+//                )
+                NavigationBarItem(
+                    selected =  navSelectedItem ==  IntervalTrainingSections.SETTINGS,
+                    onClick = { navSelectedItem = IntervalTrainingSections.SETTINGS },
+                    icon = { Icon(Icons.Default.Settings, null) },
+                    label = { Text(stringResource(id = R.string.bottom_bar_settings_label)) }
+                )
+            }
+        }
+    ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
             TrainedHoursComponent(trainingViewModel = trainingViewModel,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(all = 16.dp))
-            TrainingListComponent(trainingViewModel = trainingViewModel,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(all = 16.dp)
-                    .weight(1f),
-                onPlay = onPlay
-            )
+            when(navSelectedItem) {
+                IntervalTrainingSections.TRAININGS ->
+                    TrainingListComponent(
+                        trainingViewModel = trainingViewModel,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(all = 16.dp)
+                            .weight(1f),
+                        onPlay = onPlay
+                    )
+                IntervalTrainingSections.STATS ->
+                    Text(text = "#TODO")
+                IntervalTrainingSections.SETTINGS ->
+                    SettingsPanel(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(all = 16.dp)
+                            .weight(1f),
+                    )
+            }
         }
     }
 }
+
 
 @Composable
 fun TrainedHoursComponent(trainingViewModel:TrainingViewModel, modifier: Modifier){
@@ -118,6 +170,7 @@ fun TrainingItemComponent(training: Training, timeMin: Int, modifier: Modifier, 
     }
 }
 
+
 // PREVIEWS
 @Preview(name = "Light Mode")
 @Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
@@ -137,11 +190,11 @@ fun TrainingListPreview() {
 }
 
 // PREVIEWS
-@Preview(name = "Light Mode")
-@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
-@Composable
-fun InternalTrainingScreenPreview() {
-    IntervalTrainingTheme {
-        IntervalTrainingScreen(trainingViewModel = TrainingViewModel(TrainingDummyRepository()))
-    }
-}
+//@Preview(name = "Light Mode")
+//@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+//@Composable
+//fun InternalTrainingScreenPreview() {
+//    IntervalTrainingTheme {
+//        IntervalTrainingScreen(trainingViewModel = TrainingViewModel(TrainingDummyRepository()))
+//    }
+//}

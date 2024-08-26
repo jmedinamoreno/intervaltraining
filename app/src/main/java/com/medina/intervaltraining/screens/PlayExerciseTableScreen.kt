@@ -1,7 +1,6 @@
 package com.medina.intervaltraining.screens
 
 import android.content.res.Configuration
-import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -51,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.inset
@@ -59,25 +59,35 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.medina.intervaltraining.R
+import com.medina.intervaltraining.data.model.Session
+import com.medina.intervaltraining.data.model.Training
+import com.medina.intervaltraining.data.repository.UserDataDummyRepository
 import com.medina.intervaltraining.data.viewmodel.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
-import com.medina.intervaltraining.data.viewmodel.Session
-import com.medina.intervaltraining.data.viewmodel.Training
+import com.medina.intervaltraining.data.viewmodel.SettingsViewModel
+import com.medina.intervaltraining.data.viewmodel.getTrainingStartDelaySecs
+import com.medina.intervaltraining.data.viewmodel.isSoundsEnabledTrainingStart
+import com.medina.intervaltraining.ui.components.ExerciseRunningLabel
 import com.medina.intervaltraining.ui.components.FXSoundPool
 import com.medina.intervaltraining.ui.stringChosen
-import com.medina.intervaltraining.ui.stringForButtonDescription
 import com.medina.intervaltraining.ui.stringForIconDescription
+import com.medina.intervaltraining.ui.stringRandom
+import com.medina.intervaltraining.ui.stringRandomSelected
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.selects.whileSelect
 import java.util.Calendar
 import java.util.UUID
+import kotlin.math.cos
 import kotlin.math.min
+import kotlin.math.sin
 
 @Composable
 fun PlayExerciseTableScreen(
@@ -85,12 +95,11 @@ fun PlayExerciseTableScreen(
     immediate: Boolean = false,
     onBack:()->Unit,
     onEdit:()->Unit,
-    updateSession: (session:Session) -> Unit = {_->},
+    updateSession: (session: Session) -> Unit = { _->},
 ) {
     val items: List<Exercise> by exerciseViewModel.exercises.observeAsState(listOf())
     val training: Training? by exerciseViewModel.training.observeAsState()
     val session: Session = exerciseViewModel.session
-    Log.d("JMMLOG", "PlayExerciseTableScreen");
     PlayExerciseTableView(
         training = training,
         session = session,
@@ -109,9 +118,12 @@ fun PlayExerciseTableView(
     startState:PlayExerciseTableState = PlayExerciseTableState.READY,
     updateSession: (session:Session) -> Unit = {_->},
     onBack:()->Unit = {},
-    onEdit:()->Unit = {},){
+    onEdit:()->Unit = {},
+    settingsViewModel: SettingsViewModel = hiltViewModel(),){
 
     val context = LocalContext.current
+    val settingsState by settingsViewModel.settingsUiState.collectAsStateWithLifecycle()
+    val startDelay = settingsState.getTrainingStartDelaySecs()
     var soundPool by remember { mutableStateOf<FXSoundPool?>(null) }
     // Initialize SoundPool & dispose it when the composable leaves the composition
     LaunchedEffect(key1 = context) { soundPool = FXSoundPool(context).build() }
@@ -130,7 +142,6 @@ fun PlayExerciseTableView(
     var playState by rememberSaveable {
         mutableStateOf(startState)
     }
-    Log.d("JMMLOG", "PlayExerciseTableScreen: $currentExerciseIndex -> $currentTimeMillis");
 
     // create session to track
     val currentSessionItem by remember { mutableStateOf(session) }
@@ -141,7 +152,9 @@ fun PlayExerciseTableView(
         scope.launch {
             if (playState == PlayExerciseTableState.RUNNING){
                 var startTime = Calendar.getInstance().timeInMillis - currentTimeMillis
-                soundPool?.playSound(FXSoundPool.FX.PUIN)
+                if(settingsState.isSoundsEnabledTrainingStart()) {
+                    soundPool?.playSound(FXSoundPool.FX.PUIN)
+                }
                 do {
                     delay(25L)
                     currentTimeMillis = (Calendar.getInstance().timeInMillis - startTime).toInt()
@@ -163,6 +176,21 @@ fun PlayExerciseTableView(
                     }
                 } while (playState == PlayExerciseTableState.RUNNING)
             }
+
+            if(playState == PlayExerciseTableState.STARTING){
+                val startTime = Calendar.getInstance().timeInMillis - currentTimeMillis
+                if(settingsState.isSoundsEnabledTrainingStart()) {
+                    soundPool?.playSound(FXSoundPool.FX.PUIN)
+                }
+                do {
+                    delay(25L)
+                    currentTimeMillis = (Calendar.getInstance().timeInMillis - startTime).toInt()
+                    val currentTimeSec = currentTimeMillis / 1000
+                    if(currentTimeSec>= startDelay){
+                        playState = PlayExerciseTableState.RUNNING
+                    }
+                } while (playState == PlayExerciseTableState.STARTING)
+            }
         }
     }
     Scaffold(topBar = {
@@ -173,10 +201,11 @@ fun PlayExerciseTableView(
             modifier = Modifier.padding(contentPadding),
             items = items,
             playState = playState,
+            startDelay = startDelay,
             currentExercise = currentExerciseIndex,
             currentTimeMillis = currentTimeMillis,
             onStart = {
-                playState = PlayExerciseTableState.RUNNING
+                playState = PlayExerciseTableState.STARTING
                 currentTimeMillis = 0
                 currentSessionItem.dateTimeStart = Calendar.getInstance().timeInMillis
                 currentSessionItem.dateTimeEnd = Calendar.getInstance().timeInMillis
@@ -215,13 +244,13 @@ fun PlayExerciseTableScreenTopBar(training: Training?, onBack:()->Unit, onEdit:(
     )
 }
 
-enum class PlayExerciseTableState{ READY,RUNNING,PAUSED,COMPLETE}
-@OptIn(ExperimentalFoundationApi::class)
+enum class PlayExerciseTableState{ READY,STARTING,RUNNING,PAUSED,COMPLETE}
 @Composable
 fun PlayExerciseTableBody(
     modifier: Modifier,
     items: List<Exercise>,
     playState: PlayExerciseTableState,
+    startDelay: Int,
     currentExercise: Int,
     currentTimeMillis: Int,
     onStart:()->Unit,
@@ -238,6 +267,7 @@ fun PlayExerciseTableBody(
             playState = playState,
             currentExercise = currentExercise,
             currentTimeMillis = currentTimeMillis,
+            startDelay = startDelay,
             onStart = onStart,
             onPause = onPause,
             onResume = onResume,
@@ -251,6 +281,7 @@ fun PlayExerciseTableBody(
             playState = playState,
             currentExercise = currentExercise,
             currentTimeMillis = currentTimeMillis,
+            startDelay = startDelay,
             onStart = onStart,
             onPause = onPause,
             onResume = onResume,
@@ -266,6 +297,7 @@ fun PlayExerciseTableBodyVertical(
     modifier: Modifier,
     items: List<Exercise>,
     playState: PlayExerciseTableState,
+    startDelay: Int,
     currentExercise: Int,
     currentTimeMillis: Int,
     onStart:()->Unit,
@@ -284,6 +316,7 @@ fun PlayExerciseTableBodyVertical(
                 playState = playState,
                 runningExercise = items.getOrNull(currentExercise),
                 currentTimeMillis = currentTimeMillis,
+                startDelay = startDelay,
                 onStart = onStart,
                 onPause = onPause,
                 onResume = onResume,
@@ -314,6 +347,7 @@ fun PlayExerciseTableBodyHorizontal(
     modifier: Modifier,
     items: List<Exercise>,
     playState: PlayExerciseTableState,
+    startDelay: Int,
     currentExercise: Int,
     currentTimeMillis: Int,
     onStart:()->Unit,
@@ -349,6 +383,7 @@ fun PlayExerciseTableBodyHorizontal(
             playState = playState,
             runningExercise = items.getOrNull(currentExercise),
             currentTimeMillis = currentTimeMillis,
+            startDelay = startDelay,
             onStart = onStart,
             onPause = onPause,
             onResume = onResume,
@@ -361,6 +396,7 @@ fun PlayExerciseTableBodyHorizontal(
 fun ExercisePlayer(
     modifier: Modifier,
     playState: PlayExerciseTableState,
+    startDelay: Int,
     runningExercise: Exercise?,
     currentTimeMillis: Int,
     onStart:()->Unit,
@@ -376,6 +412,12 @@ fun ExercisePlayer(
             PlayExerciseTableState.READY -> BigPlayButton(
                 Modifier.fillMaxSize(),
                 onStart = onStart
+            )
+            PlayExerciseTableState.STARTING ->  StartingRoutine(
+                Modifier.fillMaxSize(),
+                startDelay = startDelay,
+                currentTimeMillis = currentTimeMillis,
+                onPause = onPause
             )
 
             PlayExerciseTableState.RUNNING -> RunningExercise(
@@ -397,6 +439,49 @@ fun ExercisePlayer(
                 onRestart = onRestart
             )
         }
+    }
+}
+
+@Composable
+fun StartingRoutine(
+    modifier: Modifier,
+    startDelay: Int,
+    currentTimeMillis: Int,
+    onPause: () -> Unit
+) {
+    val text = stringRandomSelected(id = R.array.running_exercise_rest_list)
+    val currentTimeSec = currentTimeMillis/1000
+    val timeText = "${startDelay - currentTimeSec}"
+    val backgroundColor =  MaterialTheme.colorScheme.secondary
+    val color = MaterialTheme.colorScheme.primary
+
+    BoxWithConstraints(modifier = modifier.clickable { onPause() }) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val padding = 8.dp.toPx()
+            val center = Offset(size.width / 2, size.height / 2)
+            val radius = size.minDimension / 3
+            val dotRadius = size.minDimension / ((startDelay*2)+1)
+
+            for (i in 0 until startDelay) {
+                val angle = ((2 * Math.PI / startDelay) * i ) - (Math.PI / 2)
+                val x = center.x + radius * cos(angle).toFloat()
+                val y = center.y + radius * sin(angle).toFloat()
+
+                drawCircle(
+                    color = if(currentTimeSec <= i) color else backgroundColor,
+                    radius = dotRadius,
+                    center = Offset(x, y),
+                    style = Fill // Optional: Add a stroke for better visibility
+                )
+            }
+        }
+        PlayItemTexts(
+            modifier = Modifier.align(Alignment.Center),
+            timeText = timeText,
+            labelText = text,
+            maxHeight = maxHeight.value,
+            maxWidth = maxWidth.value
+        )
     }
 }
 
@@ -476,22 +561,13 @@ fun RunningExercise(modifier: Modifier, runningExercise:Exercise?, currentTimeMi
                 }
             }
         }
-        Text(text = timeText, style = TextStyle(
-            fontSize = (min(maxHeight.value,maxWidth.value)*0.7f).toInt().sp,
-            color = Color(1f,1f,1f,0.7f),
-            shadow = Shadow(
-                color =  Color(0f,0f,0f,0.7f),
-                blurRadius = 5f
-            )
-        ), modifier = Modifier.align(Alignment.Center))
-        Text(text = text, style = TextStyle(
-            fontSize = (min(maxHeight.value,maxWidth.value)*0.3f).toInt().sp,
-            color = Color.White,
-            shadow = Shadow(
-                color = Color.Black,
-                blurRadius = 5f
-            )
-        ), modifier = Modifier.align(Alignment.Center))
+        PlayItemTexts(
+            modifier = Modifier.align(Alignment.Center),
+            timeText = timeText,
+            labelText = text,
+            maxHeight = maxHeight.value,
+            maxWidth = maxWidth.value
+        )
     }
 }
 
@@ -547,23 +623,40 @@ fun PausedExercise(modifier: Modifier, runningExercise:Exercise?, currentTimeSec
                 }
             }
         }
-        Text(text = timeText, style = TextStyle(
-            fontSize = (min(maxHeight.value,maxWidth.value)*0.7f).toInt().sp,
-            color = Color(1f,1f,1f,0.7f),
-            shadow = Shadow(
-                color =  Color(0f,0f,0f,0.7f),
-                blurRadius = 5f
-            )
-        ), modifier = Modifier.align(Alignment.Center))
-        Text(text = text, style = TextStyle(
-            fontSize = (min(maxHeight.value,maxWidth.value)*0.3f).toInt().sp,
-            color = Color.White,
-            shadow = Shadow(
-                color = Color.Black,
-                blurRadius = 5f
-            )
-        ), modifier = Modifier.align(Alignment.Center))
+        PlayItemTexts(
+            modifier = Modifier.align(Alignment.Center),
+            timeText = timeText,
+            labelText = text,
+            maxHeight = maxHeight.value,
+            maxWidth = maxWidth.value
+        )
     }
+}
+
+@Composable
+private fun PlayItemTexts(
+    modifier: Modifier,
+    timeText:String,
+    labelText:String,
+    maxHeight:Float,
+    maxWidth:Float
+){
+    Text(text = timeText, style = TextStyle(
+        fontSize = (min(maxHeight,maxWidth)*0.7f).toInt().sp,
+        color = Color(1f,1f,1f,0.7f),
+        shadow = Shadow(
+            color =  Color(0f,0f,0f,0.7f),
+            blurRadius = 5f
+        )
+    ), modifier = modifier)
+    Text(text = labelText, style = TextStyle(
+        fontSize = (min(maxHeight,maxWidth)*0.3f).toInt().sp,
+        color = Color.White,
+        shadow = Shadow(
+            color = Color.Black,
+            blurRadius = 5f
+        )
+    ), modifier = modifier)
 }
 
 @Composable
@@ -576,6 +669,25 @@ fun FinishedTraining(modifier: Modifier, onRestart:()->Unit){
                 .size(84.dp)
                 .align(Alignment.Center)
         )
+    }
+}
+
+@ExperimentalFoundationApi
+@Preview(name = "Light Mode")
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+fun StartingPreview() {
+    IntervalTrainingTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            StartingRoutine(
+                Modifier
+                    .width(200.dp)
+                    .height(150.dp),
+                5,
+                currentTimeMillis = 2200,
+                onPause = {}
+            )
+        }
     }
 }
 
@@ -606,6 +718,7 @@ fun PlayerPreview() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             PlayExerciseTableView(
+                settingsViewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository()),
                 training = Training("test",30,5),
                 session = Session(UUID.randomUUID()),
                 items = (1 until 15).toList().map{Exercise("Exercise $it")})
@@ -620,6 +733,7 @@ fun PlaybackHorizontalPreview() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             PlayExerciseTableView(
+                settingsViewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository()),
                 training = Training("test",30,5),
                 session = Session(UUID.randomUUID()),
                 items = (1 until 15).toList().map{Exercise("Exercise $it")})

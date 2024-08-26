@@ -56,6 +56,23 @@
     <string name="ic_name_exercise_flex">Flex</string>
     <string name="ic_name_exercise_left">Left</string>
     <string name="ic_name_exercise_right">Right</string>
+    <string name="bottom_bar_trainings_label">My routines</string>
+    <string name="bottom_bar_stats_label">Stats</string>
+    <string name="bottom_bar_settings_label">Settings</string>
+    <string name="settings_panel_title">Customize your settings</string>
+    <string name="settings_panel_training_start_delay_label">Training start delay</string>
+    <string name="settings_panel_training_start_delay_value">%s seconds</string>
+    <string name="settings_panel_training_start_delay_extra">Set the training start delay</string>
+    <string name="settings_panel_start_trainig_sound_label">Start training sound</string>
+    <string name="settings_panel_start_trainig_sound_desc">Play a sound when the exercise starts</string>
+    <string name="settings_panel_dark_mode_label">Dark mode</string>
+    <string name="settings_panel_dark_mode_value">The current configuration is: %s</string>
+    <string name="settings_panel_dynamic_color_label">Use system dynamic color</string>
+    <string name="settings_panel_dynamic_color_desc">Use the dynamic color from the system settings in the app</string>
+    <string name="settings_panel_dark_mode_option_dark">Dark</string>
+    <string name="settings_panel_dark_mode_option_light">Light</string>
+    <string name="settings_panel_dark_mode_option_system">System defined</string>
+    <string name="settings_panel_dark_mode_label_extra">Configure color mode</string>
     <string-array name="suggested_training_name_list">
         <item>Daily Strength Boost</item>
         <item>Cardio Blast Workout</item>

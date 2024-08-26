@@ -13,6 +13,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
 import com.medina.intervaltraining.ui.SemanticsKeyDrawableId
 import com.medina.intervaltraining.ui.SemanticsKeyIconName
+import com.medina.intervaltraining.ui.components.AnimatedIconRow
+import com.medina.intervaltraining.ui.components.DialogIconButton
+import com.medina.intervaltraining.ui.components.IconRow
 import com.medina.intervaltraining.ui.iconToDrawableResource
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.*

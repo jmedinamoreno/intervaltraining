@@ -4,6 +4,8 @@ package com.medina.intervaltraining.data.viewmodel
 import android.util.Log
 import androidx.lifecycle.*
 import androidx.lifecycle.asLiveData
+import com.medina.intervaltraining.data.model.Session
+import com.medina.intervaltraining.data.model.Training
 import com.medina.intervaltraining.data.repository.TrainingRepository
 import com.medina.intervaltraining.data.room.ExerciseItem
 import kotlinx.coroutines.flow.map

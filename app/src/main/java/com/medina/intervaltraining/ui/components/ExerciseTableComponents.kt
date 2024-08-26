@@ -1,4 +1,4 @@
-package com.medina.intervaltraining.screens
+package com.medina.intervaltraining.ui.components
 
 
 import android.content.res.Configuration
@@ -20,60 +20,34 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.FocusRequester.Companion.Cancel
-import androidx.compose.ui.focus.FocusRequester.Companion.Default
-import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -81,7 +55,6 @@ import androidx.compose.ui.unit.sp
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.viewmodel.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
-import com.medina.intervaltraining.ui.components.SelectableIconButton
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import com.medina.intervaltraining.ui.drawableId
 import com.medina.intervaltraining.ui.iconName
@@ -89,49 +62,8 @@ import com.medina.intervaltraining.ui.iconToDrawableResource
 import com.medina.intervaltraining.ui.iconToStringResource
 import com.medina.intervaltraining.ui.stringForButtonDescription
 import com.medina.intervaltraining.ui.stringForIconDescription
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
-/**
- * Draws button with.
- *
- * When not visible, will collapse to 16.dp high by default. You can enlarge this with the passed
- * modifier.
- *
- * @param icon (state) the current selected icon
- * @param modifier modifier for this element
- */
-@Composable
-fun DialogIconButton(
-    modifier: Modifier = Modifier,
-    text: String,
-    icon: ImageVector,
-    iconDescription: String,
-    enabled : Boolean = true,
-    onClick: ()->Unit,
-){
-    Button(
-        modifier = modifier.height(40.dp),
-        enabled = enabled,
-        onClick = onClick
-    ) {
-        Row {
-            Icon(
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .size(24.dp),
-                imageVector = icon,
-                contentDescription = iconDescription
-            )
-            Text(
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .padding(horizontal = 8.dp),
-                text = text
-            )
-        }
-    }
-}
+
 
 /**
  * Draws a row of [ExerciseTableIcon] with visibility changes animated.
@@ -363,19 +295,4 @@ fun PreviewIconRow() {
 @Composable
 fun PreviewIcon() {
     ExerciseTableIcon(icon = ExerciseIcon.NONE, tint = MaterialTheme.colorScheme.primary)
-}
-
-
-@Preview
-@Composable
-fun PreviewDialogIconButton() {
-    DialogIconButton(modifier = Modifier
-        .padding(horizontal = 8.dp, vertical = 8.dp)
-        .width(160.dp)
-        .height(48.dp),
-        text = "Button",
-        icon = Icons.Default.Edit,
-        iconDescription = "Edit",
-        onClick = {}
-    )
 }

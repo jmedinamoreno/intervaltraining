@@ -3,6 +3,10 @@ package com.medina.intervaltraining.ui
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsPropertyKey
@@ -65,6 +69,12 @@ fun stringForIconDescription(@StringRes id: Int) =
 
 @Composable
 fun stringRandom(@ArrayRes id: Int) = stringArrayResource(id = id).random()
+
+@Composable
+fun stringRandomSelected(@ArrayRes id: Int):String {
+    val chosen by remember { mutableIntStateOf(Math.random().toInt()) }
+    return stringChosen(id = id, chosen)
+}
 
 @Composable
 fun stringChosen(@ArrayRes id: Int, chosen: Int) = stringArrayResource(id = id).let {
