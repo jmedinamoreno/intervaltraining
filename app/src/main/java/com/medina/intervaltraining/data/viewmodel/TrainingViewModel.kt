@@ -22,14 +22,14 @@ import java.util.*
 
 
 class TrainingViewModel(
-    val repository: TrainingRepository,
-    private val userDataRepository: UserDataRepository,
+    val trainingRepository: TrainingRepository,
+    userDataRepository: UserDataRepository,
     private val clock: Clock = RealClock()
 ):ViewModel(){
 
     private val userPreferencesFlow = userDataRepository.userData
 
-    private val trainingListFlow = repository.trainingsFlow.map {
+    private val trainingListFlow = trainingRepository.trainingsFlow.map {
         it.map { trainingItem ->
             Training(
                 id = trainingItem.id,
@@ -53,21 +53,20 @@ class TrainingViewModel(
             userData = userData
         )
     }
-    val trainingUiModel = trainingUiModelFlow.asLiveData()
 
     fun getTimeForTrainingLiveData(id: UUID):LiveData<Int> {
-        return repository.timeForTrainingMinAsFlow(id).asLiveData()
+        return trainingRepository.timeForTrainingMinAsFlow(id).asLiveData()
     }
 
     fun delete(training: UUID) {
         viewModelScope.launch {
             try {
-                repository.deleteAllExercises(training)
+                trainingRepository.deleteAllExercises(training)
             }catch (e:Exception){
                 e.printStackTrace()
             }
             try {
-                repository.deleteTraining(training)
+                trainingRepository.deleteTraining(training)
             }catch (e:Exception){
                 e.printStackTrace()
             }
@@ -77,7 +76,7 @@ class TrainingViewModel(
     fun update(training: Training) {
         viewModelScope.launch {
             try {
-                repository.insert(TrainingItem(
+                trainingRepository.insert(TrainingItem(
                     id = training.id,
                     name = training.name,
                     defaultTimeSec = training.defaultTimeSec,
@@ -105,7 +104,7 @@ class TrainingViewModel(
             set(Calendar.SECOND,59)
             set(Calendar.MILLISECOND,0)
         }
-        return repository.getTotalSessionTimeSecForDateRange(weekstart.timeInMillis,weekend.timeInMillis).map {
+        return trainingRepository.getTotalSessionTimeSecForDateRange(weekstart.timeInMillis,weekend.timeInMillis).map {
             it / 3600f
         }.asLiveData()
     }
@@ -113,7 +112,7 @@ class TrainingViewModel(
     fun saveSession(session: Session) {
         viewModelScope.launch {
             try {
-                repository.insert(
+                trainingRepository.insert(
                     SessionItem(
                         id = session.id,
                         training = session.training,

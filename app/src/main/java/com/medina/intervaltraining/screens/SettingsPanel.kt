@@ -3,9 +3,10 @@ package com.medina.intervaltraining.screens
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -17,6 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.model.DarkThemeConfig
+import com.medina.intervaltraining.data.repository.UserDataDummyRepository
 import com.medina.intervaltraining.data.viewmodel.SettingsUiState
 import com.medina.intervaltraining.data.viewmodel.SettingsViewModel
 import com.medina.intervaltraining.ui.components.SettingsEntryEnum
@@ -39,17 +41,11 @@ fun SettingsPanel(
         is SettingsUiState.Success -> {
             val settings = (state as? SettingsUiState.Success)?.settings ?: return
             Column(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxSize()
-                    .padding(16.dp),
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.Start
             ) {
-                Text(
-                    text = stringResource(R.string.settings_panel_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(16.dp)
-                )
-
                 // Delay Setting
                 SettingsEntryNum(
                     labelTitle = stringResource(R.string.settings_panel_training_start_delay_label),
@@ -60,14 +56,38 @@ fun SettingsPanel(
                     viewModel.updateTrainingStartDelay(it.coerceIn(1,10))
                 }
 
-//                // Sound Toggle
-//                SettingsEntryToggle(
-//                    labelTitle = stringResource(R.string.settings_panel_start_trainig_sound_label),
-//                    labelDescription = stringResource(R.string.settings_panel_start_trainig_sound_desc),
-//                    checked = settings.soundsEnabledTrainingStart
-//                ) {
-//                    viewModel.updateSoundsEnabledTrainingStart(it)
-//                }
+                //Countdown
+                SettingsEntryNum(
+                    labelTitle = stringResource(R.string.settings_panel_countdown_sounds_label),
+                    labelDescription = stringResource(R.string.settings_panel_countdown_sounds_value),
+                    extraDescription = stringResource(R.string.settings_panel_countdown_sounds_extra),
+                    value = settings.countdownToChange,
+                ) {
+                    viewModel.updateCountdownToChange(it)
+                }
+
+                // Sound effects
+                SettingsEntryToggle(
+                    labelTitle = stringResource(R.string.settings_panel_start_trainig_sound_label),
+                    labelDescription = stringResource(R.string.settings_panel_start_trainig_sound_desc),
+                    checked = settings.soundsEnabledTrainingStart
+                ) {
+                    viewModel.updateSoundsEnabledTrainingStart(it)
+                }
+                SettingsEntryToggle(
+                    labelTitle = stringResource(R.string.settings_panel_rest_sound_label),
+                    labelDescription = stringResource(R.string.settings_panel_rest_sound_desc),
+                    checked = settings.soundsEnabledRestStart
+                ) {
+                    viewModel.updateSoundsEnabledRestStart(it)
+                }
+                SettingsEntryToggle(
+                    labelTitle = stringResource(R.string.settings_panel_end_training_sound_label),
+                    labelDescription = stringResource(R.string.settings_panel_end_training_sound_desc),
+                    checked = settings.soundsEnabledTrainingEnd
+                ) {
+                    viewModel.updateSoundsEnabledTrainingEnd(it)
+                }
 
                 //Dark mode
                 SettingsEntryEnum(
@@ -107,6 +127,8 @@ fun darkModeConfigTexts(key:String):String = when(key){
 @Composable
 fun SettingsComponentPreview() {
     IntervalTrainingTheme {
-        SettingsPanel()
+        SettingsPanel(
+            modifier = Modifier.fillMaxWidth().height(300.dp),
+            viewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository()))
     }
 }

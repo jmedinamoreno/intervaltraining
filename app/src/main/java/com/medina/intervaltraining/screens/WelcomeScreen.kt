@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -32,10 +31,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.model.Training
+import com.medina.intervaltraining.data.repository.TrainingDummyRepository
+import com.medina.intervaltraining.data.repository.UserDataDummyRepository
 import com.medina.intervaltraining.data.viewmodel.TrainingViewModel
 import com.medina.intervaltraining.ui.floatToHours
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
@@ -122,12 +124,15 @@ fun TrainedHoursComponent(trainingViewModel:TrainingViewModel, modifier: Modifie
         val hours:Float by trainingViewModel.getTrainedThisWeek().observeAsState(initial = 0f)
         Text(stringResource(id = R.string.welcome_trained_time_first_line),
             style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center,
             modifier = Modifier.align(Alignment.CenterHorizontally))
         Text(stringResource(id = R.string.welcome_trained_time_second_line, floatToHours(float = hours)),
             style = MaterialTheme.typography.headlineLarge,
+            textAlign = TextAlign.Center,
             modifier = Modifier.align(Alignment.CenterHorizontally))
         Text(stringResource(id = R.string.welcome_trained_time_third_line),
             style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center,
             modifier = Modifier.align(Alignment.CenterHorizontally))
     }
 }
@@ -190,11 +195,15 @@ fun TrainingListPreview() {
 }
 
 // PREVIEWS
-//@Preview(name = "Light Mode")
-//@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
-//@Composable
-//fun InternalTrainingScreenPreview() {
-//    IntervalTrainingTheme {
-//        IntervalTrainingScreen(trainingViewModel = TrainingViewModel(TrainingDummyRepository()))
-//    }
-//}
+@Preview(name = "Light Mode")
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+fun InternalTrainingScreenPreview() {
+    IntervalTrainingTheme {
+        IntervalTrainingScreen(
+            trainingViewModel = TrainingViewModel(
+                trainingRepository = TrainingDummyRepository(),
+                userDataRepository = UserDataDummyRepository(),
+            ))
+    }
+}

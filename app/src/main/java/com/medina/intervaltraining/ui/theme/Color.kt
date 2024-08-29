@@ -1,6 +1,7 @@
 package com.medina.intervaltraining.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.ColorUtils
 
 internal val Blue10 = Color(0xFF001F28)
 internal val Blue20 = Color(0xFF003544)
@@ -64,3 +65,25 @@ internal val Teal30 = Color(0xFF214D56)
 internal val Teal40 = Color(0xFF3A656F)
 internal val Teal80 = Color(0xFFA2CED9)
 internal val Teal90 = Color(0xFFBEEAF6)
+
+fun Color.desaturateColor(ratio: Float=0f): Color{
+    require(ratio in 0f..1f) { "Ratio must be between 0 and 1" }
+    val hsl = FloatArray(3)
+    ColorUtils.RGBToHSL(
+        (this.red * 255).toInt(),
+        (this.green * 255).toInt(),
+        (this.blue * 255).toInt(),
+        hsl
+    )
+    hsl[1] = (hsl[1] * ratio).coerceIn(0f,1f)
+    return Color(ColorUtils.HSLToColor(hsl))
+}
+
+fun Color.mixColor(color:Color, ratio:Float=0.5f): Color {
+    require(ratio in 0f..1f) { "Ratio must be between 0 and 1" }
+    val weight2 = 1f - ratio
+    val red = (this.red * ratio + color.red * weight2).coerceIn(0f, 1f)
+    val green = (this.green * ratio + color.green * weight2).coerceIn(0f, 1f)
+    val blue = (this.blue * ratio + color.blue * weight2).coerceIn(0f, 1f)
+    return Color(red, green, blue, this.alpha)
+}

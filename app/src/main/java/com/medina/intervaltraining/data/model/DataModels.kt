@@ -13,8 +13,10 @@ data class TrainingStatistics(val trainedThisWeek:Float)
 data class UserData(
     val trainingStartDelaySecs:Int,
     val soundsEnabledTrainingStart:Boolean,
+    val soundsEnabledExerciseStart:Boolean,
     val soundsEnabledRestStart:Boolean,
     val soundsEnabledTrainingEnd:Boolean,
+    val countdownToChange:Int,
     val themeBrand: ThemeBrand,
     val darkThemeConfig: DarkThemeConfig,
     val useDynamicColor: Boolean,

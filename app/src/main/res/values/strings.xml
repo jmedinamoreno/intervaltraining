@@ -38,6 +38,11 @@
     <string name="input_number_less">Less</string>
     <string name="input_number_more">More</string>
     <string name="exercise_label_time_and_rest">Time/Rest: %1$s/%2$s\"</string>
+    <string-array name="running_exercise_starting_list">
+        <item>Starting in…</item>
+        <item>Get ready!</item>
+        <item>Your training starts in…</item>
+    </string-array>
     <string-array name="running_exercise_rest_list">
         <item>Pause</item>
         <item>Break</item>
@@ -73,6 +78,18 @@
     <string name="settings_panel_dark_mode_option_light">Light</string>
     <string name="settings_panel_dark_mode_option_system">System defined</string>
     <string name="settings_panel_dark_mode_label_extra">Configure color mode</string>
+    <string name="running_exercise_paused">Paused</string>
+    <string name="running_exercise_first_exercise_label">First exercise is %1$s</string>
+    <string name="running_exercise_finish">Finish</string>
+    <string name="running_exercise_end_top">You finished the training.</string>
+    <string name="running_exercise_end_bottom">Congratulations!</string>
+    <string name="settings_panel_countdown_sounds_label">Countdown sounds</string>
+    <string name="settings_panel_countdown_sounds_value">Play a sound %s seconds before the next interval starts</string>
+    <string name="settings_panel_countdown_sounds_extra">Set how many seconds want to play a sound before the next interval starts</string>
+    <string name="settings_panel_rest_sound_label">Rest sound</string>
+    <string name="settings_panel_rest_sound_desc">Play a sound when the rest interval starts</string>
+    <string name="settings_panel_end_training_sound_label">End training sound</string>
+    <string name="settings_panel_end_training_sound_desc">Play a sound when the training ends</string>
     <string-array name="suggested_training_name_list">
         <item>Daily Strength Boost</item>
         <item>Cardio Blast Workout</item>

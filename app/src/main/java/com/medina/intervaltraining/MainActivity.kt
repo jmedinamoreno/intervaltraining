@@ -12,7 +12,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.datastore.preferences.preferencesDataStore
@@ -29,7 +28,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.jetcaster.util.viewModelProviderFactoryOf
 import com.medina.intervaltraining.data.model.DarkThemeConfig
-import com.medina.intervaltraining.data.model.ThemeBrand
 import com.medina.intervaltraining.data.repository.TrainingRoomRepository
 import com.medina.intervaltraining.data.room.TrainingRoomDatabase
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
@@ -187,7 +185,7 @@ fun IntervalTrainingNavHost(
             val viewModel: ExerciseViewModel = viewModel(
                 key = "exercise_model_for_$training",
                 factory = viewModelProviderFactoryOf { ExerciseViewModel(
-                    repository = trainingViewModel.repository, UUID.fromString(training)
+                    repository = trainingViewModel.trainingRepository, UUID.fromString(training)
                 ) }
             )
             PlayExerciseTableScreen( exerciseViewModel = viewModel,
@@ -214,7 +212,7 @@ fun IntervalTrainingNavHost(
             val viewModel: ExerciseViewModel = viewModel(
                 key = "exercise_model_for_$training",
                 factory = viewModelProviderFactoryOf { ExerciseViewModel(
-                    repository = trainingViewModel.repository, training
+                    repository = trainingViewModel.trainingRepository, training
                 ) }
             )
             EditExerciseTableScreen( exerciseViewModel = viewModel,

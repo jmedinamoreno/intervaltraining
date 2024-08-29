@@ -1,7 +1,5 @@
 package com.medina.intervaltraining.data.repository
 
-import android.content.Context
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -9,22 +7,15 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import com.medina.intervaltraining.data.model.DarkThemeConfig
 import com.medina.intervaltraining.data.model.ThemeBrand
 import com.medina.intervaltraining.data.model.UserData
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 import javax.inject.Inject
-import javax.inject.Singleton
 
 interface UserDataRepository {
     /**
@@ -52,6 +43,11 @@ interface UserDataRepository {
      */
     suspend fun updateTrainingStartDelaySecs(secs: Int)
 
+    /*
+     * Updates the countdown to change in seconds.
+     */
+    suspend fun updateCountdownToChange(secs: Int)
+
     /**
      * Sets the desired theme brand.
      */
@@ -77,6 +73,8 @@ private const val TRAINING_START_DELAY_SECS_KEY = "training_start_delay_secs"
 private const val SOUNDS_ENABLED_TRAINING_START_KEY = "sounds_enabled_training_start"
 private const val SOUNDS_ENABLED_REST_START_KEY = "sounds_enabled_rest_start"
 private const val SOUNDS_ENABLED_TRAINING_END_KEY = "sounds_enabled_training_end"
+private const val SOUNDS_ENABLED_EXERCISE_START_KEY = "sounds_enabled_exercise_start"
+private const val COUNTDOWN_TO_CHANGE_KEY = "countdown_to_change"
 private const val THEME_BRAND_KEY = "theme_brand"
 private const val DARK_THEME_CONFIG_KEY = "dark_theme_config"
 private const val USE_DYNAMIC_COLOR_KEY = "use_dynamic_color"
@@ -86,6 +84,8 @@ private object PreferencesKeys {
     val SOUNDS_ENABLED_TRAINING_START = booleanPreferencesKey(SOUNDS_ENABLED_TRAINING_START_KEY)
     val SOUNDS_ENABLED_REST_START = booleanPreferencesKey(SOUNDS_ENABLED_REST_START_KEY)
     val SOUNDS_ENABLED_TRAINING_END = booleanPreferencesKey(SOUNDS_ENABLED_TRAINING_END_KEY)
+    val SOUNDS_ENABLED_EXERCISE_START = booleanPreferencesKey(SOUNDS_ENABLED_EXERCISE_START_KEY)
+    val COUNTDOWN_TO_CHANGE = intPreferencesKey(COUNTDOWN_TO_CHANGE_KEY)
     val THEME_BRAND = stringPreferencesKey(THEME_BRAND_KEY)
     val DARK_THEME_CONFIG = stringPreferencesKey(DARK_THEME_CONFIG_KEY)
     val USE_DYNAMIC_COLOR = booleanPreferencesKey(USE_DYNAMIC_COLOR_KEY)
@@ -110,6 +110,8 @@ class UserDataDatastoreRepository @Inject constructor(
         }.map { preferences ->
             val trainingStartDelaySecs = preferences[PreferencesKeys.TRAINING_START_DELAY_SECS] ?: 5
             val soundsEnabledTrainingStart = preferences[PreferencesKeys.SOUNDS_ENABLED_TRAINING_START] ?: true
+            val soundsEnabledExerciseStart = preferences[PreferencesKeys.SOUNDS_ENABLED_EXERCISE_START] ?: true
+            val countdownToChange = preferences[PreferencesKeys.COUNTDOWN_TO_CHANGE] ?: 3
             val soundsEnabledRestStart = preferences[PreferencesKeys.SOUNDS_ENABLED_REST_START] ?: true
             val soundsEnabledTrainingEnd = preferences[PreferencesKeys.SOUNDS_ENABLED_TRAINING_END] ?: true
             val themeBrand = preferences[PreferencesKeys.THEME_BRAND]?.let { ThemeBrand.valueOf(it) } ?: ThemeBrand.DEFAULT
@@ -122,6 +124,8 @@ class UserDataDatastoreRepository @Inject constructor(
                 soundsEnabledTrainingStart = soundsEnabledTrainingStart,
                 soundsEnabledRestStart = soundsEnabledRestStart,
                 soundsEnabledTrainingEnd = soundsEnabledTrainingEnd,
+                soundsEnabledExerciseStart = soundsEnabledExerciseStart,
+                countdownToChange = countdownToChange,
                 themeBrand = themeBrand,
                 darkThemeConfig = darkThemeConfig,
                 useDynamicColor = useDynamicColor,
@@ -177,15 +181,22 @@ class UserDataDatastoreRepository @Inject constructor(
         }
     }
 
+    override suspend fun updateCountdownToChange(secs: Int) {
+        userPreferences.edit { preferences ->
+            preferences[PreferencesKeys.COUNTDOWN_TO_CHANGE] = secs
+        }
+    }
 }
 
 class UserDataDummyRepository() : UserDataRepository {
     override val userData: Flow<UserData>
         get() = flowOf(UserData(
             soundsEnabledTrainingEnd = true,
+            soundsEnabledExerciseStart = true,
             soundsEnabledRestStart = true,
             soundsEnabledTrainingStart = true,
             trainingStartDelaySecs = 5,
+            countdownToChange = 3,
             darkThemeConfig = DarkThemeConfig.FOLLOW_SYSTEM,
             themeBrand = ThemeBrand.DEFAULT,
             useDynamicColor = false,
@@ -214,6 +225,9 @@ class UserDataDummyRepository() : UserDataRepository {
     }
 
     override suspend fun setShouldHideOnboarding(shouldHideOnboarding: Boolean) {
+    }
+
+    override suspend fun updateCountdownToChange(secs: Int) {
     }
 
 }

@@ -19,7 +19,6 @@ package com.medina.intervaltraining.data.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.medina.intervaltraining.data.model.DarkThemeConfig
-import com.medina.intervaltraining.data.model.ThemeBrand
 import com.medina.intervaltraining.data.repository.UserDataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
@@ -41,8 +40,10 @@ class SettingsViewModel @Inject constructor(
                     settings = UserEditableSettings(
                         trainingStartDelaySecs = userData.trainingStartDelaySecs,
                         soundsEnabledRestStart = userData.soundsEnabledRestStart,
+                        soundsEnabledExerciseStart = userData.soundsEnabledExerciseStart,
                         soundsEnabledTrainingEnd = userData.soundsEnabledTrainingEnd,
                         soundsEnabledTrainingStart = userData.soundsEnabledTrainingStart,
+                        countdownToChange = userData.countdownToChange,
                         useDynamicColor = userData.useDynamicColor,
                         darkThemeConfig = userData.darkThemeConfig,
                     ),
@@ -73,6 +74,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun updateCountdownToChange(countdownInSeconds: Int) {
+        viewModelScope.launch {
+            userDataRepository.updateCountdownToChange(countdownInSeconds)
+        }
+    }
+
     fun updateSoundsEnabledTrainingStart(enabled: Boolean) {
         viewModelScope.launch {
             userDataRepository.updateSoundsEnabledTrainingStart(enabled)
@@ -100,7 +107,7 @@ class SettingsViewModel @Inject constructor(
 
 fun SettingsUiState.getTrainingStartDelaySecs():Int = (this as? SettingsUiState.Success)?.settings?.trainingStartDelaySecs ?: 5
 
-fun SettingsUiState.isSoundsEnabledTrainingStart():Boolean = (this as? SettingsUiState.Success)?.settings?.soundsEnabledTrainingStart ?: false
+fun SettingsUiState.getCountDownSecs():Int = (this as? SettingsUiState.Success)?.settings?.countdownToChange ?: 3
 
 /**
  * Represents the settings which the user can edit within the app.
@@ -108,8 +115,10 @@ fun SettingsUiState.isSoundsEnabledTrainingStart():Boolean = (this as? SettingsU
 data class UserEditableSettings(
     val trainingStartDelaySecs:Int,
     val soundsEnabledTrainingStart:Boolean,
+    val soundsEnabledExerciseStart:Boolean,
     val soundsEnabledRestStart:Boolean,
     val soundsEnabledTrainingEnd:Boolean,
+    val countdownToChange:Int,
     val useDynamicColor: Boolean,
     val darkThemeConfig: DarkThemeConfig,
 )

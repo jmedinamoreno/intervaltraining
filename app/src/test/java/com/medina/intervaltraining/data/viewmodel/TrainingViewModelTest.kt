@@ -4,17 +4,14 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import com.medina.intervaltraining.data.Clock
+import com.medina.intervaltraining.data.model.Session
+import com.medina.intervaltraining.data.model.Training
 import com.medina.intervaltraining.data.repository.TrainingRepository
 import com.medina.intervaltraining.data.room.SessionItem
 import com.medina.intervaltraining.data.room.TrainingItem
-import io.mockk.core.ValueClassSupport.boxedValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
@@ -22,13 +19,9 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TestWatcher
-import org.junit.runner.Description
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito.verify
@@ -63,7 +56,10 @@ class TrainingViewModelTest {
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = TrainingViewModel(repository = repository, clock = clock)
+        viewModel = TrainingViewModel(
+            trainingRepository = repository,
+            userDataRepository = mock(),
+            clock = clock)
     }
 
     @After
@@ -74,8 +70,8 @@ class TrainingViewModelTest {
     @Test
     fun trainingList_returnsTrainingListFromRepository(){
         val expectedTrainings = listOf(
-            Training(name = "Training 1", defaultTimeSec = 10, defaultRestSec = 5, ),
-            Training(name = "Training 2", defaultTimeSec = 15, defaultRestSec = 8, )
+            Training(name = "Training 1", defaultTimeSec = 10, defaultRestSec = 5 ),
+            Training(name = "Training 2", defaultTimeSec = 15, defaultRestSec = 8 )
         )
         val trainingList = listOf(
             TrainingItem(
@@ -94,7 +90,7 @@ class TrainingViewModelTest {
             )
         )
         whenever(repository.trainingsFlow).thenReturn(flowOf(trainingList))
-        val viewModel = TrainingViewModel(repository)
+        val viewModel = TrainingViewModel(repository, mock(), clock)
         assertEquals(expectedTrainings, viewModel.trainingList.getOrAwaitValue())
     }
 
