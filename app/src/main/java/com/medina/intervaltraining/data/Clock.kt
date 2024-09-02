@@ -1,12 +1,11 @@
 package com.medina.intervaltraining.data
 
 interface Clock {
-    fun timestapm():Long
-
+    fun timestamp():Long
 }
 
 class RealClock:Clock{
-    override fun timestapm():Long{
+    override fun timestamp():Long{
         return System.currentTimeMillis()
     }
 }

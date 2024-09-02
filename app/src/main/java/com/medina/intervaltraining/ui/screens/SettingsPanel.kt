@@ -1,4 +1,4 @@
-package com.medina.intervaltraining.screens
+package com.medina.intervaltraining.ui.screens
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Column
@@ -95,7 +95,9 @@ fun SettingsPanel(
                     labelDescription = stringResource(R.string.settings_panel_dark_mode_value),
                     extraDescription = stringResource(R.string.settings_panel_dark_mode_label_extra),
                     selectedValue = settings.darkThemeConfig.name,
-                    values = DarkThemeConfig.entries.associate { Pair(it.name,darkModeConfigTexts(it.name)) }
+                    values = DarkThemeConfig.entries.associate { Pair(it.name,
+                        darkModeConfigTexts(it.name)
+                    ) }
                 ) {
                     viewModel.updateDarkThemeConfig(DarkThemeConfig.valueOf(it))
                 }

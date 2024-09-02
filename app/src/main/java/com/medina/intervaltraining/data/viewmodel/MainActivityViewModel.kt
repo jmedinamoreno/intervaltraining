@@ -14,24 +14,44 @@
  * limitations under the License.
  */
 
-package com.medina.intervaltraining
+package com.medina.intervaltraining.data.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.medina.intervaltraining.data.model.Training
+import com.medina.intervaltraining.data.model.TrainingStatistics
+import com.medina.intervaltraining.data.model.TrainingUIModel
 import com.medina.intervaltraining.data.model.UserData
+import com.medina.intervaltraining.data.repository.StatsRepository
+import com.medina.intervaltraining.data.repository.TrainingRepository
 import com.medina.intervaltraining.data.repository.UserDataRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
-    userDataRepository: UserDataRepository,
+    trainingRepository: TrainingRepository,
+    statsRepository: StatsRepository,
+    userDataRepository: UserDataRepository
 ) : ViewModel() {
-    val uiState: StateFlow<MainActivityUiState> = userDataRepository.userData.map {
+
+    private val trainingUiModelFlow = combine(
+        trainingRepository.trainingsFlow,
+        userDataRepository.userDataFlow
+    ) { trainings: List<Training>, userData: UserData ->
+        return@combine TrainingUIModel(
+            trainings = trainings,
+            stats = TrainingStatistics(10f),
+            userData = userData
+        )
+    }
+
+    val uiState: StateFlow<MainActivityUiState> = trainingUiModelFlow.map {
         MainActivityUiState.Success(it)
     }.stateIn(
         scope = viewModelScope,
@@ -42,5 +62,5 @@ class MainActivityViewModel @Inject constructor(
 
 sealed interface MainActivityUiState {
     data object Loading : MainActivityUiState
-    data class Success(val userData: UserData) : MainActivityUiState
+    data class Success(val uiData: TrainingUIModel) : MainActivityUiState
 }

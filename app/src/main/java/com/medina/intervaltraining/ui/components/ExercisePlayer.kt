@@ -41,9 +41,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.medina.intervaltraining.R
-import com.medina.intervaltraining.data.viewmodel.Exercise
-import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
-import com.medina.intervaltraining.screens.PlayExerciseTableState
+import com.medina.intervaltraining.data.model.Exercise
+import com.medina.intervaltraining.data.model.ExerciseIcon
+import com.medina.intervaltraining.ui.screens.PlayExerciseTableState
 import com.medina.intervaltraining.ui.stringChosen
 import com.medina.intervaltraining.ui.stringForIconDescription
 import com.medina.intervaltraining.ui.stringRandomSelected

@@ -34,7 +34,7 @@ class SettingsViewModel @Inject constructor(
     private val userDataRepository: UserDataRepository,
 ) : ViewModel() {
     val settingsUiState: StateFlow<SettingsUiState> =
-        userDataRepository.userData
+        userDataRepository.userDataFlow
             .map { userData ->
                 SettingsUiState.Success(
                     settings = UserEditableSettings(

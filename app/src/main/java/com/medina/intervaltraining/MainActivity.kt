@@ -26,16 +26,14 @@ import androidx.navigation.compose.composable
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.jetcaster.util.viewModelProviderFactoryOf
 import com.medina.intervaltraining.data.model.DarkThemeConfig
 import com.medina.intervaltraining.data.repository.TrainingRoomRepository
 import com.medina.intervaltraining.data.room.TrainingRoomDatabase
-import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
-import com.medina.intervaltraining.data.viewmodel.TrainingViewModel
-import com.medina.intervaltraining.data.viewmodel.TrainingViewModelFactory
-import com.medina.intervaltraining.screens.EditExerciseTableScreen
-import com.medina.intervaltraining.screens.IntervalTrainingScreen
-import com.medina.intervaltraining.screens.PlayExerciseTableScreen
+import com.medina.intervaltraining.data.viewmodel.MainActivityUiState
+import com.medina.intervaltraining.data.viewmodel.MainActivityViewModel
+import com.medina.intervaltraining.ui.screens.EditTrainingScreen
+import com.medina.intervaltraining.ui.screens.IntervalTrainingScreen
+import com.medina.intervaltraining.ui.screens.PlayTrainingScreen
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -54,14 +52,7 @@ private val Context.dataStore by preferencesDataStore(
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    val viewModel: MainActivityViewModel by viewModels()
-
-    private val applicationScope = CoroutineScope(SupervisorJob())
-    private val database by lazy { TrainingRoomDatabase.getDatabase(this, applicationScope) }
-    private val repository by lazy { TrainingRoomRepository(database.trainingDao()) }
-    private val trainingViewModel: TrainingViewModel by viewModels {
-        TrainingViewModelFactory(repository, dataStore)
-    }
+    private val viewModel: MainActivityViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -98,7 +89,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    IntervalTrainingApp(trainingViewModel)
+                    IntervalTrainingApp()
                 }
             }
         }
@@ -113,7 +104,7 @@ private fun shouldUseDynamicTheming(
     uiState: MainActivityUiState,
 ): Boolean = when (uiState) {
     MainActivityUiState.Loading -> false
-    is MainActivityUiState.Success -> uiState.userData.useDynamicColor
+    is MainActivityUiState.Success -> uiState.uiData.userData.useDynamicColor
 }
 
 /**
@@ -125,7 +116,7 @@ private fun shouldUseDarkTheme(
     uiState: MainActivityUiState,
 ): Boolean = when (uiState) {
     MainActivityUiState.Loading -> isSystemInDarkTheme()
-    is MainActivityUiState.Success -> when (uiState.userData.darkThemeConfig) {
+    is MainActivityUiState.Success -> when (uiState.uiData.userData.darkThemeConfig) {
         DarkThemeConfig.FOLLOW_SYSTEM -> isSystemInDarkTheme()
         DarkThemeConfig.LIGHT -> false
         DarkThemeConfig.DARK -> true
@@ -134,11 +125,11 @@ private fun shouldUseDarkTheme(
 
 
 @Composable
-fun IntervalTrainingApp(trainingViewModel: TrainingViewModel) {
+fun IntervalTrainingApp() {
     val navController = rememberNavController()
 //    val backstackEntry = navController.currentBackStackEntryAsState()
 //    val currentRoute = backstackEntry.value?.destination?.route
-    IntervalTrainingNavHost(navController,trainingViewModel)
+    IntervalTrainingNavHost(navController)
 }
 
 enum class IntervalTrainingScreens{
@@ -150,7 +141,6 @@ enum class IntervalTrainingScreens{
 @Composable
 fun IntervalTrainingNavHost(
     navController: NavHostController,
-    trainingViewModel: TrainingViewModel,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -160,7 +150,6 @@ fun IntervalTrainingNavHost(
     ) {
         composable(IntervalTrainingScreens.Welcome.name) {
             IntervalTrainingScreen(
-                trainingViewModel = trainingViewModel,
                 onNewTraining = {
                     navController.navigate("${IntervalTrainingScreens.Editor.name}/${UUID.randomUUID()}")
                 },
@@ -182,20 +171,12 @@ fun IntervalTrainingNavHost(
         ) { entry ->
             val immediate = entry.arguments?.getBoolean(IMMEDIATE_FLAG)?:false
             val training = entry.arguments?.getString(TRAINING_KEY)
-            val viewModel: ExerciseViewModel = viewModel(
-                key = "exercise_model_for_$training",
-                factory = viewModelProviderFactoryOf { ExerciseViewModel(
-                    repository = trainingViewModel.trainingRepository, UUID.fromString(training)
-                ) }
-            )
-            PlayExerciseTableScreen( exerciseViewModel = viewModel,
+            PlayTrainingScreen(
+                trainingId = UUID.fromString(training),
                 immediate = immediate,
                 onBack = { navController.popBackStack() },
                 onEdit = {
                     navController.navigate("${IntervalTrainingScreens.Editor.name}/${training}")
-                },
-                updateSession = { session ->
-                    trainingViewModel.saveSession(session)
                 }
             )
         }
@@ -209,17 +190,10 @@ fun IntervalTrainingNavHost(
             ),
         ) { entry ->
             val training = entry.arguments?.getString(TRAINING_KEY)?.let { UUID.fromString(it) } ?: UUID.randomUUID()
-            val viewModel: ExerciseViewModel = viewModel(
-                key = "exercise_model_for_$training",
-                factory = viewModelProviderFactoryOf { ExerciseViewModel(
-                    repository = trainingViewModel.trainingRepository, training
-                ) }
-            )
-            EditExerciseTableScreen( exerciseViewModel = viewModel,
+            EditTrainingScreen(
+                trainingId = training,
                 onBack = { navController.popBackStack() },
-                onDelete = { trainingViewModel.delete(training);navController.popBackStack();navController.popBackStack() },
-                onUpdateTraining = {trainingViewModel.update(it)},
-                onExerciseListUpdated = { viewModel.saveExerciseList(it) }
+                onDelete = { navController.clearBackStack(IntervalTrainingScreens.Welcome.name)},
             )
         }
     }

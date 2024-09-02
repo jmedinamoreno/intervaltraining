@@ -28,8 +28,6 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -53,8 +51,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.medina.intervaltraining.R
-import com.medina.intervaltraining.data.viewmodel.Exercise
-import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
+import com.medina.intervaltraining.data.model.Exercise
+import com.medina.intervaltraining.data.model.ExerciseIcon
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import com.medina.intervaltraining.ui.drawableId
 import com.medina.intervaltraining.ui.iconName

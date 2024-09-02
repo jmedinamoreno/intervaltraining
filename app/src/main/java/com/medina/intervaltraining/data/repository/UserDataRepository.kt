@@ -21,7 +21,7 @@ interface UserDataRepository {
     /**
      * Stream of [UserData]
      */
-    val userData: Flow<UserData>
+    val userDataFlow: Flow<UserData>
 
     /*
      * Updates whether training start sounds are enabled.
@@ -99,7 +99,7 @@ class UserDataDatastoreRepository @Inject constructor(
     private val userPreferences: DataStore<Preferences>
 ): UserDataRepository {
 
-    override val userData: Flow<UserData> = userPreferences.data
+    override val userDataFlow: Flow<UserData> = userPreferences.data
         .catch { exception ->
             // dataStore.data throws an IOException when an error is encountered when reading data
             if (exception is IOException) {
@@ -189,7 +189,7 @@ class UserDataDatastoreRepository @Inject constructor(
 }
 
 class UserDataDummyRepository() : UserDataRepository {
-    override val userData: Flow<UserData>
+    override val userDataFlow: Flow<UserData>
         get() = flowOf(UserData(
             soundsEnabledTrainingEnd = true,
             soundsEnabledExerciseStart = true,

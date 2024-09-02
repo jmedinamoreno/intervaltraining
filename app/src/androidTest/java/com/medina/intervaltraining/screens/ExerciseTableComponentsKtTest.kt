@@ -10,7 +10,7 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.lifecycle.asLiveData
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
+import com.medina.intervaltraining.data.model.ExerciseIcon
 import com.medina.intervaltraining.ui.SemanticsKeyDrawableId
 import com.medina.intervaltraining.ui.SemanticsKeyIconName
 import com.medina.intervaltraining.ui.components.AnimatedIconRow

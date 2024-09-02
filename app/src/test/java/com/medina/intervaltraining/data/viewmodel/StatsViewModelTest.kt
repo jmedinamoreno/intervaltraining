@@ -6,6 +6,7 @@ import androidx.lifecycle.Observer
 import com.medina.intervaltraining.data.Clock
 import com.medina.intervaltraining.data.model.Session
 import com.medina.intervaltraining.data.model.Training
+import com.medina.intervaltraining.data.repository.StatsRepository
 import com.medina.intervaltraining.data.repository.TrainingRepository
 import com.medina.intervaltraining.data.room.SessionItem
 import com.medina.intervaltraining.data.room.TrainingItem
@@ -36,7 +37,7 @@ import java.util.concurrent.TimeoutException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(MockitoJUnitRunner::class)
-class TrainingViewModelTest {
+class StatsViewModelTest {
 
     // Run tasks synchronously
     @Rule
@@ -47,17 +48,17 @@ class TrainingViewModelTest {
     private val testScope = TestScope(testDispatcher)
 
     @Mock
-    private lateinit var repository: TrainingRepository
+    private lateinit var repository: StatsRepository
     @Mock
     private lateinit var clock: Clock
 
-    private lateinit var viewModel: TrainingViewModel
+    private lateinit var viewModel: StatsViewModel
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = TrainingViewModel(
-            trainingRepository = repository,
+        viewModel = StatsViewModel(
+            statsRepository = repository,
             clock = clock)
     }
 
@@ -67,54 +68,11 @@ class TrainingViewModelTest {
     }
 
     @Test
-    fun trainingList_returnsTrainingListFromRepository(){
-        val expectedTrainings = listOf(
-            Training(name = "Training 1", defaultTimeSec = 10, defaultRestSec = 5 ),
-            Training(name = "Training 2", defaultTimeSec = 15, defaultRestSec = 8 )
-        )
-        whenever(repository.trainingsFlow).thenReturn(flowOf(expectedTrainings))
-        val viewModel = TrainingViewModel(repository, clock)
-        assertEquals(expectedTrainings, viewModel.trainingList.getOrAwaitValue())
-    }
-
-    @Test
     fun getTimeForTrainingLiveData_returnsTimeForTrainingFromRepository(){
         val trainingId = UUID.randomUUID()
         val expectedTime = 30
-//        whenever(repository.timeForTrainingMinAsFlow(trainingId)).thenReturn(flowOf(expectedTime))
-//        assertEquals(expectedTime, viewModel.getTimeForTrainingLiveData(trainingId).getOrAwaitValue())
-    }
-
-    @Test
-    fun delete_callsRepositoryFunctions() {
-        val trainingId = UUID.randomUUID()
-        viewModel.delete(trainingId)
-        testScope.runTest {
-            verify(repository).deleteAllExercises(trainingId)
-            verify(repository).deleteTraining(trainingId)
-        }
-    }
-
-    @Test
-    fun update_callsRepositoryInsert(){
-        val trainingId = UUID.randomUUID()
-        val training = Training(
-            id = trainingId,
-            name = "Test Training",
-            defaultTimeSec = 10,
-            defaultRestSec = 5,
-        )
-        val trainingItem = TrainingItem(
-            id = trainingId,
-            name = "Test Training",
-            defaultTimeSec = 10,
-            defaultRestSec = 5,
-            lastUsed = 1)
-        whenever(clock.timestamp()).thenReturn(1)
-        viewModel.update(training = training)
-        testScope.runTest{
-            verify(repository).insert(training = trainingItem)
-        }
+        whenever(repository.timeForTrainingMinAsFlow(trainingId)).thenReturn(flowOf(expectedTime))
+        assertEquals(expectedTime, viewModel.getTimeForTrainingLiveData(trainingId).getOrAwaitValue())
     }
 
     @Test
@@ -133,12 +91,12 @@ class TrainingViewModelTest {
             set(Calendar.SECOND,59)
             set(Calendar.MILLISECOND,0)
         }
-//        whenever(repository.getTotalSessionTimeSecForDateRange(weekstart.timeInMillis,weekend.timeInMillis)).thenReturn(flowOf(7200f))
-//        assertEquals(2f, viewModel.getTrainedThisWeek().getOrAwaitValue())
-//        verify(repository).getTotalSessionTimeSecForDateRange(
-//            weekstart.timeInMillis,
-//            weekend.timeInMillis
-//        )
+        whenever(repository.getTotalSessionTimeSecForDateRange(weekstart.timeInMillis,weekend.timeInMillis)).thenReturn(flowOf(7200f))
+        assertEquals(2f, viewModel.getTrainedThisWeek().getOrAwaitValue())
+        verify(repository).getTotalSessionTimeSecForDateRange(
+            weekstart.timeInMillis,
+            weekend.timeInMillis
+        )
     }
 
     @Test
@@ -156,10 +114,10 @@ class TrainingViewModelTest {
             dateTimeEnd = sessionItem.dateTimeEnd,
             dateTimeStart = sessionItem.dateTimeStart
         )
-//        viewModel.saveSession(session)
-//        testScope.runTest {
-//            verify(repository).insert(sessionItem)
-//        }
+        viewModel.saveSession(session)
+        testScope.runTest {
+            verify(repository).insert(sessionItem)
+        }
     }
 
     fun <T> LiveData<T>.getOrAwaitValue(

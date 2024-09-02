@@ -1,4 +1,4 @@
-package com.medina.intervaltraining.screens
+package com.medina.intervaltraining.ui.screens
 
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
@@ -57,11 +57,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.generation.suggestExercise
 import com.medina.intervaltraining.data.model.Training
-import com.medina.intervaltraining.data.viewmodel.Exercise
-import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
+import com.medina.intervaltraining.data.model.Exercise
+import com.medina.intervaltraining.data.model.ExerciseIcon
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
 import com.medina.intervaltraining.ui.components.AnimatedIconRow
 import com.medina.intervaltraining.ui.components.DialogIconButton
@@ -106,24 +107,27 @@ fun EditExerciseTableScreenTopBar(trainingTitle: String, onSave:(String)->Unit, 
 }
 
 @Composable
-fun EditExerciseTableScreen(
-    exerciseViewModel: ExerciseViewModel,
+fun EditTrainingScreen(
+    trainingId: UUID,
+    exerciseViewModel: ExerciseViewModel = hiltViewModel<ExerciseViewModel, ExerciseViewModel.ExerciseViewModelFactory> { factory ->
+        factory.create(trainingId)
+    },
     onBack: () -> Unit,
     onDelete: () -> Unit,
-    onUpdateTraining: (newTraining: Training) -> Unit,
-    onExerciseListUpdated: (newItems: List<Exercise>) -> Unit = {},
 ) {
-    val exerciseList: List<Exercise> by exerciseViewModel.exercises.observeAsState(listOf())
     val training: Training by exerciseViewModel.training.observeAsState(Training("x", 0, 0))
+    val exerciseList: List<Exercise> by exerciseViewModel.exercises.observeAsState(listOf())
     EditExerciseTableView(
         training = training,
         exerciseList = exerciseList,
         onBack = onBack,
-        onDeleteTraining = onDelete,
+        onDeleteTraining = {
+            exerciseViewModel.deleteTraining()
+            onDelete()
+        },
         onUpdateTrainingName = {newName ->
             if(newName.isNotBlank() && newName != training.name) {
-                training.name = newName
-                onUpdateTraining(training)
+                exerciseViewModel.renameTraining(newName)
             }
         },
         onUpdateExercise = { newExercise ->
@@ -134,17 +138,17 @@ fun EditExerciseTableScreen(
             }else{
                 newList.add(newExercise)
             }
-            onExerciseListUpdated(newList)
+            exerciseViewModel.saveExerciseList(newList)
         },
         onDuplicateExercise = {index ->
             val newList = exerciseList.toMutableList()
             newList.add(index+1, newList[index].newCopy())
-            onExerciseListUpdated(newList)
+            exerciseViewModel.saveExerciseList(newList)
         },
         onDeleteExercise = {index ->
             val newList = exerciseList.toMutableList()
             newList.removeAt(index)
-            onExerciseListUpdated(newList)
+            exerciseViewModel.saveExerciseList(newList)
         },
         onMoveExercise = { oldIndex, toNewIndex ->
             val newList = exerciseList.toMutableList()
@@ -155,7 +159,7 @@ fun EditExerciseTableScreen(
             }else {
                 newList.add(toNewIndex, exercise)
             }
-            onExerciseListUpdated(newList)
+            exerciseViewModel.saveExerciseList(newList)
         }
     )
 }
@@ -578,7 +582,7 @@ fun EditorPreviewSmall() {
         Surface(color = MaterialTheme.colorScheme.background) {
             EditExerciseTableView(
                 training = Training("Test",0,0),
-                exerciseList = (1 until 3).toList().map{Exercise("Exercise $it")})
+                exerciseList = (1 until 3).toList().map{ Exercise("Exercise $it") })
         }
     }
 }
@@ -592,7 +596,7 @@ fun EditorPreview() {
         Surface(color = MaterialTheme.colorScheme.background) {
             EditExerciseTableView(
                 training = Training("Test",0,0),
-                exerciseList = (1 until 15).toList().map{Exercise("Exercise $it")})
+                exerciseList = (1 until 15).toList().map{ Exercise("Exercise $it") })
         }
     }
 }

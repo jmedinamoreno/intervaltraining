@@ -1,5 +1,6 @@
 package com.medina.intervaltraining.data.model
 
+import com.medina.intervaltraining.data.room.TrainingItem
 import java.util.UUID
 
 data class TrainingUIModel(
@@ -47,3 +48,16 @@ data class Session(
     var complete:Boolean = false,
     val id: UUID = UUID.randomUUID()
 )
+
+data class Exercise(
+    val name:String,
+    val icon: ExerciseIcon = ExerciseIcon.NONE,
+    val timeSec:Int=-1,
+    val restSec:Int=-1,
+    // since the user may generate identical tasks, give them each a unique ID
+    val id: UUID = UUID.randomUUID()
+){
+    fun newCopy() = this.copy(id = UUID.randomUUID())
+}
+
+enum class ExerciseIcon{NONE,RUN,JUMP,LEFT_ARM,RIGHT_ARM,SIT_UP,PUSH_UPS,FLEX,KNEES}

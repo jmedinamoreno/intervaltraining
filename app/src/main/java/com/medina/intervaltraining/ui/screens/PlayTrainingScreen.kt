@@ -1,4 +1,4 @@
-package com.medina.intervaltraining.screens
+package com.medina.intervaltraining.ui.screens
 
 import android.content.res.Configuration
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -45,7 +45,7 @@ import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.model.Session
 import com.medina.intervaltraining.data.model.Training
 import com.medina.intervaltraining.data.repository.UserDataDummyRepository
-import com.medina.intervaltraining.data.viewmodel.Exercise
+import com.medina.intervaltraining.data.model.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
 import com.medina.intervaltraining.data.viewmodel.SettingsViewModel
 import com.medina.intervaltraining.data.viewmodel.getCountDownSecs
@@ -65,8 +65,11 @@ import java.util.Calendar
 import java.util.UUID
 
 @Composable
-fun PlayExerciseTableScreen(
-    exerciseViewModel: ExerciseViewModel,
+fun PlayTrainingScreen(
+    trainingId : UUID,
+    exerciseViewModel: ExerciseViewModel = hiltViewModel<ExerciseViewModel, ExerciseViewModel.ExerciseViewModelFactory> { factory ->
+        factory.create(trainingId)
+    },
     immediate: Boolean = false,
     onBack:()->Unit,
     onEdit:()->Unit,
@@ -90,7 +93,7 @@ fun PlayExerciseTableView(
     training: Training?,
     session: Session,
     items: List<Exercise>,
-    startState:PlayExerciseTableState = PlayExerciseTableState.READY,
+    startState: PlayExerciseTableState = PlayExerciseTableState.READY,
     updateSession: (session:Session) -> Unit = {_->},
     onBack:()->Unit = {},
     onEdit:()->Unit = {},
@@ -206,10 +209,10 @@ fun PlayExerciseTableView(
                 currentSessionItem.dateTimeEnd = Calendar.getInstance().timeInMillis
                 updateSession(currentSessionItem)
             },
-            onPause = {playState = PlayExerciseTableState.PAUSED},
-            onResume = {playState = PlayExerciseTableState.RUNNING},
+            onPause = {playState = PlayExerciseTableState.PAUSED },
+            onResume = {playState = PlayExerciseTableState.RUNNING },
             onSkip = { toIndex -> currentExerciseIndex = toIndex},
-            onRestart = {playState = PlayExerciseTableState.READY}
+            onRestart = {playState = PlayExerciseTableState.READY }
         )
     }
 }
@@ -401,7 +404,7 @@ fun PlayerPreview() {
                 settingsViewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository()),
                 training = Training("test",30,5),
                 session = Session(UUID.randomUUID()),
-                items = (1 until 15).toList().map{Exercise("Exercise $it")})
+                items = (1 until 15).toList().map{ Exercise("Exercise $it") })
         }
     }
 }
@@ -416,7 +419,7 @@ fun PlaybackTabletPreview() {
                 settingsViewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository()),
                 training = Training("test",30,5),
                 session = Session(UUID.randomUUID()),
-                items = (1 until 15).toList().map{Exercise("Exercise $it")})
+                items = (1 until 15).toList().map{ Exercise("Exercise $it") })
         }
     }
 }
@@ -431,7 +434,7 @@ fun PlaybackHorizontalPreview() {
                 settingsViewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository()),
                 training = Training("test",30,5),
                 session = Session(UUID.randomUUID()),
-                items = (1 until 15).toList().map{Exercise("Exercise $it")})
+                items = (1 until 15).toList().map{ Exercise("Exercise $it") })
         }
     }
 }
@@ -446,7 +449,7 @@ fun PlaybackExtraWidePreview() {
                 settingsViewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository()),
                 training = Training("test",30,5),
                 session = Session(UUID.randomUUID()),
-                items = (1 until 15).toList().map{Exercise("Exercise $it")})
+                items = (1 until 15).toList().map{ Exercise("Exercise $it") })
         }
     }
 }

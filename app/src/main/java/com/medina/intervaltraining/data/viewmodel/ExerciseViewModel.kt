@@ -4,39 +4,39 @@ package com.medina.intervaltraining.data.viewmodel
 import android.util.Log
 import androidx.lifecycle.*
 import androidx.lifecycle.asLiveData
+import com.medina.intervaltraining.data.Clock
+import com.medina.intervaltraining.data.RealClock
+import com.medina.intervaltraining.data.model.Exercise
 import com.medina.intervaltraining.data.model.Session
 import com.medina.intervaltraining.data.model.Training
+import com.medina.intervaltraining.data.model.toExercise
+import com.medina.intervaltraining.data.model.toExerciseItem
+import com.medina.intervaltraining.data.model.toTraining
+import com.medina.intervaltraining.data.model.toTrainingItem
 import com.medina.intervaltraining.data.repository.TrainingRepository
-import com.medina.intervaltraining.data.room.ExerciseItem
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.*
 
-data class Exercise(
-    val name:String,
-    val icon: ExerciseIcon = ExerciseIcon.NONE,
-    val timeSec:Int=-1,
-    val restSec:Int=-1,
-    // since the user may generate identical tasks, give them each a unique ID
-    val id: UUID = UUID.randomUUID()
-){
-    fun newCopy() = this.copy(id = UUID.randomUUID())
-}
-
-enum class ExerciseIcon{NONE,RUN,JUMP,LEFT_ARM,RIGHT_ARM,SIT_UP,PUSH_UPS,FLEX,KNEES}
-
-class ExerciseViewModel(
+@HiltViewModel(assistedFactory = ExerciseViewModel.ExerciseViewModelFactory::class)
+class ExerciseViewModel @AssistedInject constructor(
+    @Assisted private val trainingId: UUID,
     private val repository: TrainingRepository,
-    val trainingId: UUID) : ViewModel() {
+    private val clock: Clock = RealClock()
+) : ViewModel() {
+
+    @AssistedFactory
+    interface ExerciseViewModelFactory {
+        fun create(trainingId: UUID): ExerciseViewModel
+    }
 
     val session = Session(training = trainingId)
 
-    val training: LiveData<Training> = repository.getTrainingFlow(trainingId).map { it?.let { Training(
-        id = it.id,
-        defaultTimeSec = it.defaultTimeSec,
-        defaultRestSec = it.defaultRestSec,
-        name = it.name,
-    ) }?: Training(
+    val training: LiveData<Training> = repository.getTrainingFlow(trainingId).map { it?.toTraining() ?: Training(
         id = trainingId,
         defaultTimeSec = 45,
         defaultRestSec = 15,
@@ -45,14 +45,33 @@ class ExerciseViewModel(
     ) }.asLiveData()
 
     val exercises: LiveData<List<Exercise>> = repository.exercisesFlow(trainingId).map { list ->
-        list.map { item ->
-                        Exercise(name = item.name,
-                            icon = item.icon,
-                            timeSec = item.timeSec,
-                            restSec = item.restSec,
-                            id = item.id,
-                        ) }
+        list.map { item -> item.toExercise() }
     }.asLiveData()
+
+    fun deleteTraining() {
+        viewModelScope.launch {
+            try {
+                repository.deleteAllExercises(trainingId)
+            }catch (e:Exception){
+                e.printStackTrace()
+            }
+            try {
+                repository.deleteTraining(trainingId)
+            }catch (e:Exception){
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun renameTraining(newName: String) {
+        viewModelScope.launch {
+            repository.update(
+                training.value
+                    ?.copy(name = newName)
+                    ?.toTrainingItem(lastUsed = clock.timestamp())
+                    ?: return@launch)
+        }
+    }
 
     fun saveExerciseList(newList: List<Exercise>) {
         if(newList.isEmpty()){
@@ -72,18 +91,12 @@ class ExerciseViewModel(
         }
     }
 
-    fun saveExercise(exercise: Exercise, position:Int) {
+    private fun saveExercise(exercise: Exercise, position:Int) {
         viewModelScope.launch {
-            val ei = ExerciseItem(
-                id = exercise.id,
-                training = trainingId,
-                name = exercise.name,
-                icon = exercise.icon,
-                restSec = exercise.restSec,
-                timeSec = exercise.timeSec,
+            repository.insert(exercise = exercise.toExerciseItem(
+                trainingId = trainingId,
                 position = position
-            )
-            repository.insert(ei)
+            ))
         }
     }
 }

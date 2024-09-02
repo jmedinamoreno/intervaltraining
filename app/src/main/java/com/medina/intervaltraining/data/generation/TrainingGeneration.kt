@@ -4,8 +4,8 @@ import androidx.annotation.ArrayRes
 import androidx.compose.runtime.Composable
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.model.Training
-import com.medina.intervaltraining.data.viewmodel.Exercise
-import com.medina.intervaltraining.data.viewmodel.ExerciseIcon
+import com.medina.intervaltraining.data.model.Exercise
+import com.medina.intervaltraining.data.model.ExerciseIcon
 import com.medina.intervaltraining.ui.stringRandom
 
 @Composable

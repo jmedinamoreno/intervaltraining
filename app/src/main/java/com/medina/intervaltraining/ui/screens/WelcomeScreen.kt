@@ -1,11 +1,15 @@
-package com.medina.intervaltraining.screens
+package com.medina.intervaltraining.ui.screens
 
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -34,10 +38,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.data.model.Training
+import com.medina.intervaltraining.data.repository.StatsDummyRepository
 import com.medina.intervaltraining.data.repository.TrainingDummyRepository
 import com.medina.intervaltraining.data.repository.UserDataDummyRepository
+import com.medina.intervaltraining.data.viewmodel.SettingsViewModel
+import com.medina.intervaltraining.data.viewmodel.StatsViewModel
 import com.medina.intervaltraining.data.viewmodel.TrainingViewModel
 import com.medina.intervaltraining.ui.floatToHours
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
@@ -45,9 +53,15 @@ import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 enum class IntervalTrainingSections { TRAININGS, STATS, SETTINGS }
 @Composable
 fun IntervalTrainingScreen(
+    welcomePanel: @Composable ColumnScope.(modifier:Modifier) -> Unit = { TrainedHoursComponent(it) },
+    settingsPanel: @Composable ColumnScope.(modifier:Modifier) -> Unit = { Text(text = "#TODO") },
+    trainingListPanel: @Composable ColumnScope.(
+        modifier:Modifier,
+        onPlay: (training: Training, immediate:Boolean) -> Unit
+    ) -> Unit = { modifier, onPlayCall -> TrainingListPanel(modifier, onPlay = onPlayCall) },
+    statsPanel: @Composable ColumnScope.(modifier:Modifier) -> Unit = { Text(text = "#TODO") },
     onNewTraining: () -> Unit = {},
     onPlay: (training: Training, immediate:Boolean) -> Unit = { _, _->},
-    trainingViewModel: TrainingViewModel
 ){
     var navSelectedItem by rememberSaveable { mutableStateOf(IntervalTrainingSections.TRAININGS) }
     Scaffold(
@@ -80,7 +94,7 @@ fun IntervalTrainingScreen(
 //                    label = { Text(stringResource(id = R.string.bottom_bar_stats_label)) }
 //                )
                 NavigationBarItem(
-                    selected =  navSelectedItem ==  IntervalTrainingSections.SETTINGS,
+                    selected =  navSelectedItem == IntervalTrainingSections.SETTINGS,
                     onClick = { navSelectedItem = IntervalTrainingSections.SETTINGS },
                     icon = { Icon(Icons.Default.Settings, null) },
                     label = { Text(stringResource(id = R.string.bottom_bar_settings_label)) }
@@ -89,25 +103,28 @@ fun IntervalTrainingScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
-            TrainedHoursComponent(trainingViewModel = trainingViewModel,
-                modifier = Modifier
+            welcomePanel(
+                Modifier
                     .fillMaxWidth()
-                    .padding(all = 16.dp))
+                    .padding(all = 16.dp)
+            )
             when(navSelectedItem) {
                 IntervalTrainingSections.TRAININGS ->
-                    TrainingListComponent(
-                        trainingViewModel = trainingViewModel,
-                        modifier = Modifier
+                    trainingListPanel(
+                        Modifier
                             .fillMaxWidth()
                             .padding(all = 16.dp)
                             .weight(1f),
-                        onPlay = onPlay
+                        onPlay
                     )
                 IntervalTrainingSections.STATS ->
-                    Text(text = "#TODO")
+                    statsPanel(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(all = 16.dp))
                 IntervalTrainingSections.SETTINGS ->
-                    SettingsPanel(
-                        modifier = Modifier
+                    settingsPanel(
+                        Modifier
                             .fillMaxWidth()
                             .padding(all = 16.dp)
                             .weight(1f),
@@ -119,9 +136,12 @@ fun IntervalTrainingScreen(
 
 
 @Composable
-fun TrainedHoursComponent(trainingViewModel:TrainingViewModel, modifier: Modifier){
+fun TrainedHoursComponent(
+    modifier: Modifier,
+    statsViewModel: StatsViewModel = hiltViewModel()
+){
     Column(modifier = modifier) {
-        val hours:Float by trainingViewModel.getTrainedThisWeek().observeAsState(initial = 0f)
+        val hours:Float by statsViewModel.getTrainedThisWeek().observeAsState(initial = 0f)
         Text(stringResource(id = R.string.welcome_trained_time_first_line),
             style = MaterialTheme.typography.headlineMedium,
             textAlign = TextAlign.Center,
@@ -138,14 +158,15 @@ fun TrainedHoursComponent(trainingViewModel:TrainingViewModel, modifier: Modifie
 }
 
 @Composable
-fun TrainingListComponent(
+fun TrainingListPanel(
     modifier: Modifier,
-    trainingViewModel: TrainingViewModel,
+    trainingViewModel: TrainingViewModel = hiltViewModel(),
+    statsViewModel: StatsViewModel = hiltViewModel(),
     onPlay: (training: Training, immediate:Boolean) -> Unit = { _, _->},){
     val items: List<Training> by trainingViewModel.trainingList.observeAsState(listOf())
     LazyColumn(modifier = modifier) {
         items(items) { training ->
-            val timeMin: Int by trainingViewModel.getTimeForTrainingLiveData(training.id).observeAsState(0)
+            val timeMin: Int by statsViewModel.getTimeForTrainingLiveData(training.id).observeAsState(0)
             TrainingItemComponent(training, timeMin, Modifier.padding(2.dp),
                 {onPlay(training,false)},{onPlay(training,true)})
         }
@@ -182,15 +203,16 @@ fun TrainingItemComponent(training: Training, timeMin: Int, modifier: Modifier, 
 @Composable
 fun TrainingListPreview() {
     IntervalTrainingTheme {
-        val items: List<Training> = listOf(
-            Training(name = "Training 1", defaultTimeSec = 45, defaultRestSec = 15),
-            Training(name = "Training 2", defaultTimeSec = 45, defaultRestSec = 15),
+        TrainingListPanel(
+            modifier = Modifier.fillMaxWidth(),
+            trainingViewModel = TrainingViewModel(
+                trainingRepository = TrainingDummyRepository(),
+            ),
+            statsViewModel = StatsViewModel(
+                statsRepository = StatsDummyRepository()
+            )
+            ,onPlay = { _, _->}
         )
-        LazyColumn(modifier = Modifier) {
-            items(items) { training ->
-                TrainingItemComponent(training, 45, Modifier.padding(2.dp), {},{})
-            }
-        }
     }
 }
 
@@ -201,9 +223,27 @@ fun TrainingListPreview() {
 fun InternalTrainingScreenPreview() {
     IntervalTrainingTheme {
         IntervalTrainingScreen(
-            trainingViewModel = TrainingViewModel(
-                trainingRepository = TrainingDummyRepository(),
-                userDataRepository = UserDataDummyRepository(),
-            ))
+            welcomePanel = { TrainedHoursComponent(
+                it,
+                statsViewModel = StatsViewModel(
+                    statsRepository = StatsDummyRepository()
+                )
+            ) },
+            settingsPanel = { SettingsPanel(
+                it,
+                viewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository())
+            ) },
+            trainingListPanel = { modifier, onPlayCall -> TrainingListPanel(
+                modifier,
+                trainingViewModel = TrainingViewModel(
+                    trainingRepository = TrainingDummyRepository(),
+                ),
+                statsViewModel = StatsViewModel(
+                    statsRepository = StatsDummyRepository()
+                )
+                ,onPlay = onPlayCall
+            ) },
+            statsPanel = { Text(text = "#TODO") },
+        )
     }
 }
