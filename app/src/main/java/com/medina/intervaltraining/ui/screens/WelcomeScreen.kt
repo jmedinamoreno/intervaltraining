@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -53,13 +54,21 @@ import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 enum class IntervalTrainingSections { TRAININGS, STATS, SETTINGS }
 @Composable
 fun IntervalTrainingScreen(
-    welcomePanel: @Composable ColumnScope.(modifier:Modifier) -> Unit = { TrainedHoursComponent(it) },
-    settingsPanel: @Composable ColumnScope.(modifier:Modifier) -> Unit = { Text(text = "#TODO") },
+    welcomePanel: @Composable ColumnScope.(modifier: Modifier) -> Unit = { modifier ->
+        TrainedHoursComponent(modifier)
+    },
+    settingsPanel: @Composable ColumnScope.(modifier: Modifier) -> Unit = { modifier ->
+        SettingsPanel(modifier)
+    },
     trainingListPanel: @Composable ColumnScope.(
-        modifier:Modifier,
-        onPlay: (training: Training, immediate:Boolean) -> Unit
-    ) -> Unit = { modifier, onPlayCall -> TrainingListPanel(modifier, onPlay = onPlayCall) },
-    statsPanel: @Composable ColumnScope.(modifier:Modifier) -> Unit = { Text(text = "#TODO") },
+        modifier: Modifier,
+        onPlay: (training: Training, immediate: Boolean) -> Unit
+    ) -> Unit = { modifier, onPlayCall ->
+        TrainingListPanel(modifier, onPlay = onPlayCall)
+    },
+    statsPanel: @Composable ColumnScope.(modifier: Modifier) -> Unit = { modifier ->
+        StatsPanel(modifier)
+    },
     onNewTraining: () -> Unit = {},
     onPlay: (training: Training, immediate:Boolean) -> Unit = { _, _->},
 ){
@@ -87,12 +96,12 @@ fun IntervalTrainingScreen(
                     icon = { Icon(Icons.Default.AccountBox, null) },
                     label = { Text(stringResource(id = R.string.bottom_bar_trainings_label)) }
                 )
-//                NavigationBarItem(
-//                    selected =  navSelectedItem ==  IntervalTrainingSections.STATS,
-//                    onClick = { navSelectedItem = IntervalTrainingSections.STATS },
-//                    icon = { Icon(Icons.Default.DateRange, null) },
-//                    label = { Text(stringResource(id = R.string.bottom_bar_stats_label)) }
-//                )
+                NavigationBarItem(
+                    selected =  navSelectedItem ==  IntervalTrainingSections.STATS,
+                    onClick = { navSelectedItem = IntervalTrainingSections.STATS },
+                    icon = { Icon(Icons.Default.DateRange, null) },
+                    label = { Text(stringResource(id = R.string.bottom_bar_stats_label)) }
+                )
                 NavigationBarItem(
                     selected =  navSelectedItem == IntervalTrainingSections.SETTINGS,
                     onClick = { navSelectedItem = IntervalTrainingSections.SETTINGS },
@@ -223,27 +232,34 @@ fun TrainingListPreview() {
 fun InternalTrainingScreenPreview() {
     IntervalTrainingTheme {
         IntervalTrainingScreen(
-            welcomePanel = { TrainedHoursComponent(
-                it,
-                statsViewModel = StatsViewModel(
-                    statsRepository = StatsDummyRepository()
+            welcomePanel = { modifier ->
+                TrainedHoursComponent(
+                    modifier = modifier,
+                    statsViewModel = StatsViewModel(
+                        statsRepository = StatsDummyRepository()
+                    )
                 )
-            ) },
-            settingsPanel = { SettingsPanel(
-                it,
-                viewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository())
-            ) },
-            trainingListPanel = { modifier, onPlayCall -> TrainingListPanel(
-                modifier,
-                trainingViewModel = TrainingViewModel(
-                    trainingRepository = TrainingDummyRepository(),
-                ),
-                statsViewModel = StatsViewModel(
-                    statsRepository = StatsDummyRepository()
+            },
+            settingsPanel = { modifier ->
+                SettingsPanel(
+                    modifier = modifier,
+                    viewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository())
                 )
-                ,onPlay = onPlayCall
-            ) },
-            statsPanel = { Text(text = "#TODO") },
+            },
+            trainingListPanel = { modifier, onPlayCall ->
+                TrainingListPanel(
+                    modifier = modifier,
+                    trainingViewModel = TrainingViewModel(
+                        trainingRepository = TrainingDummyRepository(),
+                    ),
+                    statsViewModel = StatsViewModel(
+                        statsRepository = StatsDummyRepository()
+                    ), onPlay = onPlayCall
+                )
+            },
+            statsPanel = { modifier ->
+                StatsPanel(modifier)
+            },
         )
     }
 }

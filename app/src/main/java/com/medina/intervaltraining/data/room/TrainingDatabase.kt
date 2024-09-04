@@ -67,6 +67,11 @@ data class ExerciseItem(
     @PrimaryKey val id: UUID = UUID.randomUUID()
 )
 
+data class SessionTimePerDay(
+    val day: String,
+    val totalTimeSec: Long
+)
+
 @Dao
 interface TrainingDao {
     @Query("SELECT * FROM training_table ORDER BY lastUsed DESC")
@@ -123,6 +128,18 @@ interface TrainingDao {
     @Query("SELECT SUM(dateTimeEnd - dateTimeStart) FROM session_table WHERE dateTimeStart > :startDatetime AND dateTimeStart < :endDatetime")
     fun getTotalSessionTimeMilsForDateRangeAsFlow(startDatetime: Long, endDatetime: Long): Flow<Long?>
 
+    @Query("SELECT \n" +
+            "    strftime('%Y-%m-%d', datetime(dateTimeStart / 1000, 'unixepoch')) AS day,\n" +
+            "    SUM(dateTimeEnd - dateTimeStart) / 1000 AS totalTimeSec\n" +
+            "FROM \n" +
+            "    session_table\n" +
+            "WHERE \n" +
+            "    strftime('%Y-%m', datetime(dateTimeStart / 1000, 'unixepoch')) = :yearMonth -- Format the year month as: '2023-12'\n" +
+            "GROUP BY \n" +
+            "    day\n" +
+            "ORDER BY \n" +
+            "    day;")
+    fun getSessionTimeSecForEachDayInMonth(yearMonth: String):  Flow<List<SessionTimePerDay>>
 }
 
 @Database(

@@ -47,6 +47,10 @@ class StatsViewModel @Inject constructor(
         }.asLiveData()
     }
 
+    fun getTrainedSecForEachDayInMonth(calendar: Calendar):LiveData<List<Long>>{
+        return statsRepository.getSessionTimeSecForEachDayInMonth(calendar).asLiveData()
+    }
+
     fun saveSession(session: Session) {
         viewModelScope.launch {
             try {
