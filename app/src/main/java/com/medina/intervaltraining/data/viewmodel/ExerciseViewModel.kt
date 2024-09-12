@@ -63,6 +63,16 @@ class ExerciseViewModel @AssistedInject constructor(
         }
     }
 
+    fun createTraining(newName: String) {
+        viewModelScope.launch {
+            repository.insert(
+                training.value
+                    ?.copy(name = newName)
+                    ?.toTrainingItem(lastUsed = clock.timestamp())
+                    ?: return@launch)
+        }
+    }
+
     fun renameTraining(newName: String) {
         viewModelScope.launch {
             repository.update(

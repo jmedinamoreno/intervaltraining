@@ -4,16 +4,24 @@ import android.content.res.Configuration
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,7 +41,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -258,36 +268,55 @@ fun PlayExerciseTableBody(
     onRestart:()->Unit,
 ) {
     val orientation = LocalConfiguration.current.orientation
-    if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-        PlayExerciseTableBodyHorizontal(
-            modifier = modifier,
-            items = items,
-            playState = playState,
-            currentExercise = currentExercise,
-            currentTimeMillis = currentTimeMillis,
-            startDelay = startDelay,
-            onStart = onStart,
-            onPause = onPause,
-            onResume = onResume,
-            onSkip = onSkip,
-            onRestart = onRestart
-        )
-    } else {
-        PlayExerciseTableBodyVertical(
-            modifier = modifier,
-            items = items,
-            playState = playState,
-            currentExercise = currentExercise,
-            currentTimeMillis = currentTimeMillis,
-            startDelay = startDelay,
-            onStart = onStart,
-            onPause = onPause,
-            onResume = onResume,
-            onSkip = onSkip,
-            onRestart = onRestart
-        )
+    Box(modifier = modifier) {
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            PlayExerciseTableBodyHorizontal(
+                modifier = Modifier,
+                items = items,
+                playState = playState,
+                currentExercise = currentExercise,
+                currentTimeMillis = currentTimeMillis,
+                startDelay = startDelay,
+                onStart = onStart,
+                onPause = onPause,
+                onResume = onResume,
+                onSkip = onSkip,
+                onRestart = onRestart
+            )
+        } else {
+            PlayExerciseTableBodyVertical(
+                modifier = Modifier,
+                items = items,
+                playState = playState,
+                currentExercise = currentExercise,
+                currentTimeMillis = currentTimeMillis,
+                startDelay = startDelay,
+                onStart = onStart,
+                onPause = onPause,
+                onResume = onResume,
+                onSkip = onSkip,
+                onRestart = onRestart
+            )
+        }
+        Card(
+            shape = RoundedCornerShape(
+                topStart = 0.dp,
+                topEnd = 0.dp,
+                bottomStart = 60.dp,
+                bottomEnd = 0.dp
+            ),
+            modifier = Modifier
+                .width(80.dp)
+                .height(80.dp)
+                .align(Alignment.TopEnd),
+        ) {
+            Text(text = "${currentExercise+1} / ${items.size}",
+                modifier = Modifier.align(Alignment.End).padding(top = 8.dp, end = 8.dp))
+            val totalMinutes = currentTimeMillis/60000 + items.subList(0,currentExercise).sumOf { it.timeSec+it.restSec }/60
+            Text(text = "$totalMinutes' / ${(items.sumOf { it.timeSec+it.restSec })/60}'",
+                modifier = Modifier.align(Alignment.End).padding(top = 2.dp, end = 8.dp))
+        }
     }
-
 }
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -310,7 +339,11 @@ fun PlayExerciseTableBodyVertical(
     ) {
         stickyHeader {
             ExercisePlayer(
-                modifier = Modifier.aspectRatio(4f/3f),
+                modifier = if(playState==PlayExerciseTableState.READY){
+                    Modifier.aspectRatio(21/9f)
+                }else{
+                    Modifier.aspectRatio(1f)
+                },
                 playState = playState,
                 runningExercise = items.getOrNull(currentExercise),
                 nextExercise = items.getOrNull(currentExercise+1),
@@ -369,7 +402,6 @@ fun PlayExerciseTableBodyHorizontal(
                         else -> currentTimeMillis
                     },
                     modifier = Modifier
-                        .padding(2.dp)
                         .combinedClickable(
                             onLongClick = { onSkip(items.indexOf(exercise)) },
                             onClick = {},

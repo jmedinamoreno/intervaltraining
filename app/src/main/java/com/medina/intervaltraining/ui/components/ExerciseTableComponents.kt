@@ -109,8 +109,10 @@ fun IconRow(
     onIconChange: (ExerciseIcon) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(modifier.semantics { this.testTag = "IconRow" }
-        .selectableGroup()
+    Row(
+        modifier
+            .semantics { this.testTag = "IconRow" }
+            .selectableGroup()
     ) {
         for (exerciseIcon in ExerciseIcon.entries) {
             SelectableIconButton(
@@ -206,23 +208,33 @@ fun ExerciseRunningLabel(exercise: Exercise, currentTimeMillis:Int, modifier: Mo
     val color = if(isRest) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
 
     when{
-        currentTimeMillis == 0 ->  ExerciseLabel(exercise = exercise,modifier = modifier)
+        currentTimeMillis == 0 ->
+            ExerciseLabel(exercise = exercise,modifier = modifier.padding(2.dp))
         currentTimeMillis < 0 ->
-            Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, shadowElevation = 1.dp) {
-                Box(modifier = Modifier
-                    .height(2.dp)
-                    .fillMaxWidth()
-                    .background(Color(0x80808080)))
-                Box(modifier = Modifier.background(Color(0x40808080))) {
+            Surface(modifier = modifier.padding(2.dp), shape = MaterialTheme.shapes.medium, shadowElevation = 1.dp) {
+                Box(modifier = Modifier.background(Color(0x80808080))) {
                     ExerciseLabelBody(exercise = exercise, modifier = modifier.padding(2.dp))
                 }
             }
-        else -> Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, shadowElevation = 1.dp) {
-            Box(modifier = Modifier
-                .height(2.dp)
-                .fillMaxWidth(totalProgress)
-                .background(color))
-            ExerciseLabelBody(exercise = exercise, modifier = modifier.padding(2.dp))
+        else ->
+            Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, shadowElevation = 1.dp) {
+            Box {
+                ExerciseLabelBody(
+                    exercise = exercise,
+                    modifier = modifier.padding(
+                        top = 2.dp,
+                        start = 2.dp,
+                        end = 2.dp,
+                        bottom = 10.dp
+                    ))
+                Box(
+                    modifier = Modifier
+                        .height(12.dp)
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth(totalProgress)
+                        .background(color)
+                )
+            }
         }
     }
 }
@@ -239,19 +251,6 @@ fun RowPreview() {
                 .fillMaxWidth()
                 .height(420.dp)
         ) {
-            ExerciseLabel(
-                Exercise(
-                    name = "Jump",
-                    icon = ExerciseIcon.JUMP
-                )
-            )
-            ExerciseRunningLabel(exercise =
-                Exercise(
-                    name = "Run",
-                    icon = ExerciseIcon.RUN
-                ),
-                0
-            )
             ExerciseRunningLabel(exercise =
             Exercise(
                 name = "Run",
@@ -266,7 +265,7 @@ fun RowPreview() {
                 timeSec = 40,
                 restSec = 20,
             ),
-                20
+                20000
             )
             ExerciseRunningLabel(exercise =
             Exercise(
@@ -275,9 +274,15 @@ fun RowPreview() {
                 timeSec = 40,
                 restSec = 20,
             ),
-                50
+                50000
             )
-
+            ExerciseRunningLabel(exercise =
+            Exercise(
+                name = "Run",
+                icon = ExerciseIcon.RUN
+            ),
+                0
+            )
         }
     }
 }

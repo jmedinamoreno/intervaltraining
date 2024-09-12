@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -55,6 +56,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -115,7 +117,7 @@ fun EditTrainingScreen(
     onBack: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    val training: Training by exerciseViewModel.training.observeAsState(Training("x", 0, 0))
+    val training: Training by exerciseViewModel.training.observeAsState(Training("", 0, 0))
     val exerciseList: List<Exercise> by exerciseViewModel.exercises.observeAsState(listOf())
     EditExerciseTableView(
         training = training,
@@ -127,7 +129,11 @@ fun EditTrainingScreen(
         },
         onUpdateTrainingName = {newName ->
             if(newName.isNotBlank() && newName != training.name) {
-                exerciseViewModel.renameTraining(newName)
+                if(training.name.isBlank()) {
+                    exerciseViewModel.createTraining(newName)
+                }else {
+                    exerciseViewModel.renameTraining(newName)
+                }
             }
         },
         onUpdateExercise = { newExercise ->
@@ -294,6 +300,16 @@ fun ExerciseTableEditableList(
                 },
             state = listState,
             content = {
+                stickyHeader {
+                    Box(modifier = Modifier.fillParentMaxWidth()) {
+                        ExerciseTableHeader(
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .align(Alignment.Center),
+                            exercises = items,
+                        )
+                    }
+                }
                 if (training.name.isNotEmpty()) {
                     itemsIndexed(
                         items = items,
@@ -319,11 +335,9 @@ fun ExerciseTableEditableList(
                     }
                     item {
                         Box(
-                            Modifier
+                            modifier = Modifier
                                 .fillParentMaxWidth()
-                                .height(82.dp)) {
-
-                        }
+                                .height(82.dp)) {}
                     }
                 } else {
                     item {
@@ -366,6 +380,25 @@ fun ExerciseTableEditableList(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun ExerciseTableHeader(modifier: Modifier, exercises: List<Exercise>) {
+    Row(modifier = modifier) {
+        Text(
+            text = "${exercises.size} exercises",
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontSize = 24.sp
+            ),
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "${(exercises.sumOf { it.timeSec+it.restSec }) / 60} min",
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontSize = 24.sp
+            ),
+        )
     }
 }
 
