@@ -1,22 +1,24 @@
 package com.medina.intervaltraining.ui.screens
 
 import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -43,23 +45,27 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.medina.intervaltraining.R
+import com.medina.intervaltraining.data.model.Exercise
 import com.medina.intervaltraining.data.model.Session
 import com.medina.intervaltraining.data.model.Training
 import com.medina.intervaltraining.data.repository.UserDataDummyRepository
-import com.medina.intervaltraining.data.model.Exercise
 import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
 import com.medina.intervaltraining.data.viewmodel.SettingsViewModel
 import com.medina.intervaltraining.data.viewmodel.getCountDownSecs
 import com.medina.intervaltraining.data.viewmodel.getTrainingStartDelaySecs
+import com.medina.intervaltraining.ui.components.ExerciseLabel
+import com.medina.intervaltraining.ui.components.ExerciseLabelBody
 import com.medina.intervaltraining.ui.components.ExercisePlayer
 import com.medina.intervaltraining.ui.components.ExerciseRunningLabel
 import com.medina.intervaltraining.ui.components.FXSoundPool
@@ -151,7 +157,7 @@ fun PlayExerciseTableView(
                         val exercise = items.getOrNull(currentExerciseIndex) ?: return@launch
                         if (currentTimeSec == exercise.let { it.timeSec + it.restSec }) {
                             currentTimeMillis = 0
-                            currentExerciseIndex += 1
+                            currentExerciseIndex = currentExerciseIndex.inc()
                             if (currentExerciseIndex < items.size) {
                                 soundPool?.playExerciseStartSound(settingsState)
                                 startTime = Calendar.getInstance().timeInMillis
@@ -210,7 +216,7 @@ fun PlayExerciseTableView(
             items = items,
             playState = playState,
             startDelay = startDelay,
-            currentExercise = currentExerciseIndex,
+            currentExercise = currentExerciseIndex.coerceAtMost((items.size-1).coerceAtLeast(0)),
             currentTimeMillis = currentTimeMillis,
             onStart = {
                 playState = PlayExerciseTableState.STARTING
@@ -311,10 +317,14 @@ fun PlayExerciseTableBody(
                 .align(Alignment.TopEnd),
         ) {
             Text(text = "${currentExercise+1} / ${items.size}",
-                modifier = Modifier.align(Alignment.End).padding(top = 8.dp, end = 8.dp))
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(top = 8.dp, end = 8.dp))
             val totalMinutes = currentTimeMillis/60000 + items.subList(0,currentExercise).sumOf { it.timeSec+it.restSec }/60
             Text(text = "$totalMinutes' / ${(items.sumOf { it.timeSec+it.restSec })/60}'",
-                modifier = Modifier.align(Alignment.End).padding(top = 2.dp, end = 8.dp))
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(top = 2.dp, end = 8.dp))
         }
     }
 }
@@ -333,43 +343,78 @@ fun PlayExerciseTableBodyVertical(
     onSkip:(toIndex:Int)->Unit,
     onRestart:()->Unit,
 ) {
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    // Control automatic scrolling based on conditions (e.g., initial load)
+    LaunchedEffect(key1 = currentExercise) {
+        delay(1000)// Initial delay (optional)
+        coroutineScope.launch {
+            Log.d("SCROLL", "Scrolling to $currentExercise")
+            listState.animateScrollToItem(currentExercise)
+        }
+    }
     LazyColumn(
         modifier = modifier,
+        state = listState,
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        stickyHeader {
-            ExercisePlayer(
-                modifier = if(playState==PlayExerciseTableState.READY){
-                    Modifier.aspectRatio(21/9f)
-                }else{
-                    Modifier.aspectRatio(1f)
-                },
-                playState = playState,
-                runningExercise = items.getOrNull(currentExercise),
-                nextExercise = items.getOrNull(currentExercise+1),
-                currentTimeMillis = currentTimeMillis,
-                startDelay = startDelay,
-                onStart = onStart,
-                onPause = onPause,
-                onResume = onResume,
-                onRestart = onRestart
-            )
-        }
         items(items) { exercise ->
-            ExerciseRunningLabel(
-                exercise = exercise,
-                currentTimeMillis = when{
-                    items.indexOf(exercise) > currentExercise -> 0
-                    items.indexOf(exercise) < currentExercise -> -1
-                    else -> currentTimeMillis
-                },
-                modifier = Modifier
-                    .padding(2.dp)
-                    .combinedClickable(
-                        onLongClick = { onSkip(items.indexOf(exercise)) },
-                        onClick = {},
-                        enabled = true
-                    ))
+            when {
+                items.indexOf(exercise) > currentExercise ->
+                    ExerciseLabel(
+                        exercise = exercise,
+                        modifier = Modifier
+                            .padding(2.dp)
+                            .combinedClickable {
+                                onSkip(items.indexOf(exercise))
+                            }
+                    )
+                items.indexOf(exercise) < currentExercise ->
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        shadowElevation = 1.dp,
+                        modifier = modifier
+                            .padding(2.dp)
+                            .combinedClickable {
+                                onSkip(items.indexOf(exercise))
+                            }
+                    ) {
+                        Box(modifier = Modifier.background(Color(0x80808080))) {
+                            ExerciseLabelBody(exercise = exercise, modifier = modifier.padding(2.dp))
+                        }
+                    }
+                else ->
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        shadowElevation = 1.dp,
+                        modifier = Modifier
+                            .padding(2.dp)
+                            .combinedClickable(
+                                onLongClick = { onSkip(items.indexOf(exercise)) },
+                                onClick = {
+                                    when (playState) {
+                                        PlayExerciseTableState.READY -> onStart()
+                                        PlayExerciseTableState.STARTING ->  onPause()
+                                        PlayExerciseTableState.RUNNING -> onPause()
+                                        PlayExerciseTableState.PAUSED -> onResume()
+                                        PlayExerciseTableState.COMPLETE -> onRestart()
+                                    }
+                                },
+                                enabled = true
+                            )
+                    ) {
+                        ExercisePlayer(
+                            modifier =Modifier
+                                .fillMaxWidth()
+                                .height(300.dp)
+                                .padding(bottom = 20.dp),
+                            playState = playState,
+                            startDelay = startDelay,
+                            runningExercise = exercise,
+                            currentTimeMillis = currentTimeMillis
+                        )
+                    }
+            }
         }
     }
 }
@@ -394,33 +439,76 @@ fun PlayExerciseTableBodyHorizontal(
             .weight(1f)
         ) {
             items(items) { exercise ->
-                ExerciseRunningLabel(
-                    exercise = exercise,
-                    currentTimeMillis = when{
-                        items.indexOf(exercise) > currentExercise -> 0
-                        items.indexOf(exercise) < currentExercise -> -1
-                        else -> currentTimeMillis
-                    },
-                    modifier = Modifier
-                        .combinedClickable(
-                            onLongClick = { onSkip(items.indexOf(exercise)) },
-                            onClick = {},
-                            enabled = true
-                        ))
+                when {
+                    items.indexOf(exercise) > currentExercise ->
+                        ExerciseLabel(
+                            exercise = exercise,
+                            modifier = Modifier
+                                .padding(2.dp)
+                                .combinedClickable {
+                                    onSkip(items.indexOf(exercise))
+                                }
+                        )
+                    items.indexOf(exercise) < currentExercise ->
+                        Surface(
+                            shape = MaterialTheme.shapes.medium,
+                            shadowElevation = 1.dp,
+                            modifier = modifier
+                                .padding(2.dp)
+                                .combinedClickable {
+                                    onSkip(items.indexOf(exercise))
+                                }
+                        ) {
+                            Box(modifier = Modifier.background(Color(0x80808080))) {
+                                ExerciseLabelBody(exercise = exercise, modifier = modifier.padding(2.dp))
+                            }
+                        }
+                    else ->
+                        Surface(
+                            shape = MaterialTheme.shapes.medium,
+                            shadowElevation = 1.dp,
+                            modifier = Modifier
+                                .padding(2.dp)
+                                .clickable {
+                                    when (playState) {
+                                        PlayExerciseTableState.READY -> onStart()
+                                        PlayExerciseTableState.STARTING ->  onPause()
+                                        PlayExerciseTableState.RUNNING -> onPause()
+                                        PlayExerciseTableState.PAUSED -> onResume()
+                                        PlayExerciseTableState.COMPLETE -> onRestart()
+                                    }
+                                }
+                        ) {
+                            ExerciseRunningLabel(exercise = exercise, currentTimeMillis, modifier = modifier.padding(2.dp))
+                        }
+                }
             }
         }
-        ExercisePlayer(
-            modifier = Modifier.aspectRatio(1f),
-            playState = playState,
-            runningExercise = items.getOrNull(currentExercise),
-            nextExercise = items.getOrNull(currentExercise+1),
-            currentTimeMillis = currentTimeMillis,
-            startDelay = startDelay,
-            onStart = onStart,
-            onPause = onPause,
-            onResume = onResume,
-            onRestart = onRestart
-        )
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            shadowElevation = 1.dp,
+            modifier = Modifier.aspectRatio(1f)
+                .padding(2.dp)
+                .clickable {
+                    when (playState) {
+                        PlayExerciseTableState.READY -> onStart()
+                        PlayExerciseTableState.STARTING ->  onPause()
+                        PlayExerciseTableState.RUNNING -> onPause()
+                        PlayExerciseTableState.PAUSED -> onResume()
+                        PlayExerciseTableState.COMPLETE -> onRestart()
+                    }
+                }
+        ) {
+            ExercisePlayer(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(bottom = 20.dp),
+                playState = playState,
+                startDelay = startDelay,
+                runningExercise = items.getOrNull(currentExercise),
+                currentTimeMillis = currentTimeMillis
+            )
+        }
     }
 }
 
@@ -457,31 +545,53 @@ fun PlaybackTabletPreview() {
 }
 
 @ExperimentalFoundationApi
-@Preview(name = "Light Mode", widthDp = 720, heightDp = 360, uiMode = Configuration.ORIENTATION_LANDSCAPE)
+@Preview(name = "Light Mode", group = "TabletBody")
+@Preview(name = "Dark Mode", group = "TabletBody", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Preview(name = "Light Mode", group = "TabletBodyHorizontal", widthDp = 720, heightDp = 460, uiMode = Configuration.ORIENTATION_LANDSCAPE)
+@Preview(name = "Dark Mode", group = "TabletBodyHorizontal", widthDp = 720, heightDp = 460, uiMode = Configuration.ORIENTATION_LANDSCAPE or Configuration.UI_MODE_NIGHT_YES)
+@Preview(name = "Light Mode", group = "TabletBodyHorizontal", widthDp = 720, heightDp = 260, uiMode = Configuration.ORIENTATION_LANDSCAPE)
+@Preview(name = "Dark Mode", group = "TabletBodyHorizontal", widthDp = 720, heightDp = 260, uiMode = Configuration.ORIENTATION_LANDSCAPE or Configuration.UI_MODE_NIGHT_YES)
 @Composable
-fun PlaybackHorizontalPreview() {
+fun PlaybackTabletBodyPreview(@PreviewParameter(PlaybackTableBodyArgsProvider::class) param: PlaybackTableBodyArgs) {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            PlayExerciseTableView(
-                settingsViewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository()),
-                training = Training("test",30,5),
-                session = Session(UUID.randomUUID()),
-                items = (1 until 15).toList().map{ Exercise("Exercise $it") })
+            PlayExerciseTableBody(
+                modifier = Modifier.padding(8.dp),
+                items = (1 until 15).toList().map{ Exercise("Exercise $it", timeSec = 45, restSec = 15) },
+                playState = param.playState,
+                startDelay = 0,
+                currentExercise = param.currentExercise,
+                currentTimeMillis = param.currentTimeMillis,
+                onStart = { },
+                onPause = { },
+                onResume = {  },
+                onSkip = {  },
+                onRestart = {  }
+            )
         }
     }
 }
-
-@ExperimentalFoundationApi
-@Preview(name = "Light Mode", widthDp = 720, heightDp = 260, uiMode = Configuration.ORIENTATION_LANDSCAPE)
-@Composable
-fun PlaybackExtraWidePreview() {
-    IntervalTrainingTheme {
-        Surface(color = MaterialTheme.colorScheme.background) {
-            PlayExerciseTableView(
-                settingsViewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository()),
-                training = Training("test",30,5),
-                session = Session(UUID.randomUUID()),
-                items = (1 until 15).toList().map{ Exercise("Exercise $it") })
-        }
-    }
+data class PlaybackTableBodyArgs(
+    val playState:PlayExerciseTableState,
+    val currentExercise: Int,
+    val currentTimeMillis: Int,
+)
+class PlaybackTableBodyArgsProvider : PreviewParameterProvider<PlaybackTableBodyArgs> {
+    override val values = sequenceOf(
+        PlaybackTableBodyArgs(
+            playState = PlayExerciseTableState.READY,
+            currentExercise = 0,
+            currentTimeMillis = 0
+        ),
+        PlaybackTableBodyArgs(
+            playState = PlayExerciseTableState.STARTING,
+            currentExercise = 0,
+            currentTimeMillis = 500
+        ),
+        PlaybackTableBodyArgs(
+            playState = PlayExerciseTableState.RUNNING,
+            currentExercise = 2,
+            currentTimeMillis = 15000
+        ),
+    )
 }

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -27,12 +26,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.graphics.drawscope.inset
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -61,12 +61,7 @@ fun ExercisePlayer(
     playState: PlayExerciseTableState,
     startDelay: Int,
     runningExercise: Exercise?,
-    nextExercise: Exercise?,
-    currentTimeMillis: Int,
-    onStart:()->Unit,
-    onPause:()->Unit,
-    onResume:()->Unit,
-    onRestart: () -> Unit,){
+    currentTimeMillis: Int){
     Surface(modifier = modifier.then(
         Modifier.background(
             MaterialTheme.colorScheme.background
@@ -74,37 +69,30 @@ fun ExercisePlayer(
     )) {
         when (playState) {
             PlayExerciseTableState.READY -> BigPlayButton(
-                modifier = Modifier.fillMaxSize(),
-                onStart = onStart
+                modifier = Modifier.fillMaxSize()
             )
 
             PlayExerciseTableState.STARTING ->  StartingRoutine(
                 modifier = Modifier.fillMaxSize(),
                 startDelay = startDelay,
                 currentTimeMillis = currentTimeMillis,
-                firstExercise = runningExercise,
-                onPause = onPause
+                firstExercise = runningExercise
             )
 
             PlayExerciseTableState.RUNNING -> RunningExercise(
                 modifier = Modifier.fillMaxSize(),
                 runningExercise = runningExercise,
-                nextExercise = nextExercise,
-                onPause = onPause,
                 currentTimeMillis = currentTimeMillis
             )
 
             PlayExerciseTableState.PAUSED -> PausedExercise(
                 modifier = Modifier.fillMaxSize(),
                 runningExercise = runningExercise,
-                nextExercise = nextExercise,
-                onResume = onResume,
                 currentTimeSec = currentTimeMillis / 1000
             )
 
             PlayExerciseTableState.COMPLETE -> FinishedTraining(
                 modifier = Modifier.fillMaxSize(),
-                onRestart = onRestart
             )
         }
     }
@@ -113,12 +101,12 @@ fun ExercisePlayer(
 private const val longNameLimit = 20
 private val nameFontSize = 28.sp
 private val longnameFontSize = 20.sp
-private val nextFontSize = 16.sp
+private val nextFontSize = 26.sp
 private val pauseFontSize = 48.sp
 
 @Composable
-fun BigPlayButton(modifier: Modifier, onStart:()->Unit){
-    Box(modifier = modifier.clickable { onStart() }) {
+fun BigPlayButton(modifier: Modifier){
+    Box(modifier = modifier) {
         Icon(
             imageVector = Icons.Default.PlayArrow,
             contentDescription = stringForIconDescription(id = R.string.running_training_play),
@@ -135,8 +123,7 @@ fun StartingRoutine(
     modifier: Modifier,
     startDelay: Int,
     currentTimeMillis: Int,
-    firstExercise: Exercise?,
-    onPause: () -> Unit
+    firstExercise: Exercise?
 ) {
     val text = stringRandomSelected(id = R.array.running_exercise_starting_list)
     val textFirst = firstExercise?.name?.let {
@@ -144,7 +131,7 @@ fun StartingRoutine(
             R.string.running_exercise_first_exercise_label,
             it
         ) }
-    Column {
+    Column(modifier = modifier) {
         OutlinedText(
             modifier = Modifier.align(Alignment.CenterHorizontally),
             text = text,
@@ -154,7 +141,7 @@ fun StartingRoutine(
             shadowColor = MaterialTheme.colorScheme.background
         )
         CounterView(
-            modifier = modifier.clickable { onPause() },
+            modifier = Modifier.weight(1f),
             total = startDelay,
             currentMs = currentTimeMillis,
             backgroundColor = MaterialTheme.colorScheme.background,
@@ -175,7 +162,7 @@ fun StartingRoutine(
 }
 
 @Composable
-fun RunningExercise(modifier: Modifier, runningExercise: Exercise?, nextExercise: Exercise?, currentTimeMillis: Int, onPause:()->Unit){
+fun RunningExercise(modifier: Modifier, runningExercise: Exercise?, currentTimeMillis: Int){
     if(runningExercise == null) return
     val runTimeMillis = runningExercise.timeSec * 1000
     val restTimeMillis = runningExercise.restSec * 1000
@@ -186,9 +173,7 @@ fun RunningExercise(modifier: Modifier, runningExercise: Exercise?, nextExercise
     else
         runningExercise.name
 
-    val nextText = nextExercise?.name?.let { "Next is $it" } ?: "Finish"
-
-    Column(modifier = modifier.clickable { onPause() }) {
+    Column(modifier = modifier) {
         OutlinedText(
             modifier = Modifier.align(Alignment.CenterHorizontally),
             text = text,
@@ -207,19 +192,11 @@ fun RunningExercise(modifier: Modifier, runningExercise: Exercise?, nextExercise
             secondaryColor = MaterialTheme.colorScheme.secondary,
             thirdColor = MaterialTheme.colorScheme.secondary.mixColor(MaterialTheme.colorScheme.background)
         )
-        OutlinedText(
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            text = nextText,
-            fontSize = nextFontSize,
-            color = MaterialTheme.colorScheme.primary,
-            outlineColor = MaterialTheme.colorScheme.background,
-            shadowColor = MaterialTheme.colorScheme.background
-        )
     }
 }
 
 @Composable
-fun PausedExercise(modifier: Modifier, runningExercise: Exercise?, nextExercise: Exercise?, currentTimeSec: Int, onResume:()->Unit){
+fun PausedExercise(modifier: Modifier, runningExercise: Exercise?, currentTimeSec: Int){
     if(runningExercise == null) return
     val runTimeMillis = runningExercise.timeSec * 1000
     val restTimeMillis = runningExercise.restSec * 1000
@@ -230,14 +207,13 @@ fun PausedExercise(modifier: Modifier, runningExercise: Exercise?, nextExercise:
         stringChosen(id = R.array.running_exercise_rest_list,runningExercise.name.hashCode())
     else
         runningExercise.name
-    val nextText = nextExercise?.name?.let { "Next is $it" } ?: stringResource(R.string.running_exercise_finish)
 
     val backgroundColor = MaterialTheme.colorScheme.background.desaturateColor()
     val primaryColor = MaterialTheme.colorScheme.primary.desaturateColor().mixColor(backgroundColor)
     val secondaryColor = MaterialTheme.colorScheme.secondary.desaturateColor().mixColor(backgroundColor)
     val thirdColor = MaterialTheme.colorScheme.tertiary.desaturateColor().mixColor(backgroundColor)
 
-    Box(modifier = modifier.clickable { onResume() }) {
+    Box(modifier = modifier) {
         Column {
             OutlinedText(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -257,14 +233,6 @@ fun PausedExercise(modifier: Modifier, runningExercise: Exercise?, nextExercise:
                 secondaryColor = secondaryColor,
                 thirdColor = thirdColor
             )
-            OutlinedText(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                text = nextText,
-                fontSize = nextFontSize,
-                color = MaterialTheme.colorScheme.primary,
-                outlineColor = MaterialTheme.colorScheme.background,
-                shadowColor = MaterialTheme.colorScheme.background
-            )
         }
         OutlinedText(
             modifier = Modifier.align(Alignment.Center),
@@ -277,8 +245,8 @@ fun PausedExercise(modifier: Modifier, runningExercise: Exercise?, nextExercise:
 }
 
 @Composable
-fun FinishedTraining(modifier: Modifier, onRestart:()->Unit){
-    Column(modifier = modifier.clickable { onRestart() }, verticalArrangement = Arrangement.Center) {
+fun FinishedTraining(modifier: Modifier){
+    Column(modifier = modifier, verticalArrangement = Arrangement.Center) {
         OutlinedText(
             modifier = Modifier.align(Alignment.CenterHorizontally),
             text = stringResource(R.string.running_exercise_end_top),
@@ -355,7 +323,7 @@ secondaryColor:Color
 }
 
 @Composable
-private fun ChronometerView(
+public fun ChronometerView(
     modifier: Modifier,
     progressMs: Int,
     partialMs: Int,
@@ -403,7 +371,7 @@ private fun ChronometerView(
 }
 
 @Composable
-private fun ProgressCircle(
+fun ProgressCircle(
     modifier: Modifier,
     localProgress: Float,
     totalProgress: Float,
@@ -414,12 +382,13 @@ private fun ProgressCircle(
     Canvas(modifier = modifier) {
         val padding = 8.dp.toPx()
         drawRect(backgroundColor)
-        inset(left = padding, right = padding, top = padding, bottom = padding) {
+        translate(left = padding, top = padding) {
+            drawContext.size = Size(size.width - (padding * 2), size.height - (padding * 2))
             val canvasWidth = size.width
             val canvasHeight = size.height
-            val size = min(canvasHeight,canvasWidth)
+            val circleSize = min(canvasHeight,canvasWidth)
             val center = Offset(x = canvasWidth / 2, y = canvasHeight / 2)
-            val radius = size / 2f
+            val radius = circleSize / 2f
             clipRect(0F, localProgress * canvasHeight, canvasWidth, canvasHeight) {
                 drawCircle(
                     color = secondaryColor,
@@ -427,13 +396,12 @@ private fun ProgressCircle(
                     radius = radius - 6.dp.toPx(),
                 )
             }
-            inset(
-                left =  (canvasWidth-size)/2,
-                right =  (canvasWidth-size)/2,
-                top = (canvasHeight-size)/2,
-                bottom = (canvasHeight-size)/2,
+            translate(
+                left =  (canvasWidth-circleSize)/2,
+                top = (canvasHeight-circleSize)/2,
             ) {
                 drawArc(
+                    size = Size(circleSize, circleSize),
                     color = primaryColor,
                     useCenter = false,
                     startAngle = 270f,
@@ -489,7 +457,7 @@ fun StartPreview() {
         Surface(color = MaterialTheme.colorScheme.background) {
             BigPlayButton(modifier = Modifier
                 .width(200.dp)
-                .height(200.dp)) {}
+                .height(200.dp))
         }
     }
 }
@@ -503,7 +471,7 @@ fun EndPreview() {
             FinishedTraining(
                 modifier = Modifier
                     .width(200.dp)
-                    .height(200.dp)) {}
+                    .height(200.dp))
         }
     }
 }
@@ -524,7 +492,6 @@ fun StartingPreview2p5to5() {
                 startDelay = 5,
                 currentTimeMillis = 2500,
                 firstExercise = Exercise(name = "Exercise", icon = ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
-                onPause = {}
             )
         }
     }
@@ -543,7 +510,6 @@ fun StartingPreviewZeroTo5() {
                 startDelay = 5,
                 currentTimeMillis = 0,
                 firstExercise = Exercise(name = "Exercise", icon = ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
-                onPause = {}
             )
         }
     }
@@ -560,10 +526,7 @@ fun StartingPreviewZeroTo10() {
                     .height(200.dp),
                 startDelay = 10,
                 currentTimeMillis = 0,
-                firstExercise = Exercise(
-                    name = "Exercise",
-                    icon = ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
-                onPause = {}
+                firstExercise = Exercise(name = "Exercise", icon = ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
             )
         }
     }
@@ -581,10 +544,7 @@ fun StartingPreviewZeroTo2() {
                     .height(200.dp),
                 startDelay = 2,
                 currentTimeMillis = 0,
-                firstExercise = Exercise(
-                    name = "Exercise",
-                    icon = ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
-                onPause = {}
+                firstExercise = Exercise(name = "Exercise", icon = ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
             )
         }
     }
@@ -602,9 +562,7 @@ fun PlaybackPreview() {
                     .width(200.dp)
                     .height(200.dp),
                 Exercise("Exercise", ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
-                Exercise("Following", ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
-                currentTimeMillis = 18000,
-                onPause = {}
+                currentTimeMillis = 18000
             )
         }
     }
@@ -623,9 +581,7 @@ fun PlaybackPreviewRest() {
                     .width(200.dp)
                     .height(200.dp),
                 Exercise("Exercise", ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
-                Exercise("Following", ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
-                currentTimeMillis = 50000,
-                onPause = {}
+                currentTimeMillis = 50000
             )
         }
     }
@@ -644,9 +600,7 @@ fun PlaybackPreviewLongName() {
                     .width(200.dp)
                     .height(200.dp),
                 Exercise("Exercise with a long name", ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
-                Exercise("Following", ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
-                currentTimeMillis = 18000,
-                onPause = {}
+                currentTimeMillis = 18000
             )
         }
     }
@@ -664,9 +618,7 @@ fun PlaybackPreviewPaused() {
                     .width(200.dp)
                     .height(200.dp),
                 runningExercise = Exercise("Exercise", ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
-                nextExercise = Exercise("Following", ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
-                currentTimeSec = 18,
-                onResume = {}
+                currentTimeSec = 18
             )
         }
     }

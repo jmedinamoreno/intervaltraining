@@ -58,9 +58,10 @@ import com.medina.intervaltraining.ui.drawableId
 import com.medina.intervaltraining.ui.iconName
 import com.medina.intervaltraining.ui.iconToDrawableResource
 import com.medina.intervaltraining.ui.iconToStringResource
+import com.medina.intervaltraining.ui.screens.PlayExerciseTableState
 import com.medina.intervaltraining.ui.stringForButtonDescription
 import com.medina.intervaltraining.ui.stringForIconDescription
-
+import com.medina.intervaltraining.ui.theme.mixColor
 
 
 /**
@@ -207,35 +208,22 @@ fun ExerciseRunningLabel(exercise: Exercise, currentTimeMillis:Int, modifier: Mo
     val isRest = exercise.timeSec*1000 < currentTimeMillis
     val color = if(isRest) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
 
-    when{
-        currentTimeMillis == 0 ->
-            ExerciseLabel(exercise = exercise,modifier = modifier.padding(2.dp))
-        currentTimeMillis < 0 ->
-            Surface(modifier = modifier.padding(2.dp), shape = MaterialTheme.shapes.medium, shadowElevation = 1.dp) {
-                Box(modifier = Modifier.background(Color(0x80808080))) {
-                    ExerciseLabelBody(exercise = exercise, modifier = modifier.padding(2.dp))
-                }
-            }
-        else ->
-            Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, shadowElevation = 1.dp) {
-            Box {
-                ExerciseLabelBody(
-                    exercise = exercise,
-                    modifier = modifier.padding(
-                        top = 2.dp,
-                        start = 2.dp,
-                        end = 2.dp,
-                        bottom = 10.dp
-                    ))
-                Box(
-                    modifier = Modifier
-                        .height(12.dp)
-                        .align(Alignment.BottomStart)
-                        .fillMaxWidth(totalProgress)
-                        .background(color)
-                )
-            }
-        }
+    Box {
+        ExerciseLabelBody(
+            exercise = exercise,
+            modifier = modifier.padding(
+                top = 2.dp,
+                start = 2.dp,
+                end = 2.dp,
+                bottom = 10.dp
+            ))
+        Box(
+            modifier = Modifier
+                .height(12.dp)
+                .align(Alignment.BottomStart)
+                .fillMaxWidth(totalProgress)
+                .background(color)
+        )
     }
 }
 
@@ -243,47 +231,29 @@ fun ExerciseRunningLabel(exercise: Exercise, currentTimeMillis:Int, modifier: Mo
 @Preview(name = "Light Mode")
 @Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
-fun RowPreview() {
+fun LabelPreview() {
     IntervalTrainingTheme {
-        Column(
-            modifier = Modifier
-                .padding(horizontal = 8.dp, vertical = 8.dp)
-                .fillMaxWidth()
-                .height(420.dp)
-        ) {
-            ExerciseRunningLabel(exercise =
+        ExerciseLabel(exercise =
+            Exercise(
+                name = "Run",
+                icon = ExerciseIcon.RUN
+            )
+        )
+    }
+}
+
+@Preview(name = "Light Mode")
+@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+fun RunningLabelPreview() {
+    IntervalTrainingTheme {
+        ExerciseRunningLabel(exercise =
             Exercise(
                 name = "Run",
                 icon = ExerciseIcon.RUN
             ),
-                -1
+                currentTimeMillis = 1000
             )
-            ExerciseRunningLabel(exercise =
-            Exercise(
-                name = "Run",
-                icon = ExerciseIcon.RUN,
-                timeSec = 40,
-                restSec = 20,
-            ),
-                20000
-            )
-            ExerciseRunningLabel(exercise =
-            Exercise(
-                name = "Run",
-                icon = ExerciseIcon.RUN,
-                timeSec = 40,
-                restSec = 20,
-            ),
-                50000
-            )
-            ExerciseRunningLabel(exercise =
-            Exercise(
-                name = "Run",
-                icon = ExerciseIcon.RUN
-            ),
-                0
-            )
-        }
     }
 }
 
