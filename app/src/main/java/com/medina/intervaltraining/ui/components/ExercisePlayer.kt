@@ -42,8 +42,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.medina.intervaltraining.R
-import com.medina.intervaltraining.data.model.Exercise
-import com.medina.intervaltraining.data.model.ExerciseIcon
+import com.medina.domain.data.model.Exercise
+import com.medina.domain.data.model.ExerciseIcon
 import com.medina.intervaltraining.ui.screens.PlayExerciseTableState
 import com.medina.intervaltraining.ui.stringChosen
 import com.medina.intervaltraining.ui.stringForIconDescription
@@ -491,7 +491,12 @@ fun StartingPreview2p5to5() {
                     .height(200.dp),
                 startDelay = 5,
                 currentTimeMillis = 2500,
-                firstExercise = Exercise(name = "Exercise", icon = ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
+                firstExercise = Exercise(
+                    name = "Exercise",
+                    icon = ExerciseIcon.JUMP,
+                    restSec = 12,
+                    timeSec = 45
+                ),
             )
         }
     }
@@ -509,7 +514,12 @@ fun StartingPreviewZeroTo5() {
                     .height(200.dp),
                 startDelay = 5,
                 currentTimeMillis = 0,
-                firstExercise = Exercise(name = "Exercise", icon = ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
+                firstExercise = Exercise(
+                    name = "Exercise",
+                    icon = ExerciseIcon.JUMP,
+                    restSec = 12,
+                    timeSec = 45
+                ),
             )
         }
     }
@@ -526,7 +536,12 @@ fun StartingPreviewZeroTo10() {
                     .height(200.dp),
                 startDelay = 10,
                 currentTimeMillis = 0,
-                firstExercise = Exercise(name = "Exercise", icon = ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
+                firstExercise = Exercise(
+                    name = "Exercise",
+                    icon = ExerciseIcon.JUMP,
+                    restSec = 12,
+                    timeSec = 45
+                ),
             )
         }
     }
@@ -544,7 +559,12 @@ fun StartingPreviewZeroTo2() {
                     .height(200.dp),
                 startDelay = 2,
                 currentTimeMillis = 0,
-                firstExercise = Exercise(name = "Exercise", icon = ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
+                firstExercise = Exercise(
+                    name = "Exercise",
+                    icon = ExerciseIcon.JUMP,
+                    restSec = 12,
+                    timeSec = 45
+                ),
             )
         }
     }
@@ -561,7 +581,12 @@ fun PlaybackPreview() {
                 Modifier
                     .width(200.dp)
                     .height(200.dp),
-                Exercise("Exercise", ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
+                Exercise(
+                    "Exercise",
+                    ExerciseIcon.JUMP,
+                    restSec = 12,
+                    timeSec = 45
+                ),
                 currentTimeMillis = 18000
             )
         }
@@ -580,7 +605,12 @@ fun PlaybackPreviewRest() {
                 Modifier
                     .width(200.dp)
                     .height(200.dp),
-                Exercise("Exercise", ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
+                Exercise(
+                    "Exercise",
+                    ExerciseIcon.JUMP,
+                    restSec = 12,
+                    timeSec = 45
+                ),
                 currentTimeMillis = 50000
             )
         }
@@ -599,7 +629,12 @@ fun PlaybackPreviewLongName() {
                 Modifier
                     .width(200.dp)
                     .height(200.dp),
-                Exercise("Exercise with a long name", ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
+                Exercise(
+                    "Exercise with a long name",
+                    ExerciseIcon.JUMP,
+                    restSec = 12,
+                    timeSec = 45
+                ),
                 currentTimeMillis = 18000
             )
         }
@@ -617,7 +652,12 @@ fun PlaybackPreviewPaused() {
                 modifier = Modifier
                     .width(200.dp)
                     .height(200.dp),
-                runningExercise = Exercise("Exercise", ExerciseIcon.JUMP, restSec = 12, timeSec = 45),
+                runningExercise = Exercise(
+                    "Exercise",
+                    ExerciseIcon.JUMP,
+                    restSec = 12,
+                    timeSec = 45
+                ),
                 currentTimeSec = 18
             )
         }

@@ -51,8 +51,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.medina.intervaltraining.R
-import com.medina.intervaltraining.data.model.Exercise
-import com.medina.intervaltraining.data.model.ExerciseIcon
+import com.medina.domain.data.model.Exercise
+import com.medina.domain.data.model.ExerciseIcon
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import com.medina.intervaltraining.ui.drawableId
 import com.medina.intervaltraining.ui.iconName
@@ -234,10 +234,10 @@ fun ExerciseRunningLabel(exercise: Exercise, currentTimeMillis:Int, modifier: Mo
 fun LabelPreview() {
     IntervalTrainingTheme {
         ExerciseLabel(exercise =
-            Exercise(
-                name = "Run",
-                icon = ExerciseIcon.RUN
-            )
+        Exercise(
+            name = "Run",
+            icon = ExerciseIcon.RUN
+        )
         )
     }
 }
@@ -248,10 +248,10 @@ fun LabelPreview() {
 fun RunningLabelPreview() {
     IntervalTrainingTheme {
         ExerciseRunningLabel(exercise =
-            Exercise(
-                name = "Run",
-                icon = ExerciseIcon.RUN
-            ),
+        Exercise(
+            name = "Run",
+            icon = ExerciseIcon.RUN
+        ),
                 currentTimeMillis = 1000
             )
     }

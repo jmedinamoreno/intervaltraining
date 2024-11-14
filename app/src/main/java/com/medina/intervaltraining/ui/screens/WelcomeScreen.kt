@@ -5,11 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -40,16 +37,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.medina.domain.data.model.Training
+import com.medina.domain.data.repository.StatsDummyRepository
+import com.medina.domain.data.repository.TrainingDummyRepository
+import com.medina.domain.data.repository.UserDataDummyRepository
 import com.medina.intervaltraining.R
-import com.medina.intervaltraining.data.model.Training
-import com.medina.intervaltraining.data.repository.StatsDummyRepository
-import com.medina.intervaltraining.data.repository.TrainingDummyRepository
-import com.medina.intervaltraining.data.repository.UserDataDummyRepository
-import com.medina.intervaltraining.data.viewmodel.SettingsViewModel
-import com.medina.intervaltraining.data.viewmodel.StatsViewModel
-import com.medina.intervaltraining.data.viewmodel.TrainingViewModel
 import com.medina.intervaltraining.ui.floatToHours
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
+import com.medina.intervaltraining.viewmodel.SettingsViewModel
+import com.medina.intervaltraining.viewmodel.StatsViewModel
+import com.medina.intervaltraining.viewmodel.TrainingViewModel
 
 enum class IntervalTrainingSections { TRAININGS, STATS, SETTINGS }
 @Composable
@@ -243,7 +240,9 @@ fun InternalTrainingScreenPreview() {
             settingsPanel = { modifier ->
                 SettingsPanel(
                     modifier = modifier,
-                    viewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository())
+                    viewModel = SettingsViewModel(
+                        userDataRepository = UserDataDummyRepository()
+                    )
                 )
             },
             trainingListPanel = { modifier, onPlayCall ->

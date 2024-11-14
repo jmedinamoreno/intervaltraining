@@ -3,12 +3,13 @@ package com.medina.intervaltraining.data.viewmodel
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
-import com.medina.intervaltraining.data.Clock
-import com.medina.intervaltraining.data.model.Session
-import com.medina.intervaltraining.data.model.Training
-import com.medina.intervaltraining.data.repository.TrainingRepository
-import com.medina.intervaltraining.data.room.SessionItem
-import com.medina.intervaltraining.data.room.TrainingItem
+import com.medina.domain.data.Clock
+import com.medina.domain.data.model.Session
+import com.medina.domain.data.model.Training
+import com.medina.domain.data.repository.TrainingRepository
+import com.medina.domain.data.room.SessionItem
+import com.medina.domain.data.room.TrainingItem
+import com.medina.intervaltraining.viewmodel.TrainingViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -47,9 +48,9 @@ class TrainingViewModelTest {
     private val testScope = TestScope(testDispatcher)
 
     @Mock
-    private lateinit var repository: TrainingRepository
+    private lateinit var repository: com.medina.domain.data.repository.TrainingRepository
     @Mock
-    private lateinit var clock: Clock
+    private lateinit var clock: com.medina.domain.data.Clock
 
     private lateinit var viewModel: TrainingViewModel
 
@@ -58,7 +59,8 @@ class TrainingViewModelTest {
         Dispatchers.setMain(testDispatcher)
         viewModel = TrainingViewModel(
             trainingRepository = repository,
-            clock = clock)
+            clock = clock
+        )
     }
 
     @After
@@ -69,8 +71,16 @@ class TrainingViewModelTest {
     @Test
     fun trainingList_returnsTrainingListFromRepository(){
         val expectedTrainings = listOf(
-            Training(name = "Training 1", defaultTimeSec = 10, defaultRestSec = 5 ),
-            Training(name = "Training 2", defaultTimeSec = 15, defaultRestSec = 8 )
+            com.medina.domain.data.model.Training(
+                name = "Training 1",
+                defaultTimeSec = 10,
+                defaultRestSec = 5
+            ),
+            com.medina.domain.data.model.Training(
+                name = "Training 2",
+                defaultTimeSec = 15,
+                defaultRestSec = 8
+            )
         )
         whenever(repository.trainingsFlow).thenReturn(flowOf(expectedTrainings))
         val viewModel = TrainingViewModel(repository, clock)
@@ -98,18 +108,19 @@ class TrainingViewModelTest {
     @Test
     fun update_callsRepositoryInsert(){
         val trainingId = UUID.randomUUID()
-        val training = Training(
+        val training = com.medina.domain.data.model.Training(
             id = trainingId,
             name = "Test Training",
             defaultTimeSec = 10,
             defaultRestSec = 5,
         )
-        val trainingItem = TrainingItem(
+        val trainingItem = com.medina.domain.data.room.TrainingItem(
             id = trainingId,
             name = "Test Training",
             defaultTimeSec = 10,
             defaultRestSec = 5,
-            lastUsed = 1)
+            lastUsed = 1
+        )
         whenever(clock.timestamp()).thenReturn(1)
         viewModel.update(training = training)
         testScope.runTest{
@@ -144,12 +155,13 @@ class TrainingViewModelTest {
     @Test
     fun saveSession_callsRepositoryInsert(){
         val sessionId = UUID.randomUUID()
-        val sessionItem = SessionItem(
+        val sessionItem = com.medina.domain.data.room.SessionItem(
             id = sessionId,
             training = UUID.randomUUID(),
             dateTimeStart = Date().time,
-            dateTimeEnd = Date().time)
-        val session = Session(
+            dateTimeEnd = Date().time
+        )
+        val session = com.medina.domain.data.model.Session(
             id = sessionId,
             training = sessionItem.training,
             complete = sessionItem.complete,

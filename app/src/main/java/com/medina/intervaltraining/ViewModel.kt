@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.jetcaster.util
+package com.medina.intervaltraining
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

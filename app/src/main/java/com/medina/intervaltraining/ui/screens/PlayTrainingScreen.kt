@@ -8,7 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -55,15 +54,11 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.medina.domain.data.model.Exercise
+import com.medina.domain.data.model.Session
+import com.medina.domain.data.model.Training
+import com.medina.domain.data.repository.UserDataDummyRepository
 import com.medina.intervaltraining.R
-import com.medina.intervaltraining.data.model.Exercise
-import com.medina.intervaltraining.data.model.Session
-import com.medina.intervaltraining.data.model.Training
-import com.medina.intervaltraining.data.repository.UserDataDummyRepository
-import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
-import com.medina.intervaltraining.data.viewmodel.SettingsViewModel
-import com.medina.intervaltraining.data.viewmodel.getCountDownSecs
-import com.medina.intervaltraining.data.viewmodel.getTrainingStartDelaySecs
 import com.medina.intervaltraining.ui.components.ExerciseLabel
 import com.medina.intervaltraining.ui.components.ExerciseLabelBody
 import com.medina.intervaltraining.ui.components.ExercisePlayer
@@ -75,6 +70,10 @@ import com.medina.intervaltraining.ui.components.playRestStartSound
 import com.medina.intervaltraining.ui.components.playTrainingEndSound
 import com.medina.intervaltraining.ui.components.playTrainingStartSound
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
+import com.medina.intervaltraining.viewmodel.ExerciseViewModel
+import com.medina.intervaltraining.viewmodel.SettingsViewModel
+import com.medina.intervaltraining.viewmodel.getCountDownSecs
+import com.medina.intervaltraining.viewmodel.getTrainingStartDelaySecs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -110,7 +109,7 @@ fun PlayExerciseTableView(
     session: Session,
     items: List<Exercise>,
     startState: PlayExerciseTableState = PlayExerciseTableState.READY,
-    updateSession: (session:Session) -> Unit = {_->},
+    updateSession: (session: Session) -> Unit = { _->},
     onBack:()->Unit = {},
     onEdit:()->Unit = {},
     settingsViewModel: SettingsViewModel = hiltViewModel(),){
@@ -521,8 +520,10 @@ fun PlayerPreview() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             PlayExerciseTableView(
-                settingsViewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository()),
-                training = Training("test",30,5),
+                settingsViewModel = SettingsViewModel(
+                    userDataRepository = UserDataDummyRepository()
+                ),
+                training = Training("test", 30, 5),
                 session = Session(UUID.randomUUID()),
                 items = (1 until 15).toList().map{ Exercise("Exercise $it") })
         }
@@ -536,8 +537,10 @@ fun PlaybackTabletPreview() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             PlayExerciseTableView(
-                settingsViewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository()),
-                training = Training("test",30,5),
+                settingsViewModel = SettingsViewModel(
+                    userDataRepository = UserDataDummyRepository()
+                ),
+                training = Training("test", 30, 5),
                 session = Session(UUID.randomUUID()),
                 items = (1 until 15).toList().map{ Exercise("Exercise $it") })
         }
@@ -557,7 +560,13 @@ fun PlaybackTabletBodyPreview(@PreviewParameter(PlaybackTableBodyArgsProvider::c
         Surface(color = MaterialTheme.colorScheme.background) {
             PlayExerciseTableBody(
                 modifier = Modifier.padding(8.dp),
-                items = (1 until 15).toList().map{ Exercise("Exercise $it", timeSec = 45, restSec = 15) },
+                items = (1 until 15).toList().map{
+                    Exercise(
+                        "Exercise $it",
+                        timeSec = 45,
+                        restSec = 15
+                    )
+                },
                 playState = param.playState,
                 startDelay = 0,
                 currentExercise = param.currentExercise,

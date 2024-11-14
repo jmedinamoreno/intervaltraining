@@ -1,7 +1,7 @@
 package com.medina.intervaltraining.ui.components
 
 import android.util.Log
-import com.medina.intervaltraining.data.viewmodel.SettingsUiState
+import com.medina.intervaltraining.viewmodel.SettingsUiState
 
 fun FXSoundPool.playTrainingStartSound(settingsState: SettingsUiState){
     Log.d("JMMLOG", "ExercisesSounds: playTrainingStartSound (${(settingsState as? SettingsUiState.Success)?.settings?.soundsEnabledTrainingStart == true})")

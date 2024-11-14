@@ -68,8 +68,8 @@
     <string name="settings_panel_training_start_delay_label">Training start delay</string>
     <string name="settings_panel_training_start_delay_value">%s seconds</string>
     <string name="settings_panel_training_start_delay_extra">Set the training start delay</string>
-    <string name="settings_panel_start_trainig_sound_label">Start training sound</string>
-    <string name="settings_panel_start_trainig_sound_desc">Play a sound when the exercise starts</string>
+    <string name="settings_panel_start_training_sound_label">Start training sound</string>
+    <string name="settings_panel_start_training_sound_desc">Play a sound when the exercise starts</string>
     <string name="settings_panel_dark_mode_label">Dark mode</string>
     <string name="settings_panel_dark_mode_value">The current configuration is: %s</string>
     <string name="settings_panel_dynamic_color_label">Use system dynamic color</string>
@@ -90,33 +90,4 @@
     <string name="settings_panel_rest_sound_desc">Play a sound when the rest interval starts</string>
     <string name="settings_panel_end_training_sound_label">End training sound</string>
     <string name="settings_panel_end_training_sound_desc">Play a sound when the training ends</string>
-    <string-array name="suggested_training_name_list">
-        <item>Daily Strength Boost</item>
-        <item>Cardio Blast Workout</item>
-        <item>Full Body Conditioning</item>
-        <item>Flexibility &amp; Mobility</item>
-        <item>Weekend Warrior Routine</item>
-    </string-array>
-    <string-array name="suggested_exercise_plank_like_list">
-        <item>Mountain Climbers</item>
-        <item>Plank</item>
-        <item>Push-Ups</item>
-    </string-array>
-    <string-array name="suggested_exercise_crunches_like_list">
-        <item>Crunches</item>
-        <item>Bicycle Crunches</item>
-    </string-array>
-    <string-array name="suggested_exercise_burpees_like_list">
-        <item>Jumping Jacks</item>
-        <item>Burpees</item>
-    </string-array>
-    <string-array name="suggested_exercise_knees_like_list">
-        <item>High Knees</item>
-    </string-array>
-    <string-array name="suggested_exercise_squats_like_list">
-        <item>Squats</item>
-    </string-array>
-    <string-array name="suggested_exercise_lunges_like_list">
-        <item>Lunges</item>
-    </string-array>
 </resources>

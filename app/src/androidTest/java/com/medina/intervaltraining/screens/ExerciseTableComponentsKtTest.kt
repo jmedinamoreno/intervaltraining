@@ -10,7 +10,7 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.lifecycle.asLiveData
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.medina.intervaltraining.data.model.ExerciseIcon
+import com.medina.domain.data.model.ExerciseIcon
 import com.medina.intervaltraining.ui.SemanticsKeyDrawableId
 import com.medina.intervaltraining.ui.SemanticsKeyIconName
 import com.medina.intervaltraining.ui.components.AnimatedIconRow
@@ -92,7 +92,7 @@ class AnimatedIconRowTest {
     fun animatedIconRow_isVisibleWhenVisibleTrue() {
         composeTestRule.setContent {
             AnimatedIconRow(
-                icon = ExerciseIcon.NONE,
+                icon = com.medina.domain.data.model.ExerciseIcon.NONE,
                 onIconChange = {}
             )
         }
@@ -103,7 +103,7 @@ class AnimatedIconRowTest {
     fun animatedIconRow_isNotVisibleWhenVisibleFalse() {
         composeTestRule.setContent {
             AnimatedIconRow(
-                icon = ExerciseIcon.NONE,
+                icon = com.medina.domain.data.model.ExerciseIcon.NONE,
                 onIconChange = {},
                 visible = false
             )
@@ -117,7 +117,7 @@ class AnimatedIconRowTest {
         composeTestRule.setContent {
             val visibility:Boolean by visibilityStateFlow.asLiveData().observeAsState(initial = false)
             AnimatedIconRow(
-                icon = ExerciseIcon.NONE,
+                icon = com.medina.domain.data.model.ExerciseIcon.NONE,
                 onIconChange = {},
                 visible = visibility
             )
@@ -137,7 +137,7 @@ class AnimatedIconRowTest {
         composeTestRule.setContent {
             val visibility:Boolean by visibilityStateFlow.asLiveData().observeAsState(initial = true)
             AnimatedIconRow(
-                icon = ExerciseIcon.NONE,
+                icon = com.medina.domain.data.model.ExerciseIcon.NONE,
                 onIconChange = {},
                 visible = visibility
             )
@@ -160,10 +160,10 @@ class IconRowTest {
     @Test
     fun iconRow_displaysAllIcons() {
         composeTestRule.setContent {
-            IconRow(icon = ExerciseIcon.NONE, onIconChange = {})
+            IconRow(icon = com.medina.domain.data.model.ExerciseIcon.NONE, onIconChange = {})
         }
-        ExerciseIcon.entries.forEach { icon ->
-            if (icon == ExerciseIcon.NONE) {
+        com.medina.domain.data.model.ExerciseIcon.entries.forEach { icon ->
+            if (icon == com.medina.domain.data.model.ExerciseIcon.NONE) {
                 composeTestRule.onNodeWithImageVector(Icons.Default.Clear).assertIsDisplayed()
             } else {
                 composeTestRule.onNodeWithDrawableResource(iconToDrawableResource(icon)).assertIsDisplayed()
@@ -173,9 +173,9 @@ class IconRowTest {
 
     @Test
     fun iconRow_selectsCorrectIcon() {
-        val selectedIconStateFlow = MutableStateFlow(ExerciseIcon.NONE)
+        val selectedIconStateFlow = MutableStateFlow(com.medina.domain.data.model.ExerciseIcon.NONE)
         composeTestRule.setContent {
-            val selectedIcon by selectedIconStateFlow.asLiveData().observeAsState(initial = ExerciseIcon.NONE)
+            val selectedIcon by selectedIconStateFlow.asLiveData().observeAsState(initial = com.medina.domain.data.model.ExerciseIcon.NONE)
             IconRow(
                 icon = selectedIcon,
                 onIconChange = { selectedIconStateFlow.value = it }
@@ -183,8 +183,8 @@ class IconRowTest {
         }
 
         // Initially, no icon should be selected (except potentially the "NONE" icon)
-        ExerciseIcon.entries.forEach { icon ->
-            if (icon == ExerciseIcon.NONE) {
+        com.medina.domain.data.model.ExerciseIcon.entries.forEach { icon ->
+            if (icon == com.medina.domain.data.model.ExerciseIcon.NONE) {
                 composeTestRule.onNodeWithImageVector(Icons.Default.Clear).assertIsSelected()
             } else {
                 composeTestRule.onNodeWithDrawableResource(iconToDrawableResource(icon)).assertIsNotSelected()
@@ -192,12 +192,12 @@ class IconRowTest {
         }
 
         // Select a different icon and verify the selection changes
-        val newIcon = ExerciseIcon.RUN
+        val newIcon = com.medina.domain.data.model.ExerciseIcon.RUN
         composeTestRule.onNodeWithDrawableResource(iconToDrawableResource(newIcon)).performClick()
         assertTrue(selectedIconStateFlow.value == newIcon)
-        ExerciseIcon.entries.forEach { icon ->
+        com.medina.domain.data.model.ExerciseIcon.entries.forEach { icon ->
             when (icon) {
-                ExerciseIcon.NONE -> {
+                com.medina.domain.data.model.ExerciseIcon.NONE -> {
                     composeTestRule.onNodeWithImageVector(Icons.Default.Clear).assertIsNotSelected()
                 }
                 newIcon -> {

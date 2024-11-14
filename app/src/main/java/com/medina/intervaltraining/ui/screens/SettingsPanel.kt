@@ -16,16 +16,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.medina.domain.data.repository.UserDataDummyRepository
 import com.medina.intervaltraining.R
-import com.medina.intervaltraining.data.model.DarkThemeConfig
-import com.medina.intervaltraining.data.repository.UserDataDummyRepository
-import com.medina.intervaltraining.data.viewmodel.SettingsUiState
-import com.medina.intervaltraining.data.viewmodel.SettingsViewModel
 import com.medina.intervaltraining.ui.components.SettingsEntryEnum
 import com.medina.intervaltraining.ui.components.SettingsEntryNum
 import com.medina.intervaltraining.ui.components.SettingsEntryToggle
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import com.medina.intervaltraining.ui.theme.supportsDynamicTheming
+import com.medina.intervaltraining.viewmodel.SettingsUiState
+import com.medina.intervaltraining.viewmodel.SettingsViewModel
 
 
 @Composable
@@ -68,8 +67,8 @@ fun SettingsPanel(
 
                 // Sound effects
                 SettingsEntryToggle(
-                    labelTitle = stringResource(R.string.settings_panel_start_trainig_sound_label),
-                    labelDescription = stringResource(R.string.settings_panel_start_trainig_sound_desc),
+                    labelTitle = stringResource(R.string.settings_panel_start_training_sound_label),
+                    labelDescription = stringResource(R.string.settings_panel_start_training_sound_desc),
                     checked = settings.soundsEnabledTrainingStart
                 ) {
                     viewModel.updateSoundsEnabledTrainingStart(it)
@@ -95,11 +94,11 @@ fun SettingsPanel(
                     labelDescription = stringResource(R.string.settings_panel_dark_mode_value),
                     extraDescription = stringResource(R.string.settings_panel_dark_mode_label_extra),
                     selectedValue = settings.darkThemeConfig.name,
-                    values = DarkThemeConfig.entries.associate { Pair(it.name,
+                    values = com.medina.domain.data.model.DarkThemeConfig.entries.associate { Pair(it.name,
                         darkModeConfigTexts(it.name)
                     ) }
                 ) {
-                    viewModel.updateDarkThemeConfig(DarkThemeConfig.valueOf(it))
+                    viewModel.updateDarkThemeConfig(com.medina.domain.data.model.DarkThemeConfig.valueOf(it))
                 }
 
                 if(supportsDynamicTheming()) {
@@ -119,8 +118,8 @@ fun SettingsPanel(
 
 @Composable
 fun darkModeConfigTexts(key:String):String = when(key){
-    DarkThemeConfig.DARK.name -> stringResource(R.string.settings_panel_dark_mode_option_dark)
-    DarkThemeConfig.LIGHT.name -> stringResource(R.string.settings_panel_dark_mode_option_light)
+    com.medina.domain.data.model.DarkThemeConfig.DARK.name -> stringResource(R.string.settings_panel_dark_mode_option_dark)
+    com.medina.domain.data.model.DarkThemeConfig.LIGHT.name -> stringResource(R.string.settings_panel_dark_mode_option_light)
     else -> stringResource(R.string.settings_panel_dark_mode_option_system)
 }
 
@@ -131,6 +130,7 @@ fun SettingsComponentPreview() {
     IntervalTrainingTheme {
         SettingsPanel(
             modifier = Modifier.fillMaxWidth().height(300.dp),
-            viewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository()))
+            viewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository())
+        )
     }
 }

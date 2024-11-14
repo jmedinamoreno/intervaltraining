@@ -14,40 +14,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.medina.intervaltraining.data.model.DarkThemeConfig
-import com.medina.intervaltraining.data.repository.TrainingRoomRepository
-import com.medina.intervaltraining.data.room.TrainingRoomDatabase
-import com.medina.intervaltraining.data.viewmodel.MainActivityUiState
-import com.medina.intervaltraining.data.viewmodel.MainActivityViewModel
+import com.medina.domain.data.model.DarkThemeConfig
+import com.medina.intervaltraining.viewmodel.MainActivityUiState
+import com.medina.intervaltraining.viewmodel.MainActivityViewModel
 import com.medina.intervaltraining.ui.screens.EditTrainingScreen
 import com.medina.intervaltraining.ui.screens.IntervalTrainingScreen
 import com.medina.intervaltraining.ui.screens.PlayTrainingScreen
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.util.UUID
-
-private const val USER_PREFERENCES_NAME = "user_preferences"
-
-private val Context.dataStore by preferencesDataStore(
-    name = USER_PREFERENCES_NAME
-)
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -127,8 +116,6 @@ private fun shouldUseDarkTheme(
 @Composable
 fun IntervalTrainingApp() {
     val navController = rememberNavController()
-//    val backstackEntry = navController.currentBackStackEntryAsState()
-//    val currentRoute = backstackEntry.value?.destination?.route
     IntervalTrainingNavHost(navController)
 }
 

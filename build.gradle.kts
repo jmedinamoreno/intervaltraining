@@ -15,6 +15,7 @@ plugins {
     alias(libs.plugins.android.test) apply false
     alias(libs.plugins.gradle.versions)
     alias(libs.plugins.version.catalog.update)
+    alias(libs.plugins.android.library) apply false
 }
 
 apply("${project.rootDir}/buildscripts/toml-updater-config.gradle")

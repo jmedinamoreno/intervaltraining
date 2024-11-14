@@ -3,13 +3,14 @@ package com.medina.intervaltraining.data.viewmodel
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
-import com.medina.intervaltraining.data.Clock
-import com.medina.intervaltraining.data.model.Session
-import com.medina.intervaltraining.data.model.Training
-import com.medina.intervaltraining.data.repository.StatsRepository
-import com.medina.intervaltraining.data.repository.TrainingRepository
-import com.medina.intervaltraining.data.room.SessionItem
-import com.medina.intervaltraining.data.room.TrainingItem
+import com.medina.domain.data.Clock
+import com.medina.domain.data.model.Session
+import com.medina.domain.data.model.Training
+import com.medina.domain.data.repository.StatsRepository
+import com.medina.domain.data.repository.TrainingRepository
+import com.medina.domain.data.room.SessionItem
+import com.medina.domain.data.room.TrainingItem
+import com.medina.intervaltraining.viewmodel.StatsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -48,9 +49,9 @@ class StatsViewModelTest {
     private val testScope = TestScope(testDispatcher)
 
     @Mock
-    private lateinit var repository: StatsRepository
+    private lateinit var repository: com.medina.domain.data.repository.StatsRepository
     @Mock
-    private lateinit var clock: Clock
+    private lateinit var clock: com.medina.domain.data.Clock
 
     private lateinit var viewModel: StatsViewModel
 
@@ -59,7 +60,8 @@ class StatsViewModelTest {
         Dispatchers.setMain(testDispatcher)
         viewModel = StatsViewModel(
             statsRepository = repository,
-            clock = clock)
+            clock = clock
+        )
     }
 
     @After
@@ -102,12 +104,13 @@ class StatsViewModelTest {
     @Test
     fun saveSession_callsRepositoryInsert(){
         val sessionId = UUID.randomUUID()
-        val sessionItem = SessionItem(
+        val sessionItem = com.medina.domain.data.room.SessionItem(
             id = sessionId,
             training = UUID.randomUUID(),
             dateTimeStart = Date().time,
-            dateTimeEnd = Date().time)
-        val session = Session(
+            dateTimeEnd = Date().time
+        )
+        val session = com.medina.domain.data.model.Session(
             id = sessionId,
             training = sessionItem.training,
             complete = sessionItem.complete,

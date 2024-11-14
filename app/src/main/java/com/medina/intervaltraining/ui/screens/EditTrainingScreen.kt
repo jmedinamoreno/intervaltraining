@@ -61,11 +61,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.medina.intervaltraining.R
-import com.medina.intervaltraining.data.generation.suggestExercise
-import com.medina.intervaltraining.data.model.Training
-import com.medina.intervaltraining.data.model.Exercise
-import com.medina.intervaltraining.data.model.ExerciseIcon
-import com.medina.intervaltraining.data.viewmodel.ExerciseViewModel
+import com.medina.domain.data.model.Training
+import com.medina.domain.data.model.Exercise
+import com.medina.domain.data.model.ExerciseIcon
+import com.medina.intervaltraining.viewmodel.ExerciseViewModel
 import com.medina.intervaltraining.ui.components.AnimatedIconRow
 import com.medina.intervaltraining.ui.components.DialogIconButton
 import com.medina.intervaltraining.ui.components.DraggableItem
@@ -76,7 +75,8 @@ import com.medina.intervaltraining.ui.components.InputText
 import com.medina.intervaltraining.ui.components.SavableInputText
 import com.medina.intervaltraining.ui.components.rememberDragDropState
 import com.medina.intervaltraining.ui.stringForButtonDescription
-import com.medina.intervaltraining.ui.stringRandom
+import com.medina.generation.stringRandom
+import com.medina.generation.suggestExercise
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -117,7 +117,9 @@ fun EditTrainingScreen(
     onBack: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    val training: Training by exerciseViewModel.training.observeAsState(Training("", 0, 0))
+    val training: Training by exerciseViewModel.training.observeAsState(
+        Training("", 0, 0)
+    )
     val exerciseList: List<Exercise> by exerciseViewModel.exercises.observeAsState(listOf())
     EditExerciseTableView(
         training = training,
@@ -565,7 +567,15 @@ fun EditExerciseDialogBody(
                     icon = Icons.Default.Check,
                     iconDescription = stringForButtonDescription(id = R.string.edit_exercise_dialog_save),
                     onClick = {
-                        onItemComplete(Exercise(text, icon, time, rest, id = id))
+                        onItemComplete(
+                            Exercise(
+                                text,
+                                icon,
+                                time,
+                                rest,
+                                id = id
+                            )
+                        )
                     },
                 )
             }
@@ -588,7 +598,7 @@ fun EditorPreviewNew() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             EditExerciseTableView(
-                training = Training("",0,0),
+                training = Training("", 0, 0),
                 exerciseList = emptyList()
             )
         }
@@ -601,7 +611,7 @@ fun EditorPreviewEmpty() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             EditExerciseTableView(
-                training = Training("Test",0,0),
+                training = Training("Test", 0, 0),
                 exerciseList = emptyList()
             )
         }
@@ -614,7 +624,7 @@ fun EditorPreviewSmall() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             EditExerciseTableView(
-                training = Training("Test",0,0),
+                training = Training("Test", 0, 0),
                 exerciseList = (1 until 3).toList().map{ Exercise("Exercise $it") })
         }
     }
@@ -628,7 +638,7 @@ fun EditorPreview() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             EditExerciseTableView(
-                training = Training("Test",0,0),
+                training = Training("Test", 0, 0),
                 exerciseList = (1 until 15).toList().map{ Exercise("Exercise $it") })
         }
     }
