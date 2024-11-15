@@ -4,16 +4,16 @@ package com.medina.intervaltraining.viewmodel
 import android.util.Log
 import androidx.lifecycle.*
 import androidx.lifecycle.asLiveData
-import com.medina.domain.data.Clock
-import com.medina.domain.data.RealClock
-import com.medina.domain.data.model.Exercise
-import com.medina.domain.data.model.Session
-import com.medina.domain.data.model.Training
-import com.medina.domain.data.model.toExercise
-import com.medina.domain.data.model.toExerciseItem
-import com.medina.domain.data.model.toTraining
-import com.medina.domain.data.model.toTrainingItem
-import com.medina.domain.data.repository.TrainingRepository
+import com.medina.data.Clock
+import com.medina.data.RealClock
+import com.medina.data.model.Exercise
+import com.medina.data.model.Session
+import com.medina.data.model.Training
+import com.medina.data.model.toExercise
+import com.medina.data.model.toExerciseItem
+import com.medina.data.model.toTraining
+import com.medina.data.model.toTrainingItem
+import com.medina.data.repository.TrainingRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -41,6 +41,8 @@ class ExerciseViewModel @AssistedInject constructor(
         defaultTimeSec = 45,
         defaultRestSec = 15,
         name = "",
+        lastUsed = 0,
+        totalTimeSec = 0,
         draft = true
     ) }.asLiveData()
 

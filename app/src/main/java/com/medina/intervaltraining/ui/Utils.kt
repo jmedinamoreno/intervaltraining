@@ -11,7 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import com.medina.intervaltraining.R
-import com.medina.domain.data.model.ExerciseIcon
+import com.medina.data.model.ExerciseIcon
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
@@ -30,27 +30,27 @@ fun floatToHours(float: Float):String{
     }
 }
 
-fun iconToDrawableResource(icon: com.medina.domain.data.model.ExerciseIcon):Int = when(icon){
-    com.medina.domain.data.model.ExerciseIcon.RUN -> R.drawable.ic_exercise_run
-    com.medina.domain.data.model.ExerciseIcon.JUMP -> R.drawable.ic_exercise_jump
-    com.medina.domain.data.model.ExerciseIcon.KNEES -> R.drawable.ic_exercise_knees
-    com.medina.domain.data.model.ExerciseIcon.SIT_UP -> R.drawable.ic_exercise_sit_up
-    com.medina.domain.data.model.ExerciseIcon.PUSH_UPS -> R.drawable.ic_exercise_push_ups
-    com.medina.domain.data.model.ExerciseIcon.FLEX -> R.drawable.ic_exercise_flex
-    com.medina.domain.data.model.ExerciseIcon.LEFT_ARM -> R.drawable.ic_exercise_left_arm
-    com.medina.domain.data.model.ExerciseIcon.RIGHT_ARM -> R.drawable.ic_exercise_right_arm
+fun iconToDrawableResource(icon: ExerciseIcon):Int = when(icon){
+    ExerciseIcon.RUN -> R.drawable.ic_exercise_run
+    ExerciseIcon.JUMP -> R.drawable.ic_exercise_jump
+    ExerciseIcon.KNEES -> R.drawable.ic_exercise_knees
+    ExerciseIcon.SIT_UP -> R.drawable.ic_exercise_sit_up
+    ExerciseIcon.PUSH_UPS -> R.drawable.ic_exercise_push_ups
+    ExerciseIcon.FLEX -> R.drawable.ic_exercise_flex
+    ExerciseIcon.LEFT_ARM -> R.drawable.ic_exercise_left_arm
+    ExerciseIcon.RIGHT_ARM -> R.drawable.ic_exercise_right_arm
     else -> R.drawable.ic_exercise_none
 }
 
-fun iconToStringResource(icon: com.medina.domain.data.model.ExerciseIcon):Int = when(icon){
-    com.medina.domain.data.model.ExerciseIcon.RUN -> R.string.ic_name_exercise_run
-    com.medina.domain.data.model.ExerciseIcon.JUMP -> R.string.ic_name_exercise_jump
-    com.medina.domain.data.model.ExerciseIcon.KNEES -> R.string.ic_name_exercise_knees
-    com.medina.domain.data.model.ExerciseIcon.SIT_UP -> R.string.ic_name_exercise_sit_up
-    com.medina.domain.data.model.ExerciseIcon.PUSH_UPS -> R.string.ic_name_exercise_push_ups
-    com.medina.domain.data.model.ExerciseIcon.FLEX -> R.string.ic_name_exercise_flex
-    com.medina.domain.data.model.ExerciseIcon.LEFT_ARM -> R.string.ic_name_exercise_left
-    com.medina.domain.data.model.ExerciseIcon.RIGHT_ARM -> R.string.ic_name_exercise_right
+fun iconToStringResource(icon: ExerciseIcon):Int = when(icon){
+    ExerciseIcon.RUN -> R.string.ic_name_exercise_run
+    ExerciseIcon.JUMP -> R.string.ic_name_exercise_jump
+    ExerciseIcon.KNEES -> R.string.ic_name_exercise_knees
+    ExerciseIcon.SIT_UP -> R.string.ic_name_exercise_sit_up
+    ExerciseIcon.PUSH_UPS -> R.string.ic_name_exercise_push_ups
+    ExerciseIcon.FLEX -> R.string.ic_name_exercise_flex
+    ExerciseIcon.LEFT_ARM -> R.string.ic_name_exercise_left
+    ExerciseIcon.RIGHT_ARM -> R.string.ic_name_exercise_right
     else -> R.string.ic_name_exercise_none
 }
 

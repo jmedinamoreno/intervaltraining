@@ -26,10 +26,9 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.medina.domain.data.repository.StatsDummyRepository
+import com.medina.data.repository.StatsDummyRepository
 import com.medina.intervaltraining.viewmodel.StatsViewModel
 import com.medina.intervaltraining.ui.components.CustomCalendar
-import com.medina.intervaltraining.ui.components.InteractiveCustomCalendar
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import java.util.Calendar
 

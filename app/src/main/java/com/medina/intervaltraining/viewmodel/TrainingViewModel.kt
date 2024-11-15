@@ -7,11 +7,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
-import com.medina.domain.data.Clock
-import com.medina.domain.data.RealClock
-import com.medina.domain.data.model.Training
-import com.medina.domain.data.repository.TrainingRepository
-import com.medina.domain.data.room.TrainingItem
+import com.medina.data.Clock
+import com.medina.data.RealClock
+import com.medina.data.model.Training
+import com.medina.data.repository.TrainingRepository
+import com.medina.data.local.database.TrainingItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -56,17 +56,5 @@ class TrainingViewModel @Inject constructor(
                 e.printStackTrace()
             }
         }
-    }
-}
-
-class TrainingViewModelFactory(private val repository: TrainingRepository, private val dataStore: DataStore<Preferences>) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(TrainingViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return TrainingViewModel(
-                repository,
-            ) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

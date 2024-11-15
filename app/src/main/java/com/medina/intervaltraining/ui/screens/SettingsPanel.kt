@@ -16,7 +16,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.medina.domain.data.repository.UserDataDummyRepository
+import com.medina.data.repository.UserInfoDummyRepository
+import com.medina.data.model.DarkThemeConfig
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.ui.components.SettingsEntryEnum
 import com.medina.intervaltraining.ui.components.SettingsEntryNum
@@ -94,11 +95,11 @@ fun SettingsPanel(
                     labelDescription = stringResource(R.string.settings_panel_dark_mode_value),
                     extraDescription = stringResource(R.string.settings_panel_dark_mode_label_extra),
                     selectedValue = settings.darkThemeConfig.name,
-                    values = com.medina.domain.data.model.DarkThemeConfig.entries.associate { Pair(it.name,
+                    values = DarkThemeConfig.entries.associate { Pair(it.name,
                         darkModeConfigTexts(it.name)
                     ) }
                 ) {
-                    viewModel.updateDarkThemeConfig(com.medina.domain.data.model.DarkThemeConfig.valueOf(it))
+                    viewModel.updateDarkThemeConfig(DarkThemeConfig.valueOf(it))
                 }
 
                 if(supportsDynamicTheming()) {
@@ -118,8 +119,8 @@ fun SettingsPanel(
 
 @Composable
 fun darkModeConfigTexts(key:String):String = when(key){
-    com.medina.domain.data.model.DarkThemeConfig.DARK.name -> stringResource(R.string.settings_panel_dark_mode_option_dark)
-    com.medina.domain.data.model.DarkThemeConfig.LIGHT.name -> stringResource(R.string.settings_panel_dark_mode_option_light)
+    DarkThemeConfig.DARK.name -> stringResource(R.string.settings_panel_dark_mode_option_dark)
+    DarkThemeConfig.LIGHT.name -> stringResource(R.string.settings_panel_dark_mode_option_light)
     else -> stringResource(R.string.settings_panel_dark_mode_option_system)
 }
 
@@ -130,7 +131,7 @@ fun SettingsComponentPreview() {
     IntervalTrainingTheme {
         SettingsPanel(
             modifier = Modifier.fillMaxWidth().height(300.dp),
-            viewModel = SettingsViewModel(userDataRepository = UserDataDummyRepository())
+            viewModel = SettingsViewModel(userInfoRepository = UserInfoDummyRepository())
         )
     }
 }

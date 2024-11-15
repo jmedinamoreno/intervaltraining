@@ -18,8 +18,8 @@ package com.medina.intervaltraining.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.medina.domain.data.model.DarkThemeConfig
-import com.medina.domain.data.repository.UserDataRepository
+import com.medina.data.model.DarkThemeConfig
+import com.medina.data.repository.UserInfoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
 import kotlinx.coroutines.flow.StateFlow
@@ -31,10 +31,10 @@ import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val userDataRepository: UserDataRepository,
+    private val userInfoRepository: UserInfoRepository,
 ) : ViewModel() {
     val settingsUiState: StateFlow<SettingsUiState> =
-        userDataRepository.userDataFlow
+        userInfoRepository.userInfoFlow
             .map { userData ->
                 SettingsUiState.Success(
                     settings = UserEditableSettings(
@@ -58,49 +58,49 @@ class SettingsViewModel @Inject constructor(
 
     fun updateDarkThemeConfig(darkThemeConfig: DarkThemeConfig) {
         viewModelScope.launch {
-            userDataRepository.setDarkThemeConfig(darkThemeConfig)
+            userInfoRepository.setDarkThemeConfig(darkThemeConfig)
         }
     }
 
     fun updateDynamicColorPreference(useDynamicColor: Boolean) {
         viewModelScope.launch {
-            userDataRepository.setDynamicColorPreference(useDynamicColor)
+            userInfoRepository.setDynamicColorPreference(useDynamicColor)
         }
     }
 
     fun updateTrainingStartDelay(delayInSeconds: Int) {
         viewModelScope.launch {
-            userDataRepository.updateTrainingStartDelaySecs(delayInSeconds)
+            userInfoRepository.updateTrainingStartDelaySecs(delayInSeconds)
         }
     }
 
     fun updateCountdownToChange(countdownInSeconds: Int) {
         viewModelScope.launch {
-            userDataRepository.updateCountdownToChange(countdownInSeconds)
+            userInfoRepository.updateCountdownToChange(countdownInSeconds)
         }
     }
 
     fun updateSoundsEnabledTrainingStart(enabled: Boolean) {
         viewModelScope.launch {
-            userDataRepository.updateSoundsEnabledTrainingStart(enabled)
+            userInfoRepository.updateSoundsEnabledTrainingStart(enabled)
         }
     }
 
     fun updateSoundsEnabledRestStart(enabled: Boolean) {
         viewModelScope.launch {
-            userDataRepository.updateSoundsEnabledRestStart(enabled)
+            userInfoRepository.updateSoundsEnabledRestStart(enabled)
         }
     }
 
     fun updateSoundsEnabledTrainingEnd(enabled: Boolean) {
         viewModelScope.launch {
-            userDataRepository.updateSoundsEnabledTrainingEnd(enabled)
+            userInfoRepository.updateSoundsEnabledTrainingEnd(enabled)
         }
     }
 
     fun updateShouldHideOnboarding(shouldHide: Boolean) {
         viewModelScope.launch {
-            userDataRepository.setShouldHideOnboarding(shouldHide)
+            userInfoRepository.setShouldHideOnboarding(shouldHide)
         }
     }
 }

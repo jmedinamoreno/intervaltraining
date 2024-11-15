@@ -50,18 +50,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.medina.data.model.Exercise
+import com.medina.data.model.ExerciseIcon
 import com.medina.intervaltraining.R
-import com.medina.domain.data.model.Exercise
-import com.medina.domain.data.model.ExerciseIcon
-import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 import com.medina.intervaltraining.ui.drawableId
 import com.medina.intervaltraining.ui.iconName
 import com.medina.intervaltraining.ui.iconToDrawableResource
 import com.medina.intervaltraining.ui.iconToStringResource
-import com.medina.intervaltraining.ui.screens.PlayExerciseTableState
 import com.medina.intervaltraining.ui.stringForButtonDescription
 import com.medina.intervaltraining.ui.stringForIconDescription
-import com.medina.intervaltraining.ui.theme.mixColor
+import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
 
 
 /**

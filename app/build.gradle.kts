@@ -54,8 +54,8 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.splashscreen)
-    implementation(project(":domain"))
-    implementation(project(":domain:generation"))
+    implementation(project(":data"))
+    implementation(project(":data:generation"))
     implementation(libs.androidx.datastore.preferences.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.core.ktx)

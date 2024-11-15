@@ -1,6 +1,5 @@
 package com.medina.intervaltraining
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,7 +14,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -25,7 +23,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.medina.domain.data.model.DarkThemeConfig
+import com.medina.data.model.DarkThemeConfig
 import com.medina.intervaltraining.viewmodel.MainActivityUiState
 import com.medina.intervaltraining.viewmodel.MainActivityViewModel
 import com.medina.intervaltraining.ui.screens.EditTrainingScreen
@@ -93,7 +91,7 @@ private fun shouldUseDynamicTheming(
     uiState: MainActivityUiState,
 ): Boolean = when (uiState) {
     MainActivityUiState.Loading -> false
-    is MainActivityUiState.Success -> uiState.uiData.userData.useDynamicColor
+    is MainActivityUiState.Success -> uiState.uiData.userInfo.useDynamicColor
 }
 
 /**
@@ -105,7 +103,7 @@ private fun shouldUseDarkTheme(
     uiState: MainActivityUiState,
 ): Boolean = when (uiState) {
     MainActivityUiState.Loading -> isSystemInDarkTheme()
-    is MainActivityUiState.Success -> when (uiState.uiData.userData.darkThemeConfig) {
+    is MainActivityUiState.Success -> when (uiState.uiData.userInfo.darkThemeConfig) {
         DarkThemeConfig.FOLLOW_SYSTEM -> isSystemInDarkTheme()
         DarkThemeConfig.LIGHT -> false
         DarkThemeConfig.DARK -> true

@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -42,8 +41,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.medina.intervaltraining.R
-import com.medina.domain.data.model.Exercise
-import com.medina.domain.data.model.ExerciseIcon
+import com.medina.data.model.Exercise
+import com.medina.data.model.ExerciseIcon
 import com.medina.intervaltraining.ui.screens.PlayExerciseTableState
 import com.medina.intervaltraining.ui.stringChosen
 import com.medina.intervaltraining.ui.stringForIconDescription

@@ -3,13 +3,10 @@ package com.medina.intervaltraining.data.viewmodel
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
-import com.medina.domain.data.Clock
-import com.medina.domain.data.model.Session
-import com.medina.domain.data.model.Training
-import com.medina.domain.data.repository.StatsRepository
-import com.medina.domain.data.repository.TrainingRepository
-import com.medina.domain.data.room.SessionItem
-import com.medina.domain.data.room.TrainingItem
+import com.medina.data.Clock
+import com.medina.data.local.database.SessionItem
+import com.medina.data.model.Session
+import com.medina.data.repository.StatsRepository
 import com.medina.intervaltraining.viewmodel.StatsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,9 +46,9 @@ class StatsViewModelTest {
     private val testScope = TestScope(testDispatcher)
 
     @Mock
-    private lateinit var repository: com.medina.domain.data.repository.StatsRepository
+    private lateinit var repository: StatsRepository
     @Mock
-    private lateinit var clock: com.medina.domain.data.Clock
+    private lateinit var clock: Clock
 
     private lateinit var viewModel: StatsViewModel
 
@@ -104,13 +101,13 @@ class StatsViewModelTest {
     @Test
     fun saveSession_callsRepositoryInsert(){
         val sessionId = UUID.randomUUID()
-        val sessionItem = com.medina.domain.data.room.SessionItem(
+        val sessionItem = SessionItem(
             id = sessionId,
             training = UUID.randomUUID(),
             dateTimeStart = Date().time,
             dateTimeEnd = Date().time
         )
-        val session = com.medina.domain.data.model.Session(
+        val session = Session(
             id = sessionId,
             training = sessionItem.training,
             complete = sessionItem.complete,

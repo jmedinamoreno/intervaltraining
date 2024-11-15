@@ -21,5 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "intervaltraining"
 include(":app")
-include(":domain")
-include(":domain:generation")
+include(":data")
+include(":data:generation")

@@ -37,10 +37,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.medina.domain.data.model.Training
-import com.medina.domain.data.repository.StatsDummyRepository
-import com.medina.domain.data.repository.TrainingDummyRepository
-import com.medina.domain.data.repository.UserDataDummyRepository
+import com.medina.data.model.Training
+import com.medina.data.repository.StatsDummyRepository
+import com.medina.data.repository.TrainingDummyRepository
+import com.medina.data.repository.UserInfoDummyRepository
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.ui.floatToHours
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
@@ -241,7 +241,7 @@ fun InternalTrainingScreenPreview() {
                 SettingsPanel(
                     modifier = modifier,
                     viewModel = SettingsViewModel(
-                        userDataRepository = UserDataDummyRepository()
+                        userInfoRepository = UserInfoDummyRepository()
                     )
                 )
             },

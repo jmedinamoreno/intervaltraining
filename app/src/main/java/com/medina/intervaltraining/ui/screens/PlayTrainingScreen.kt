@@ -54,10 +54,10 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.medina.domain.data.model.Exercise
-import com.medina.domain.data.model.Session
-import com.medina.domain.data.model.Training
-import com.medina.domain.data.repository.UserDataDummyRepository
+import com.medina.data.model.Exercise
+import com.medina.data.model.Session
+import com.medina.data.model.Training
+import com.medina.data.repository.UserInfoDummyRepository
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.ui.components.ExerciseLabel
 import com.medina.intervaltraining.ui.components.ExerciseLabelBody
@@ -521,9 +521,9 @@ fun PlayerPreview() {
         Surface(color = MaterialTheme.colorScheme.background) {
             PlayExerciseTableView(
                 settingsViewModel = SettingsViewModel(
-                    userDataRepository = UserDataDummyRepository()
+                    userInfoRepository = UserInfoDummyRepository()
                 ),
-                training = Training("test", 30, 5),
+                training = Training("test", 30, 5, 10, 10),
                 session = Session(UUID.randomUUID()),
                 items = (1 until 15).toList().map{ Exercise("Exercise $it") })
         }
@@ -538,9 +538,9 @@ fun PlaybackTabletPreview() {
         Surface(color = MaterialTheme.colorScheme.background) {
             PlayExerciseTableView(
                 settingsViewModel = SettingsViewModel(
-                    userDataRepository = UserDataDummyRepository()
+                    userInfoRepository = UserInfoDummyRepository()
                 ),
-                training = Training("test", 30, 5),
+                training = Training("test", 30, 5, 10, 10),
                 session = Session(UUID.randomUUID()),
                 items = (1 until 15).toList().map{ Exercise("Exercise $it") })
         }

@@ -18,13 +18,13 @@ package com.medina.intervaltraining.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.medina.domain.data.model.Training
-import com.medina.domain.data.model.TrainingStatistics
-import com.medina.domain.data.model.TrainingUIModel
-import com.medina.domain.data.model.UserData
-import com.medina.domain.data.repository.StatsRepository
-import com.medina.domain.data.repository.TrainingRepository
-import com.medina.domain.data.repository.UserDataRepository
+import com.medina.data.model.Training
+import com.medina.data.model.TrainingStatistics
+import com.medina.data.model.TrainingUIModel
+import com.medina.data.model.UserInfo
+import com.medina.data.repository.StatsRepository
+import com.medina.data.repository.TrainingRepository
+import com.medina.data.repository.UserInfoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -37,17 +37,17 @@ import javax.inject.Inject
 class MainActivityViewModel @Inject constructor(
     trainingRepository: TrainingRepository,
     statsRepository: StatsRepository,
-    userDataRepository: UserDataRepository
+    userInfoRepository: UserInfoRepository
 ) : ViewModel() {
 
     private val trainingUiModelFlow = combine(
         trainingRepository.trainingsFlow,
-        userDataRepository.userDataFlow
-    ) { trainings: List<Training>, userData: UserData ->
+        userInfoRepository.userInfoFlow
+    ) { trainings: List<Training>, userInfo: UserInfo ->
         return@combine TrainingUIModel(
             trainings = trainings,
             stats = TrainingStatistics(10f),
-            userData = userData
+            userInfo = userInfo
         )
     }
 
