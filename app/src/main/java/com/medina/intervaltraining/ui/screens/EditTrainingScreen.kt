@@ -52,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -60,11 +61,17 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.map
+import com.medina.data.RealClock
+import com.medina.data.model.EmptyTraining
 import com.medina.intervaltraining.R
 import com.medina.data.model.Training
 import com.medina.data.model.Exercise
 import com.medina.data.model.ExerciseIcon
-import com.medina.intervaltraining.viewmodel.ExerciseViewModel
+import com.medina.data.repository.TrainingDummyRepository
+import com.medina.generation.repository.GenerationDataRepository
+import com.medina.generation.repository.GenerationDummyRepository
+import com.medina.intervaltraining.viewmodel.EditExercisesViewModel
 import com.medina.intervaltraining.ui.components.AnimatedIconRow
 import com.medina.intervaltraining.ui.components.DialogIconButton
 import com.medina.intervaltraining.ui.components.DraggableItem
@@ -75,23 +82,59 @@ import com.medina.intervaltraining.ui.components.InputText
 import com.medina.intervaltraining.ui.components.SavableInputText
 import com.medina.intervaltraining.ui.components.rememberDragDropState
 import com.medina.intervaltraining.ui.stringForButtonDescription
-import com.medina.generation.stringRandom
-import com.medina.generation.suggestExercise
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
+import com.medina.intervaltraining.viewmodel.fakeExercisesViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+@Composable
+fun EditTrainingScreen(
+    trainingId: UUID,
+    editExercisesViewModel: EditExercisesViewModel = hiltViewModel<EditExercisesViewModel, EditExercisesViewModel.ViewModelFactory> { factory ->
+        factory.create(trainingId)
+    },
+    onBack: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    EditExerciseTableView(
+        editExercisesViewModel = editExercisesViewModel,
+        onBack = onBack,
+        onDeleteTraining = {
+            editExercisesViewModel.deleteTraining()
+            onDelete()
+        },
+        onUpdateTrainingName = {newName ->
+            editExercisesViewModel.updateTrainingName(newName)
+        },
+        onUpdateExercise = { newExercise ->
+            editExercisesViewModel.updateExercise(newExercise)
+        },
+        onDuplicateExercise = {index ->
+            editExercisesViewModel.duplicateExercise(index)
+        },
+        onDeleteExercise = {index ->
+            editExercisesViewModel.deleteExercise(index)
+        },
+        onMoveExercise = { oldIndex, toNewIndex ->
+            editExercisesViewModel.moveExercise(oldIndex, toNewIndex)
+        }
+    )
+}
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditExerciseTableScreenTopBar(trainingTitle: String, onSave:(String)->Unit, onBack:()->Unit, onDelete:()->Unit ){
+fun EditExerciseTableScreenTopBar(editExercisesViewModel: EditExercisesViewModel, onSave:(String)->Unit, onBack:()->Unit, onDelete:()->Unit ){
+    val suggestedName: String = remember { editExercisesViewModel.suggestTrainingName() }
+    val trainingTitle: String by editExercisesViewModel.training.map { it.name }.observeAsState("")
     TopAppBar(
         title = {
             SavableInputText(
                 entryText = trainingTitle,
                 onSave = onSave,
                 timeoutMill = 2000,
-                placeholder = stringRandom(id = R.array.training_name_hint_list)
+                placeholder = suggestedName
             )
         },
         navigationIcon = {
@@ -108,75 +151,11 @@ fun EditExerciseTableScreenTopBar(trainingTitle: String, onSave:(String)->Unit, 
     )
 }
 
-@Composable
-fun EditTrainingScreen(
-    trainingId: UUID,
-    exerciseViewModel: ExerciseViewModel = hiltViewModel<ExerciseViewModel, ExerciseViewModel.ExerciseViewModelFactory> { factory ->
-        factory.create(trainingId)
-    },
-    onBack: () -> Unit,
-    onDelete: () -> Unit,
-) {
-    val training: Training by exerciseViewModel.training.observeAsState(
-        Training("", 0, 0, 0, 0)
-    )
-    val exerciseList: List<Exercise> by exerciseViewModel.exercises.observeAsState(listOf())
-    EditExerciseTableView(
-        training = training,
-        exerciseList = exerciseList,
-        onBack = onBack,
-        onDeleteTraining = {
-            exerciseViewModel.deleteTraining()
-            onDelete()
-        },
-        onUpdateTrainingName = {newName ->
-            if(newName.isNotBlank() && newName != training.name) {
-                if(training.name.isBlank()) {
-                    exerciseViewModel.createTraining(newName)
-                }else {
-                    exerciseViewModel.renameTraining(newName)
-                }
-            }
-        },
-        onUpdateExercise = { newExercise ->
-            val newList = exerciseList.toMutableList()
-            val pos = exerciseList.indexOfFirst { e -> e.id == newExercise.id }
-            if (pos >= 0) {
-                newList[pos] = newExercise
-            }else{
-                newList.add(newExercise)
-            }
-            exerciseViewModel.saveExerciseList(newList)
-        },
-        onDuplicateExercise = {index ->
-            val newList = exerciseList.toMutableList()
-            newList.add(index+1, newList[index].newCopy())
-            exerciseViewModel.saveExerciseList(newList)
-        },
-        onDeleteExercise = {index ->
-            val newList = exerciseList.toMutableList()
-            newList.removeAt(index)
-            exerciseViewModel.saveExerciseList(newList)
-        },
-        onMoveExercise = { oldIndex, toNewIndex ->
-            val newList = exerciseList.toMutableList()
-            val exercise = newList[oldIndex]
-            newList.removeAt(oldIndex)
-            if(toNewIndex>=newList.size){
-                newList.add(exercise)
-            }else {
-                newList.add(toNewIndex, exercise)
-            }
-            exerciseViewModel.saveExerciseList(newList)
-        }
-    )
-}
 
 
 @Composable
 fun EditExerciseTableView(
-    training: Training,
-    exerciseList: List<Exercise>,
+    editExercisesViewModel: EditExercisesViewModel,
     onBack: () -> Unit = {},
     onDeleteTraining: () -> Unit = {},
     onUpdateTrainingName: (trainingName: String) -> Unit = {},
@@ -192,16 +171,20 @@ fun EditExerciseTableView(
     val dialogExercise: MutableState<Exercise?> = remember {
         mutableStateOf(null)
     }
+
+    val exerciseList: List<Exercise> by editExercisesViewModel.exercises.observeAsState(listOf())
     Scaffold(topBar = {
-        EditExerciseTableScreenTopBar(trainingTitle = training.name, onBack = onBack,
+        EditExerciseTableScreenTopBar(
+            editExercisesViewModel = editExercisesViewModel,
+            onBack = onBack,
             onSave = onUpdateTrainingName,
-            onDelete = onDeleteTraining)
+            onDelete = onDeleteTraining
+        )
     })
     { padding ->
         ExerciseTableEditableList(
             modifier = Modifier.padding(padding),
-            items = exerciseList,
-            training = training,
+            editExercisesViewModel = editExercisesViewModel,
             onEdit = {
                 dialogState.value = true
                 dialogExercise.value = exerciseList.getOrNull(it)
@@ -218,13 +201,15 @@ fun EditExerciseTableView(
                     val exerciseToEdit = dialogExercise.value
                     dialogExercise.value = null
                     EditExerciseDialogBody(
-                        exerciseToEdit,
+                        currentExercise = exerciseToEdit,
                         onItemComplete = { newExercise ->
                             onUpdateExercise(newExercise)
                             dialogState.value = false
                         },
-                        {
-                            dialogState.value = false
+                        onSuggestExercise = {
+                            editExercisesViewModel.suggestExercise()
+                        },
+                        onCancel = {dialogState.value = false
                         })
                 },
                 properties = DialogProperties(
@@ -239,16 +224,17 @@ fun EditExerciseTableView(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ExerciseTableEditableList(
+    editExercisesViewModel: EditExercisesViewModel,
     modifier: Modifier=Modifier,
-    training: Training,
-    items: List<Exercise>,
     onNew:()->Unit = {},
     onEdit: (Int) -> Unit = {},
     onDuplicate: (Int) -> Unit = {},
     onRemove: (Int) -> Unit = {},
     onMove: (Int, Int) -> Unit = { _, _->},
 ){
-    val (selectedIndex, setSelectedIndex) = remember { mutableStateOf(-1) }
+    val exerciseList: List<Exercise> by editExercisesViewModel.exercises.observeAsState(listOf())
+    val training: Training by editExercisesViewModel.training.observeAsState(EmptyTraining)
+    val (selectedIndex, setSelectedIndex) = remember { mutableIntStateOf(-1) }
     var overscrollJob by remember { mutableStateOf<Job?>(null) }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -308,20 +294,20 @@ fun ExerciseTableEditableList(
                             modifier = Modifier
                                 .padding(8.dp)
                                 .align(Alignment.Center),
-                            exercises = items,
+                            exercises = exerciseList,
                         )
                     }
                 }
                 if (training.name.isNotEmpty()) {
                     itemsIndexed(
-                        items = items,
+                        items = exerciseList,
                         key = {_: Int, exercise: Exercise -> exercise.id.toString() }
                     ) {  index, exercise ->
                         DraggableItem(
                             dragDropState = dragDropState,
                             index = index
                         ) { isDragging ->
-                            val pos = items.indexOf(exercise)
+                            val pos = exerciseList.indexOf(exercise)
                             if(index==pos) {
                                 EditExerciseTableItemView(
                                     modifier = Modifier.clickable { setSelectedIndex(pos) },
@@ -352,7 +338,7 @@ fun ExerciseTableEditableList(
                                 modifier = Modifier
                                     .align(Alignment.TopCenter),
                                 style = MaterialTheme.typography.bodyLarge,
-                                text = stringRandom(id = R.array.think_name_training_list),
+                                text = stringArrayResource(id = R.array.think_name_training_list).random(),
                             )
                         }
                     }
@@ -369,7 +355,7 @@ fun ExerciseTableEditableList(
             ) {
                 ExtendedFloatingActionButton(
                     modifier = Modifier.align(
-                        if (items.isEmpty()) {
+                        if (exerciseList.isEmpty()) {
                             Alignment.Center
                         } else {
                             Alignment.CenterEnd
@@ -457,6 +443,7 @@ fun EditExerciseTableItemView(
 fun EditExerciseDialogBody(
     currentExercise: Exercise? = null,
     onItemComplete: (Exercise) -> Unit,
+    onSuggestExercise: ()->Exercise,
     onCancel: ()->Unit){
 
     val (text, setText) = remember { mutableStateOf("") }
@@ -474,7 +461,6 @@ fun EditExerciseDialogBody(
         setRest(currentExercise.restSec)
         setId(currentExercise.id)
     }
-    val suggestedExercise = suggestExercise()
 
     Card(
         modifier = Modifier
@@ -492,7 +478,7 @@ fun EditExerciseDialogBody(
                     icon = Icons.Default.Star,
                     iconDescription = stringForButtonDescription(id = R.string.edit_exercise_dialog_suggest),
                     onClick = {
-                        suggestedExercise.let {
+                        onSuggestExercise().let {
                             setText(it.name)
                             setIcon(it.icon)
                             setTime(it.timeSec)
@@ -585,12 +571,24 @@ fun EditExerciseDialogBody(
 
 @Preview
 @Composable
-fun PreviewExerciseInputDialog() = EditExerciseDialogBody(onItemComplete = { }, onCancel = {})
+fun PreviewExerciseInputDialog() = EditExerciseDialogBody(
+    onItemComplete = { },
+    onSuggestExercise = { Exercise("Exercise") },
+    onCancel = {}
+)
 
 
 @Preview
 @Composable
-fun PreviewExerciseListItem() = EditExerciseTableItemView(Exercise("Exercise"), Modifier, true, 1.dp,{},{},{})
+fun PreviewExerciseListItem() = EditExerciseTableItemView(
+    exercise = Exercise(name = "Exercise"),
+    modifier = Modifier,
+    isSelected = true,
+    shadowElevation = 1.dp,
+    onEdit = {},
+    onDuplicate = {},
+    onRemove = {}
+)
 
 @Preview
 @Composable
@@ -598,8 +596,7 @@ fun EditorPreviewNew() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             EditExerciseTableView(
-                training = Training("", 0, 0, 2, 2),
-                exerciseList = emptyList()
+                editExercisesViewModel = fakeExercisesViewModel
             )
         }
     }
@@ -611,8 +608,7 @@ fun EditorPreviewEmpty() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             EditExerciseTableView(
-                training = Training("Test", 0, 0, 2, 2),
-                exerciseList = emptyList()
+                editExercisesViewModel = fakeExercisesViewModel
             )
         }
     }
@@ -624,8 +620,8 @@ fun EditorPreviewSmall() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             EditExerciseTableView(
-                training = Training("Test", 0, 0, 2, 2),
-                exerciseList = (1 until 3).toList().map{ Exercise("Exercise $it") })
+                editExercisesViewModel = fakeExercisesViewModel
+            )
         }
     }
 }
@@ -638,8 +634,8 @@ fun EditorPreview() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             EditExerciseTableView(
-                training = Training("Test", 0, 0, 2, 2),
-                exerciseList = (1 until 15).toList().map{ Exercise("Exercise $it") })
+                editExercisesViewModel = fakeExercisesViewModel
+            )
         }
     }
 }

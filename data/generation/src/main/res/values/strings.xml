@@ -1,4 +1,10 @@
 <resources>
+    <string-array name="training_name_hint_list">
+        <item>Workout Title</item> <!-- Simple and direct -->
+        <item>Routine Name</item> <!-- Emphasizes the structured nature -->
+        <item>Fitness Plan</item> <!-- Suggests a broader plan -->
+        <item>Give it a name!</item> <!-- Friendly and encouraging -->
+    </string-array>
     <string-array name="suggested_training_name_list">
         <item>Daily Strength Boost</item>
         <item>Cardio Blast Workout</item>

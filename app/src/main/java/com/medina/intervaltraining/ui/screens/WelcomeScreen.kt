@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.medina.data.RealClock
 import com.medina.data.model.Training
 import com.medina.data.repository.StatsDummyRepository
 import com.medina.data.repository.TrainingDummyRepository
@@ -213,6 +214,7 @@ fun TrainingListPreview() {
             modifier = Modifier.fillMaxWidth(),
             trainingViewModel = TrainingViewModel(
                 trainingRepository = TrainingDummyRepository(),
+                clock = RealClock()
             ),
             statsViewModel = StatsViewModel(
                 statsRepository = StatsDummyRepository()
@@ -250,6 +252,7 @@ fun InternalTrainingScreenPreview() {
                     modifier = modifier,
                     trainingViewModel = TrainingViewModel(
                         trainingRepository = TrainingDummyRepository(),
+                        clock = RealClock()
                     ),
                     statsViewModel = StatsViewModel(
                         statsRepository = StatsDummyRepository()

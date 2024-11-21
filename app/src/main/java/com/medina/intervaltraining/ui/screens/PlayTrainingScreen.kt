@@ -70,7 +70,7 @@ import com.medina.intervaltraining.ui.components.playRestStartSound
 import com.medina.intervaltraining.ui.components.playTrainingEndSound
 import com.medina.intervaltraining.ui.components.playTrainingStartSound
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
-import com.medina.intervaltraining.viewmodel.ExerciseViewModel
+import com.medina.intervaltraining.viewmodel.PlayExercisesViewModel
 import com.medina.intervaltraining.viewmodel.SettingsViewModel
 import com.medina.intervaltraining.viewmodel.getCountDownSecs
 import com.medina.intervaltraining.viewmodel.getTrainingStartDelaySecs
@@ -82,7 +82,7 @@ import java.util.UUID
 @Composable
 fun PlayTrainingScreen(
     trainingId : UUID,
-    exerciseViewModel: ExerciseViewModel = hiltViewModel<ExerciseViewModel, ExerciseViewModel.ExerciseViewModelFactory> { factory ->
+    editExercisesViewModel: PlayExercisesViewModel = hiltViewModel<PlayExercisesViewModel, PlayExercisesViewModel.ViewModelFactory> { factory ->
         factory.create(trainingId)
     },
     immediate: Boolean = false,
@@ -90,9 +90,9 @@ fun PlayTrainingScreen(
     onEdit:()->Unit,
     updateSession: (session: Session) -> Unit = { _->},
 ) {
-    val items: List<Exercise> by exerciseViewModel.exercises.observeAsState(listOf())
-    val training: Training? by exerciseViewModel.training.observeAsState()
-    val session: Session = exerciseViewModel.session
+    val items: List<Exercise> by editExercisesViewModel.exercises.observeAsState(listOf())
+    val training: Training? by editExercisesViewModel.training.observeAsState()
+    val session: Session = editExercisesViewModel.session
     PlayExerciseTableView(
         training = training,
         session = session,

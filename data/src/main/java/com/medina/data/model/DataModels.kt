@@ -42,6 +42,8 @@ data class Training(
     var draft:Boolean = false
 )
 
+val EmptyTraining = Training("", 45, 15, 0, 0)
+
 data class Session(
     val training: UUID,
     var dateTimeStart:Long = 0L,

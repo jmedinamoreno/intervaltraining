@@ -20,7 +20,7 @@ import javax.inject.Inject
 @HiltViewModel
 class TrainingViewModel @Inject constructor(
     private val trainingRepository: TrainingRepository,
-    private val clock: Clock = RealClock()
+    private val clock: Clock
 ):ViewModel(){
 
     val trainingList: LiveData<List<Training>> = trainingRepository.trainingsFlow.asLiveData()
