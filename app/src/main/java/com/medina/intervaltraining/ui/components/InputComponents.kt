@@ -2,6 +2,7 @@ package com.medina.intervaltraining.ui.components
 
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -11,11 +12,13 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.with
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -23,14 +26,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -44,7 +46,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -62,13 +63,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -138,9 +138,11 @@ fun SelectableIconButton(
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun SavableInputText(entryText: String, onSave:(String)->Unit, timeoutMill:Long,
-                     modifier: Modifier = Modifier,
-                     placeholder: String = "",){
+fun SavableInputText(
+    entryText: String, onSave: (String) -> Unit, timeoutMill: Long,
+    modifier: Modifier = Modifier,
+    placeholder: String = "",
+){
 
     val (text, setText) = remember(entryText) { mutableStateOf(entryText) }
     val focusRequester = remember { FocusRequester() }
@@ -233,6 +235,70 @@ fun InputText(
     )
 }
 
+
+@Composable
+fun NewInputText(
+    text: String,
+    placeholder: String,
+    contentDescription: String = "",
+    onTextChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    textStyle: TextStyle = MaterialTheme.typography.titleMedium,
+    editIcon: @Composable ((Modifier) -> Unit) = { mod -> Icon(
+            modifier = mod,
+            imageVector = Icons.Default.Edit,
+            contentDescription = contentDescription,
+            tint = MaterialTheme.colorScheme.secondary
+        )},
+    previewOnEdit: Boolean = false,
+){
+    val keyboardController = LocalSoftwareKeyboardController.current
+    var isKeyboardMode by remember { mutableStateOf(previewOnEdit) }
+    val focusRequester = remember { FocusRequester() }
+    Box(modifier = modifier.fillMaxWidth()){
+        AnimatedVisibility(
+            visible = isKeyboardMode,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            TextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester)
+                    .padding(end = 2.dp),
+                value = text,
+                maxLines = 1,
+                singleLine = true,
+                onValueChange = onTextChange,
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = {
+                    isKeyboardMode = false
+                    keyboardController?.hide()
+                }),
+                textStyle = textStyle,
+            )
+            LaunchedEffect(Unit) {
+                focusRequester.requestFocus()
+            }
+        }
+        AnimatedVisibility(
+            visible = !isKeyboardMode,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            Row(modifier = Modifier.defaultMinSize(
+                minHeight = TextFieldDefaults.MinHeight
+            ).fillMaxWidth().clickable { isKeyboardMode = true }) {
+                Text(
+                    text = text.takeIf { it.isNotEmpty() } ?: placeholder,
+                    style = textStyle,
+                    modifier = Modifier.align(Alignment.CenterVertically).padding(start = 16.dp, end = 8.dp)
+                )
+                editIcon(Modifier.align(Alignment.CenterVertically).padding(2.dp))
+            }
+        }
+    }
+}
 /**
  * Styled [TextField] for inputting a number
  *
@@ -246,89 +312,165 @@ fun InputNumber(
     value: Int = 0,
     onNumberChange: (Int) -> Unit
 ) {
-    val keyboardController = LocalSoftwareKeyboardController.current
+    var isKeyboardMode by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
     BoxWithConstraints(
         modifier = modifier
             .height(48.dp)
-            .width(84.dp)
+            .width(84.dp),
+        contentAlignment = Alignment.CenterEnd
     ) {
         val textSizeIncrease = maxHeight / 84.dp
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            AnimatedContent(
-                modifier = Modifier
-                    .weight(1f)
+        AnimatedVisibility(
+            visible = isKeyboardMode,
+            enter = slideInHorizontally{ width -> - 128.dp.value.toInt() } + fadeIn(),
+            exit = slideOutHorizontally{ width -> - 128.dp.value.toInt() } + fadeOut()
+        ) {
+            InputNumberTextField(
+                modifier = Modifier.focusRequester(focusRequester)
                     .padding(end = 2.dp),
-                targetState = value,
-                transitionSpec = {
-                    // Compare the incoming number with the previous number.
-                    if (targetState > initialState) {
-                        // If the target number is larger, it slides up and fades in
-                        // while the initial (smaller) number slides up and fades out.
-                        slideInVertically { height -> height } + fadeIn() togetherWith
-                                slideOutVertically { height -> -height } + fadeOut()
-                    } else {
-                        // If the target number is smaller, it slides down and fades in
-                        // while the initial number slides down and fades out.
-                        slideInVertically { height -> -height } + fadeIn() togetherWith
-                                slideOutVertically { height -> height } + fadeOut()
-                    }.using(
-                        // Disable clipping since the faded slide-in/out should
-                        // be displayed out of bounds.
-                        SizeTransform(clip = false)
-                    )
-                }, label = "editText"
-            ) { targetCount ->
-                BasicTextField(
-                    value = targetCount.toString(),
-                    onValueChange = {
-                        if (it.isNotEmpty()) {
-                            onNumberChange(it.toInt())
-                        }
-                    },
-                    maxLines = 1,
-                    textStyle = MaterialTheme.typography.titleLarge.copy(
-                        color = LocalContentColor.current,
-                        textAlign = TextAlign.End,
-                        fontSize = MaterialTheme.typography.headlineLarge.fontSize * 1.5f * textSizeIncrease
-                    ),
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        imeAction = ImeAction.Done,
-                        keyboardType = KeyboardType.Number
-                    ),
-                    keyboardActions = KeyboardActions(onDone = {
-                        keyboardController?.hide()
-                    }),
+                value = value,
+                onNumberChange = onNumberChange,
+                textSizeIncrease = textSizeIncrease,
+                onDone = { isKeyboardMode = false },
+            )
+            LaunchedEffect(Unit) {
+                focusRequester.requestFocus()
+            }
+        }
+        AnimatedVisibility(
+            visible = !isKeyboardMode,
+            enter = slideInHorizontally{ width -> 128.dp.value.toInt() } + fadeIn(),
+            exit = slideOutHorizontally{ width -> 128.dp.value.toInt() } + fadeOut()
+        ) {
+            InputNumberNumberButtons(
+                modifier = Modifier
+                    .padding(end = 2.dp),
+                value = value,
+                onNumberChange = onNumberChange,
+                onClick = {
+                    isKeyboardMode = true
+                          },
+                textSizeIncrease = textSizeIncrease
+            )
+        }
+    }
+}
 
-                    singleLine = true
+@Composable
+private fun InputNumberTextField(
+    modifier: Modifier = Modifier,
+    value: Int = 0,
+    onNumberChange: (Int) -> Unit,
+    textSizeIncrease: Float,
+    onDone: () -> Unit
+){
+    val keyboardController = LocalSoftwareKeyboardController.current
+    var temporalValue:String by remember { mutableStateOf(value.toString()) }
+    var temporalFocus by remember { mutableStateOf(false) }
+    BasicTextField(
+        modifier = modifier.onFocusChanged {
+                if(it.isFocused){
+                    temporalFocus = true
+                }else{
+                    if(temporalFocus){
+                        temporalFocus = false
+                        onNumberChange(temporalValue.toIntOrNull() ?: value)
+                        onDone()
+                    }
+                }
+            },
+        value = temporalValue,
+        onValueChange = { newValue ->
+            temporalValue = newValue
+            temporalValue.toIntOrNull()?.apply(onNumberChange)
+        },
+        maxLines = 1,
+        textStyle = MaterialTheme.typography.titleLarge.copy(
+            color = LocalContentColor.current,
+            textAlign = TextAlign.End,
+            fontSize = MaterialTheme.typography.headlineLarge.fontSize * 1.5f * textSizeIncrease
+        ),
+        keyboardOptions = KeyboardOptions.Default.copy(
+            imeAction = ImeAction.Done,
+            keyboardType = KeyboardType.Number
+        ),
+        keyboardActions = KeyboardActions(onDone = {
+            keyboardController?.hide()
+            onNumberChange(temporalValue.toIntOrNull() ?: value)
+            onDone()
+        }),
+        singleLine = true
+    )
+}
+
+@Composable
+private fun InputNumberNumberButtons(
+    modifier: Modifier = Modifier,
+    value: Int = 0,
+    onNumberChange: (Int) -> Unit,
+    onClick: () -> Unit,
+    textSizeIncrease: Float
+){
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        AnimatedContent(
+            modifier = modifier,
+            targetState = value,
+            transitionSpec = {
+                // Compare the incoming number with the previous number.
+                if (targetState > initialState) {
+                    // If the target number is larger, it slides up and fades in
+                    // while the initial (smaller) number slides up and fades out.
+                    slideInVertically { height -> height } + fadeIn() togetherWith
+                            slideOutVertically { height -> -height } + fadeOut()
+                } else {
+                    // If the target number is smaller, it slides down and fades in
+                    // while the initial number slides down and fades out.
+                    slideInVertically { height -> -height } + fadeIn() togetherWith
+                            slideOutVertically { height -> height } + fadeOut()
+                }.using(
+                    // Disable clipping since the faded slide-in/out should
+                    // be displayed out of bounds.
+                    SizeTransform(clip = false)
+                )
+            }, label = "editText"
+        ) { targetCount ->
+            Text(
+                text = targetCount.toString(),
+                modifier = Modifier.clickable { onClick() },
+                style = MaterialTheme.typography.titleLarge.copy(
+                    color = LocalContentColor.current,
+                    textAlign = TextAlign.End,
+                    fontSize = MaterialTheme.typography.headlineLarge.fontSize * 1.5f * textSizeIncrease
+                ),
+            )
+        }
+        Column {
+            IconButton(modifier = Modifier
+                .weight(1f)
+                .padding(0.dp),
+                onClick = { onNumberChange(value + 1) }) {
+                Icon(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .widthIn(min = 48.dp)
+                        .heightIn(min = 24.dp),
+                    imageVector = Icons.Default.KeyboardArrowUp,
+                    contentDescription = stringForButtonDescription(id = R.string.input_number_more)
                 )
             }
-            Column {
-                IconButton(modifier = Modifier
-                    .weight(1f)
-                    .padding(0.dp),
-                    onClick = { onNumberChange(value + 1) }) {
-                    Icon(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .widthIn(min = 48.dp)
-                            .heightIn(min = 24.dp),
-                        imageVector = Icons.Default.KeyboardArrowUp,
-                        contentDescription = stringForButtonDescription(id = R.string.input_number_more)
-                    )
-                }
-                IconButton(modifier = Modifier
-                    .weight(1f)
-                    .padding(0.dp),
-                    onClick = { onNumberChange(value - 1) }) {
-                    Icon(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .widthIn(min = 48.dp)
-                            .heightIn(min = 24.dp),
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = stringForButtonDescription(id = R.string.input_number_less)
-                    )
-                }
+            IconButton(modifier = Modifier
+                .weight(1f)
+                .padding(0.dp),
+                onClick = { onNumberChange(value - 1) }) {
+                Icon(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .widthIn(min = 48.dp)
+                        .heightIn(min = 24.dp),
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = stringForButtonDescription(id = R.string.input_number_less)
+                )
             }
         }
     }
@@ -402,6 +544,33 @@ fun PreviewInputText() {
 @Preview(name = "Light Mode", group = "InputText")
 @Preview(name = "Dark Mode", group = "InputText", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
+fun PreviewNewInputText() {
+    IntervalTrainingTheme {
+        NewInputText(
+            text = "Text",
+            placeholder = "Placeholder",
+            onTextChange = {},
+            previewOnEdit = true
+        )
+    }
+}
+@Preview(name = "Light Mode", group = "InputText")
+@Preview(name = "Dark Mode", group = "InputText", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+fun PreviewNewInputText2() {
+    IntervalTrainingTheme {
+        NewInputText(
+            text = "",
+            placeholder = "Placeholder",
+            onTextChange = {},
+            previewOnEdit = false
+        )
+    }
+}
+
+@Preview(name = "Light Mode", group = "InputText")
+@Preview(name = "Dark Mode", group = "InputText", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
 fun PreviewInputTextPopup() {
     IntervalTrainingTheme {
         Card {
@@ -416,10 +585,14 @@ fun PreviewInputTextPopup() {
 @Composable
 fun PreviewInputNumber() {
     IntervalTrainingTheme {
+        var value by remember { mutableIntStateOf(0) }
         InputNumber(
             modifier = Modifier
-                .padding(horizontal = 8.dp, vertical = 8.dp), 0
-        ) {}
+                .padding(horizontal = 8.dp, vertical = 8.dp)
+                .fillMaxWidth(), value
+        ) {
+            value = it
+        }
     }
 }
 @Preview(name = "Light Mode", group = "InputNumber")
@@ -427,12 +600,15 @@ fun PreviewInputNumber() {
 @Composable
 fun PreviewInputNumber2() {
     IntervalTrainingTheme {
+        var value by remember { mutableIntStateOf(0) }
         InputNumber(
             modifier = Modifier
                 .height(100.dp)
-                .width(100.dp)
-                .padding(horizontal = 8.dp, vertical = 8.dp), 0
-        ) {}
+                .width(150.dp)
+                .padding(horizontal = 8.dp, vertical = 8.dp), value
+        ) {
+            value = it
+        }
     }
 }
 
@@ -440,16 +616,16 @@ fun PreviewInputNumber2() {
 @Preview(name = "Dark Mode", group = "InputNumber", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 fun PreviewInputNumberOnPopup() {
-    var value by remember { mutableIntStateOf(0) }
     IntervalTrainingTheme {
+        var value by remember { mutableIntStateOf(0) }
         Card {
             InputNumber(
                 modifier = Modifier
                     .height(100.dp)
-                    .width(100.dp)
+                    .width(150.dp)
                     .padding(horizontal = 8.dp, vertical = 8.dp), value
             ) {
-                value = it % 10
+                value = it % 100
             }
         }
     }

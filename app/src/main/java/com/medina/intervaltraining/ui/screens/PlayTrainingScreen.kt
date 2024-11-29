@@ -9,6 +9,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -59,6 +60,8 @@ import com.medina.data.model.Session
 import com.medina.data.model.Training
 import com.medina.data.repository.UserInfoDummyRepository
 import com.medina.intervaltraining.R
+import com.medina.intervaltraining.preview.PreviewLightAndDarkScreenSizes
+import com.medina.intervaltraining.ui.components.BigPlayButton
 import com.medina.intervaltraining.ui.components.ExerciseLabel
 import com.medina.intervaltraining.ui.components.ExerciseLabelBody
 import com.medina.intervaltraining.ui.components.ExercisePlayer
@@ -141,7 +144,7 @@ fun PlayExerciseTableView(
 
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(key1 = playState) {
+    LaunchedEffect(key1 = playState, key2 = currentExerciseIndex) {
         scope.launch {
             if (playState == PlayExerciseTableState.RUNNING){
                 var startTime = Calendar.getInstance().timeInMillis - currentTimeMillis
@@ -195,6 +198,7 @@ fun PlayExerciseTableView(
                         currentTimeSec = newTimeSec
                         if (currentTimeSec >= startDelay) {
                             playState = PlayExerciseTableState.RUNNING
+                            currentTimeMillis = 0
                         }else{
                             val remainingTime = startDelay - currentTimeSec
                             if(remainingTime <= settingsState.getCountDownSecs()){
@@ -226,7 +230,11 @@ fun PlayExerciseTableView(
             },
             onPause = {playState = PlayExerciseTableState.PAUSED },
             onResume = {playState = PlayExerciseTableState.RUNNING },
-            onSkip = { toIndex -> currentExerciseIndex = toIndex},
+            onSkip = { toIndex ->
+                currentExerciseIndex = toIndex
+                playState = PlayExerciseTableState.READY
+                currentTimeMillis = 0
+             },
             onRestart = {playState = PlayExerciseTableState.READY }
         )
     }
@@ -357,8 +365,29 @@ fun PlayExerciseTableBodyVertical(
         state = listState,
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
+        item {
+            if(currentTimeMillis==0 && currentExercise==0){
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    shadowElevation = 1.dp,
+                    modifier = Modifier
+                        .padding(2.dp)
+                        .clickable { onStart() }
+                ) {
+                    BigPlayButton(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp)
+                            .padding(bottom = 20.dp)
+                    )
+                }
+            }else {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
         items(items) { exercise ->
             when {
+                items.indexOf(exercise) == 0 && currentTimeMillis==0 ||
                 items.indexOf(exercise) > currentExercise ->
                     ExerciseLabel(
                         exercise = exercise,
@@ -548,12 +577,7 @@ fun PlaybackTabletPreview() {
 }
 
 @ExperimentalFoundationApi
-@Preview(name = "Light Mode", group = "TabletBody")
-@Preview(name = "Dark Mode", group = "TabletBody", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
-@Preview(name = "Light Mode", group = "TabletBodyHorizontal", widthDp = 720, heightDp = 460, uiMode = Configuration.ORIENTATION_LANDSCAPE)
-@Preview(name = "Dark Mode", group = "TabletBodyHorizontal", widthDp = 720, heightDp = 460, uiMode = Configuration.ORIENTATION_LANDSCAPE or Configuration.UI_MODE_NIGHT_YES)
-@Preview(name = "Light Mode", group = "TabletBodyHorizontal", widthDp = 720, heightDp = 260, uiMode = Configuration.ORIENTATION_LANDSCAPE)
-@Preview(name = "Dark Mode", group = "TabletBodyHorizontal", widthDp = 720, heightDp = 260, uiMode = Configuration.ORIENTATION_LANDSCAPE or Configuration.UI_MODE_NIGHT_YES)
+@PreviewLightAndDarkScreenSizes
 @Composable
 fun PlaybackTabletBodyPreview(@PreviewParameter(PlaybackTableBodyArgsProvider::class) param: PlaybackTableBodyArgs) {
     IntervalTrainingTheme {

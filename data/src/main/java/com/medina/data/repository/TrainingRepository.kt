@@ -3,7 +3,6 @@ package com.medina.data.repository
 import androidx.annotation.WorkerThread
 import com.medina.data.local.database.ExerciseDao
 import com.medina.data.local.database.ExerciseItem
-import com.medina.data.local.database.ItappDao
 import com.medina.data.local.database.TrainingDao
 import com.medina.data.local.database.TrainingItem
 import com.medina.data.model.ExerciseIcon
@@ -58,23 +57,17 @@ class TrainingDataRepository @Inject constructor(
 
 }
 
-class TrainingDummyRepository : TrainingRepository {
+class TrainingDummyRepository(numberOfTrainings:Int = 2, numberOfExercises:Int=2) : TrainingRepository {
 
-    val items: List<TrainingItem> = listOf(
+    val trainingItems: List<TrainingItem> = (0 until numberOfTrainings).toList().map {
         TrainingItem(
-            name = "Training 1",
+            name = "Training ${it+1}",
             defaultTimeSec = 45,
             defaultRestSec = 15,
-            lastUsed = 100000
-        ),
-        TrainingItem(
-            name = "Training 2",
-            defaultTimeSec = 45,
-            defaultRestSec = 15,
-            lastUsed = 100001
-        ),
-    )
-    private var trainingList: List<TrainingItem> = items
+            lastUsed = 100000L+it
+        )
+    }
+    private var trainingList: List<TrainingItem> = trainingItems
     private var dummyTraining = TrainingItem(
         name = "Example training",
         lastUsed = Date().time,
@@ -82,7 +75,7 @@ class TrainingDummyRepository : TrainingRepository {
         defaultRestSec = 15,
     )
 
-    private val dummyExercises: List<ExerciseItem> = (1 until 3).toList().map{ dummyExercise(it) }
+    private val dummyExercises: List<ExerciseItem> = (1 .. numberOfExercises).toList().map{ dummyExercise(it) }
 
     private fun dummyExercise(position:Int) = ExerciseItem(
         training = dummyTraining.id,
@@ -97,7 +90,7 @@ class TrainingDummyRepository : TrainingRepository {
         get() = flowOf(trainingList).map { it.map { trainingItem -> trainingItem.toTraining() } }
 
 
-    override fun getTrainingFlow(uuid: UUID): Flow<TrainingItem?> = flowOf(dummyTraining)
+    override fun getTrainingFlow(uuid: UUID): Flow<TrainingItem?> = flowOf(trainingList.getOrNull(0))
 
     override fun exercisesFlow(training: UUID): Flow<List<ExerciseItem>> = flowOf(dummyExercises)
 

@@ -2,13 +2,14 @@ package com.medina.intervaltraining.viewmodel
 
 
 import android.util.Log
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
 import com.medina.data.Clock
 import com.medina.data.RealClock
 import com.medina.data.model.EmptyTraining
 import com.medina.data.model.Exercise
-import com.medina.data.model.Session
 import com.medina.data.model.Training
 import com.medina.data.model.toExercise
 import com.medina.data.model.toExerciseItem
@@ -24,11 +25,11 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.UUID
 
-val fakeExercisesViewModel = EditExercisesViewModel(
+fun fakeExercisesViewModel(numberOfTrainings:Int = 2, numberOfExercises:Int = 2) = EditExercisesViewModel(
     trainingId = UUID.randomUUID(),
-    trainingRepository = TrainingDummyRepository(),
+    trainingRepository = TrainingDummyRepository(numberOfTrainings,numberOfExercises),
     generationRepository = GenerationDummyRepository(),
     clock = RealClock()
 )

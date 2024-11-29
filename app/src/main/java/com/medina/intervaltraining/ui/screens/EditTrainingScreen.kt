@@ -11,8 +11,11 @@ import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -35,6 +38,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -52,26 +56,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.map
-import com.medina.data.RealClock
 import com.medina.data.model.EmptyTraining
-import com.medina.intervaltraining.R
-import com.medina.data.model.Training
 import com.medina.data.model.Exercise
 import com.medina.data.model.ExerciseIcon
-import com.medina.data.repository.TrainingDummyRepository
-import com.medina.generation.repository.GenerationDataRepository
-import com.medina.generation.repository.GenerationDummyRepository
-import com.medina.intervaltraining.viewmodel.EditExercisesViewModel
+import com.medina.data.model.Training
+import com.medina.intervaltraining.R
 import com.medina.intervaltraining.ui.components.AnimatedIconRow
 import com.medina.intervaltraining.ui.components.DialogIconButton
 import com.medina.intervaltraining.ui.components.DraggableItem
@@ -79,10 +78,11 @@ import com.medina.intervaltraining.ui.components.ExerciseLabel
 import com.medina.intervaltraining.ui.components.ExerciseTableIcon
 import com.medina.intervaltraining.ui.components.InputNumber
 import com.medina.intervaltraining.ui.components.InputText
-import com.medina.intervaltraining.ui.components.SavableInputText
+import com.medina.intervaltraining.ui.components.NewInputText
 import com.medina.intervaltraining.ui.components.rememberDragDropState
 import com.medina.intervaltraining.ui.stringForButtonDescription
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
+import com.medina.intervaltraining.viewmodel.EditExercisesViewModel
 import com.medina.intervaltraining.viewmodel.fakeExercisesViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -125,27 +125,54 @@ fun EditTrainingScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditExerciseTableScreenTopBar(editExercisesViewModel: EditExercisesViewModel, onSave:(String)->Unit, onBack:()->Unit, onDelete:()->Unit ){
+fun EditExerciseTableScreenTopBar(
+    editExercisesViewModel: EditExercisesViewModel,
+    onSave: (String) -> Unit,
+    onBack: () -> Unit,
+    onDelete: () -> Unit
+){
     val suggestedName: String = remember { editExercisesViewModel.suggestTrainingName() }
     val trainingTitle: String by editExercisesViewModel.training.map { it.name }.observeAsState("")
-    TopAppBar(
-        title = {
-            SavableInputText(
-                entryText = trainingTitle,
-                onSave = onSave,
-                timeoutMill = 2000,
-                placeholder = suggestedName
-            )
-        },
-        navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = null)
+    val orientation = LocalConfiguration.current.orientation
+    val composableTopBar: @Composable (title: @Composable () -> Unit,navigationIcon: @Composable () -> Unit, actions: @Composable RowScope.() -> Unit) -> Unit =
+        if(orientation == Configuration.ORIENTATION_LANDSCAPE){
+            { title, navigationIcon, actions ->
+                TopAppBar(
+                    title = title,
+                    navigationIcon = navigationIcon,
+                    actions = actions
+                )
             }
-        },
-        actions = {
+        }else{
+            { title, navigationIcon, actions ->
+                MediumTopAppBar(
+                    title = title,
+                    navigationIcon = navigationIcon,
+                    actions = actions
+                )
+            }
+        }
+    composableTopBar({
+            NewInputText(
+                text = trainingTitle,
+                placeholder = suggestedName,
+                onTextChange = onSave,
+                contentDescription = stringForButtonDescription(id = R.string.edit_training_name),
+            )
+        },{
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                    contentDescription = null
+                )
+            }
+        },{
             // RowScope here, so these icons will be placed horizontally
             IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = stringForButtonDescription(id = R.string.edit_training_delete))
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = stringForButtonDescription(id = R.string.edit_training_delete),
+                )
             }
         }
     )
@@ -182,7 +209,7 @@ fun EditExerciseTableView(
         )
     })
     { padding ->
-        ExerciseTableEditableList(
+        ExerciseTableEditableBody(
             modifier = Modifier.padding(padding),
             editExercisesViewModel = editExercisesViewModel,
             onEdit = {
@@ -223,7 +250,7 @@ fun EditExerciseTableView(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ExerciseTableEditableList(
+fun ExerciseTableEditableBody(
     editExercisesViewModel: EditExercisesViewModel,
     modifier: Modifier=Modifier,
     onNew:()->Unit = {},
@@ -234,6 +261,46 @@ fun ExerciseTableEditableList(
 ){
     val exerciseList: List<Exercise> by editExercisesViewModel.exercises.observeAsState(listOf())
     val training: Training by editExercisesViewModel.training.observeAsState(EmptyTraining)
+    val orientation = LocalConfiguration.current.orientation
+    Box(modifier = modifier) {
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            ExerciseTableEditableListHorizontal(
+                modifier = Modifier,
+                exerciseList = exerciseList,
+                training = training,
+                onNew = onNew,
+                onEdit = onEdit,
+                onDuplicate = onDuplicate,
+                onRemove = onRemove,
+                onMove = onMove,
+            )
+        }else{
+            ExerciseTableEditableListVertical(
+                modifier = Modifier,
+                exerciseList = exerciseList,
+                training = training,
+                onNew = onNew,
+                onEdit = onEdit,
+                onDuplicate = onDuplicate,
+                onRemove = onRemove,
+                onMove = onMove,
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun ExerciseTableEditableListVertical(
+    exerciseList: List<Exercise>,
+    training: Training,
+    modifier: Modifier = Modifier,
+    onNew:()->Unit = {},
+    onEdit: (Int) -> Unit = {},
+    onDuplicate: (Int) -> Unit = {},
+    onRemove: (Int) -> Unit = {},
+    onMove: (Int, Int) -> Unit = { _, _->},
+){
     val (selectedIndex, setSelectedIndex) = remember { mutableIntStateOf(-1) }
     var overscrollJob by remember { mutableStateOf<Job?>(null) }
     val listState = rememberLazyListState()
@@ -249,10 +316,21 @@ fun ExerciseTableEditableList(
             listState.firstVisibleItemScrollOffset <= 0
         }
     }
-    Box(modifier = modifier) {
+    val newTraining = training.name.isEmpty()
+    Box(modifier = modifier.fillMaxSize()) {
+        if(exerciseList.isNotEmpty()) {
+            ExerciseTableHeader(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(8.dp),
+                exercises = exerciseList,
+            )
+        }
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(2.dp),
+            contentPadding = PaddingValues(bottom = 16.dp),
             modifier = Modifier
+                .padding(top = 48.dp, bottom = 0.dp)
                 .pointerInput(dragDropState) {
                     detectDragGesturesAfterLongPress(
                         onDrag = { change, offset ->
@@ -288,46 +366,7 @@ fun ExerciseTableEditableList(
                 },
             state = listState,
             content = {
-                stickyHeader {
-                    Box(modifier = Modifier.fillParentMaxWidth()) {
-                        ExerciseTableHeader(
-                            modifier = Modifier
-                                .padding(8.dp)
-                                .align(Alignment.Center),
-                            exercises = exerciseList,
-                        )
-                    }
-                }
-                if (training.name.isNotEmpty()) {
-                    itemsIndexed(
-                        items = exerciseList,
-                        key = {_: Int, exercise: Exercise -> exercise.id.toString() }
-                    ) {  index, exercise ->
-                        DraggableItem(
-                            dragDropState = dragDropState,
-                            index = index
-                        ) { isDragging ->
-                            val pos = exerciseList.indexOf(exercise)
-                            if(index==pos) {
-                                EditExerciseTableItemView(
-                                    modifier = Modifier.clickable { setSelectedIndex(pos) },
-                                    exercise = exercise,
-                                    isSelected = pos == selectedIndex,
-                                    shadowElevation = if(isDragging) 6.dp else 1.dp,
-                                    onEdit = { onEdit(pos) },
-                                    onDuplicate = { onDuplicate(pos) },
-                                    onRemove = { onRemove(pos) }
-                                )
-                            }
-                        }
-                    }
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillParentMaxWidth()
-                                .height(82.dp)) {}
-                    }
-                } else {
+                if(newTraining){
                     item {
                         Box(
                             Modifier
@@ -342,31 +381,222 @@ fun ExerciseTableEditableList(
                             )
                         }
                     }
+                }else{
+                    itemsIndexed(
+                        items = exerciseList,
+                        key = { _: Int, exercise: Exercise -> exercise.id.toString() }
+                    ) { index, exercise ->
+                        DraggableItem(
+                            dragDropState = dragDropState,
+                            index = index
+                        ) { isDragging ->
+                            val pos = exerciseList.indexOf(exercise)
+                            if (index == pos) {
+                                EditExerciseTableItemView(
+                                    modifier = Modifier
+                                        .clickable(
+                                            onClick = {
+                                                if (pos == selectedIndex) {
+                                                    onEdit(pos)
+                                                } else {
+                                                    setSelectedIndex(pos)
+                                                }
+                                            },
+                                            onClickLabel = if (pos == selectedIndex) {
+                                                stringForButtonDescription(id = R.string.edit_exercise_table_edit)
+                                            } else {
+                                                exercise.name
+                                            }
+                                        ),
+                                    exercise = exercise,
+                                    isSelected = pos == selectedIndex,
+                                    shadowElevation = if (isDragging) 6.dp else 1.dp,
+                                    onEdit = { onEdit(pos) },
+                                    onDuplicate = { onDuplicate(pos) },
+                                    onRemove = { onRemove(pos) }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         )
-        if(training.name.isNotEmpty()) {
-            Box(
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(82.dp)
-                    .padding(16.dp)
-            ) {
+        if (!newTraining) {
                 ExtendedFloatingActionButton(
-                    modifier = Modifier.align(
+                    modifier = Modifier
+                        .align(
+                            if (exerciseList.isEmpty()) {
+                                Alignment.TopCenter
+                            } else {
+                                Alignment.BottomEnd
+                            }
+                        )
+                        .height(82.dp)
+                        .padding(16.dp),
+                    expanded = showFullButton,
+                    onClick = onNew,
+                    icon = {
+                        Icon(
+                            Icons.Default.Add,
+                            stringForButtonDescription(id = R.string.edit_exercise_table_new_exercise)
+                        )
+                    },
+                    text = { Text(text = stringResource(id = R.string.edit_exercise_table_new_exercise)) },
+                )
+        }
+    }
+}
+
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun ExerciseTableEditableListHorizontal(
+    exerciseList: List<Exercise>,
+    training: Training,
+    modifier: Modifier = Modifier,
+    onNew:()->Unit = {},
+    onEdit: (Int) -> Unit = {},
+    onDuplicate: (Int) -> Unit = {},
+    onRemove: (Int) -> Unit = {},
+    onMove: (Int, Int) -> Unit = { _, _->},
+){
+    val (selectedIndex, setSelectedIndex) = remember { mutableIntStateOf(-1) }
+    var overscrollJob by remember { mutableStateOf<Job?>(null) }
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val dragDropState = rememberDragDropState(listState,
+        onMove = onMove,
+        onHover = { _, _, _ ->
+            setSelectedIndex(-1)
+        }
+    )
+    val newTraining = training.name.isEmpty()
+    Box(modifier = modifier.fillMaxSize()) {
+        if(exerciseList.isNotEmpty()) {
+            ExerciseTableHeader(
+                modifier = Modifier
+                    .fillMaxWidth(0.3f)
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp),
+                exercises = exerciseList,
+            )
+        }
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = Modifier
+                .fillMaxWidth(if (newTraining) 1f else 0.7f)
+                .pointerInput(dragDropState) {
+                    detectDragGesturesAfterLongPress(
+                        onDrag = { change, offset ->
+                            change.consume()
+                            dragDropState.onDrag(offset = offset)
+                            if (overscrollJob?.isActive == true) return@detectDragGesturesAfterLongPress
+
+                            dragDropState
+                                .checkForOverScroll()
+                                .takeIf { it != 0f }
+                                ?.let {
+                                    overscrollJob =
+                                        scope.launch {
+                                            dragDropState.state.animateScrollBy(
+                                                it * 1.3f, tween(easing = FastOutLinearInEasing)
+                                            )
+                                        }
+                                }
+                                ?: run { overscrollJob?.cancel() }
+                        },
+                        onDragStart = { offset ->
+                            dragDropState.onDragStart(offset)
+                        },
+                        onDragEnd = {
+                            dragDropState.onDragInterrupted()
+                            overscrollJob?.cancel()
+                        },
+                        onDragCancel = {
+                            dragDropState.onDragInterrupted()
+                            overscrollJob?.cancel()
+                        }
+                    )
+                },
+            state = listState,
+            content = {
+                if(newTraining){
+                    item {
+                        Box(
+                            Modifier
+                                .fillParentMaxWidth()
+                                .padding(32.dp)
+                        ) {
+                            Text(
+                                modifier = Modifier
+                                    .align(Alignment.TopCenter),
+                                style = MaterialTheme.typography.bodyLarge,
+                                text = stringArrayResource(id = R.array.think_name_training_list).random(),
+                            )
+                        }
+                    }
+                }else{
+                    itemsIndexed(
+                        items = exerciseList,
+                        key = { _: Int, exercise: Exercise -> exercise.id.toString() }
+                    ) { index, exercise ->
+                        DraggableItem(
+                            dragDropState = dragDropState,
+                            index = index
+                        ) { isDragging ->
+                            val pos = exerciseList.indexOf(exercise)
+                            if (index == pos) {
+                                EditExerciseTableItemView(
+                                    modifier = Modifier
+                                        .clickable(
+                                            onClick = {
+                                                if (pos == selectedIndex) {
+                                                    onEdit(pos)
+                                                } else {
+                                                    setSelectedIndex(pos)
+                                                }
+                                            },
+                                            onClickLabel = if (pos == selectedIndex) {
+                                                stringForButtonDescription(id = R.string.edit_exercise_table_edit)
+                                            } else {
+                                                exercise.name
+                                            }
+                                        ),
+                                    exercise = exercise,
+                                    isSelected = pos == selectedIndex,
+                                    shadowElevation = if (isDragging) 6.dp else 1.dp,
+                                    onEdit = { onEdit(pos) },
+                                    onDuplicate = { onDuplicate(pos) },
+                                    onRemove = { onRemove(pos) }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        )
+        if (!newTraining) {
+            ExtendedFloatingActionButton(
+                modifier = Modifier
+                    .align(
                         if (exerciseList.isEmpty()) {
-                            Alignment.Center
+                            Alignment.TopCenter
                         } else {
                             Alignment.CenterEnd
                         }
-                    ),
-                    expanded = showFullButton,
-                    onClick = onNew,
-                    icon = { Icon(Icons.Default.Add, stringForButtonDescription(id = R.string.edit_exercise_table_new_exercise))},
-                    text = { Text(text = stringResource(id = R.string.edit_exercise_table_new_exercise)) },
-                )
-            }
+                    )
+                    .height(82.dp)
+                    .padding(16.dp),
+                expanded = true,
+                onClick = onNew,
+                icon = {
+                    Icon(
+                        Icons.Default.Add,
+                        stringForButtonDescription(id = R.string.edit_exercise_table_new_exercise)
+                    )
+                },
+                text = { Text(text = stringResource(id = R.string.edit_exercise_table_new_exercise)) },
+            )
         }
     }
 }
@@ -376,16 +606,12 @@ fun ExerciseTableHeader(modifier: Modifier, exercises: List<Exercise>) {
     Row(modifier = modifier) {
         Text(
             text = "${exercises.size} exercises",
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontSize = 24.sp
-            ),
+            style = MaterialTheme.typography.titleMedium,
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = "${(exercises.sumOf { it.timeSec+it.restSec }) / 60} min",
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontSize = 24.sp
-            ),
+            style = MaterialTheme.typography.titleMedium,
         )
     }
 }
@@ -409,7 +635,8 @@ fun EditExerciseTableItemView(
             shadowElevation = shadowElevation,
             modifier = Modifier
                 .padding(2.dp)
-                .weight(0.1f))
+                .weight(0.1f),
+        )
         AnimatedVisibility(visible = isSelected) {
             Row(modifier = modifier,
                 verticalAlignment = Alignment.CenterVertically,
@@ -446,21 +673,12 @@ fun EditExerciseDialogBody(
     onSuggestExercise: ()->Exercise,
     onCancel: ()->Unit){
 
-    val (text, setText) = remember { mutableStateOf("") }
-    val (icon, setIcon) = remember { mutableStateOf(ExerciseIcon.NONE) }
-    val (time, setTime) = remember { mutableIntStateOf(45) }
-    val (rest, setRest) = remember { mutableIntStateOf(15) }
-    val (id, setId) = remember { mutableStateOf(UUID.randomUUID()) }
+    val (text, setText) = remember { mutableStateOf(currentExercise?.name ?: "") }
+    val (icon, setIcon) = remember { mutableStateOf(currentExercise?.icon ?: ExerciseIcon.NONE) }
+    val (time, setTime) = remember { mutableIntStateOf(currentExercise?.timeSec ?: 45) }
+    val (rest, setRest) = remember { mutableIntStateOf(currentExercise?.restSec ?:15) }
+    val (id, setId) = remember { mutableStateOf(currentExercise?.id ?:UUID.randomUUID()) }
     var iconsVisible by remember { mutableStateOf(false) }
-    val timesVisible = true //text.isNotBlank()
-
-    if(currentExercise!=null){
-        setText(currentExercise.name)
-        setIcon(currentExercise.icon)
-        setTime(currentExercise.timeSec)
-        setRest(currentExercise.restSec)
-        setId(currentExercise.id)
-    }
 
     Card(
         modifier = Modifier
@@ -498,7 +716,8 @@ fun EditExerciseDialogBody(
                     modifier = Modifier.align(Alignment.CenterVertically),
                     onClick = {
                         iconsVisible = true
-                    },) {
+                    },
+                ) {
                     ExerciseTableIcon(icon = icon, MaterialTheme.colorScheme.primary)
                 }
                 InputText(
@@ -518,17 +737,13 @@ fun EditExerciseDialogBody(
             } else {
                 Spacer(modifier = Modifier.height(16.dp))
             }
-            if (timesVisible) {
-                Row (
-                    Modifier
-                        .padding(16.dp)
-                        .height(48.dp)
-                ){
-                    InputNumber(modifier = Modifier.weight(0.5f), value = time , onNumberChange = setTime)
-                    InputNumber(modifier = Modifier.weight(0.5f), value = rest , onNumberChange = setRest)
-                }
-            } else {
-                Spacer(modifier = Modifier.height(16.dp))
+            Row (
+                Modifier
+                    .padding(16.dp)
+                    .height(48.dp)
+            ){
+                InputNumber(modifier = Modifier.weight(0.5f), value = time , onNumberChange = setTime)
+                InputNumber(modifier = Modifier.weight(0.5f), value = rest , onNumberChange = setRest)
             }
             Row(
                 Modifier
@@ -569,72 +784,122 @@ fun EditExerciseDialogBody(
     }
 }
 
-@Preview
+@Preview(name = "Light Mode", group = "Components")
+@Preview(name = "Dark Mode", group = "Components", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
-fun PreviewExerciseInputDialog() = EditExerciseDialogBody(
-    onItemComplete = { },
-    onSuggestExercise = { Exercise("Exercise") },
-    onCancel = {}
-)
+fun PreviewExerciseInputDialog(){
+    IntervalTrainingTheme {
+        EditExerciseDialogBody(
+            onItemComplete = { },
+            onSuggestExercise = { Exercise("Exercise") },
+            onCancel = {}
+        )
+    }
+}
 
-
-@Preview
+@Preview(name = "Light Mode", group = "Components")
+@Preview(name = "Dark Mode", group = "Components", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
-fun PreviewExerciseListItem() = EditExerciseTableItemView(
-    exercise = Exercise(name = "Exercise"),
-    modifier = Modifier,
-    isSelected = true,
-    shadowElevation = 1.dp,
-    onEdit = {},
-    onDuplicate = {},
-    onRemove = {}
-)
+fun PreviewExerciseListItem(){
+    IntervalTrainingTheme {
+        EditExerciseTableItemView(
+            exercise = Exercise(name = "Exercise"),
+            modifier = Modifier,
+            isSelected = true,
+            shadowElevation = 1.dp,
+            onEdit = {},
+            onDuplicate = {},
+            onRemove = {}
+        )
+    }
+}
 
-@Preview
+@ExperimentalFoundationApi
+@Preview(name = "Light Mode", group = "Components", widthDp = 360, heightDp = 160)
+@Preview(name = "Dark Mode", group = "Components", widthDp = 360, heightDp = 160, uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Preview(name = "Light Mode", group = "Components", widthDp = 720, heightDp = 160, uiMode = Configuration.ORIENTATION_LANDSCAPE)
+@Preview(name = "Dark Mode", group = "Components", widthDp = 720, heightDp = 160, uiMode = Configuration.ORIENTATION_LANDSCAPE or Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun PreviewEditorTopBar() {
+    IntervalTrainingTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            Scaffold(topBar = {
+                EditExerciseTableScreenTopBar(
+                    editExercisesViewModel = fakeExercisesViewModel(numberOfExercises = 0),
+                    onBack = {  },
+                    onSave = {},
+                    onDelete = {}
+                )
+            }){ padding ->
+                Box(modifier = Modifier.padding(padding),)
+            }
+        }
+    }
+}
+
+@ExperimentalFoundationApi
+@Preview(name = "Light Mode", group = "Vertical")
+@Preview(name = "Dark Mode", group = "Vertical", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Preview(name = "Light Mode", group = "Horizontal", widthDp = 720, heightDp = 260, uiMode = Configuration.ORIENTATION_LANDSCAPE)
+@Preview(name = "Dark Mode", group = "Horizontal", widthDp = 720, heightDp = 260, uiMode = Configuration.ORIENTATION_LANDSCAPE or Configuration.UI_MODE_NIGHT_YES)
+@Preview(name = "Light Mode", group = "TabletHorizontal", widthDp = 720, heightDp = 460, uiMode = Configuration.ORIENTATION_LANDSCAPE)
+@Preview(name = "Dark Mode", group = "TabletHorizontal", widthDp = 720, heightDp = 460, uiMode = Configuration.ORIENTATION_LANDSCAPE or Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun EditorPreviewNew() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             EditExerciseTableView(
-                editExercisesViewModel = fakeExercisesViewModel
+                editExercisesViewModel = fakeExercisesViewModel(numberOfTrainings = 0, numberOfExercises = 0)
             )
         }
     }
 }
 
-@Preview
+@ExperimentalFoundationApi
+@Preview(name = "Light Mode", group = "Vertical")
+@Preview(name = "Dark Mode", group = "Vertical", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Preview(name = "Light Mode", group = "Horizontal", widthDp = 720, heightDp = 260, uiMode = Configuration.ORIENTATION_LANDSCAPE)
+@Preview(name = "Dark Mode", group = "Horizontal", widthDp = 720, heightDp = 260, uiMode = Configuration.ORIENTATION_LANDSCAPE or Configuration.UI_MODE_NIGHT_YES)
+@Preview(name = "Light Mode", group = "TabletHorizontal", widthDp = 720, heightDp = 460, uiMode = Configuration.ORIENTATION_LANDSCAPE)
+@Preview(name = "Dark Mode", group = "TabletHorizontal", widthDp = 720, heightDp = 460, uiMode = Configuration.ORIENTATION_LANDSCAPE or Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun EditorPreviewEmpty() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             EditExerciseTableView(
-                editExercisesViewModel = fakeExercisesViewModel
+                editExercisesViewModel = fakeExercisesViewModel(numberOfExercises = 0)
             )
         }
     }
 }
 
-@Preview
-@Composable
-fun EditorPreviewSmall() {
-    IntervalTrainingTheme {
-        Surface(color = MaterialTheme.colorScheme.background) {
-            EditExerciseTableView(
-                editExercisesViewModel = fakeExercisesViewModel
-            )
-        }
-    }
-}
-
-
-@Preview(name = "Light Mode")
-@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@ExperimentalFoundationApi
+@Preview(name = "Light Mode", group = "Vertical")
+@Preview(name = "Dark Mode", group = "Vertical", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Preview(name = "Light Mode", group = "Horizontal", widthDp = 720, heightDp = 260, uiMode = Configuration.ORIENTATION_LANDSCAPE)
+@Preview(name = "Dark Mode", group = "Horizontal", widthDp = 720, heightDp = 260, uiMode = Configuration.ORIENTATION_LANDSCAPE or Configuration.UI_MODE_NIGHT_YES)
+@Preview(name = "Light Mode", group = "TabletHorizontal", widthDp = 720, heightDp = 460, uiMode = Configuration.ORIENTATION_LANDSCAPE)
+@Preview(name = "Dark Mode", group = "TabletHorizontal", widthDp = 720, heightDp = 460, uiMode = Configuration.ORIENTATION_LANDSCAPE or Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun EditorPreview() {
     IntervalTrainingTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
             EditExerciseTableView(
-                editExercisesViewModel = fakeExercisesViewModel
+                editExercisesViewModel = fakeExercisesViewModel(numberOfExercises = 6)
+            )
+        }
+    }
+}
+
+@ExperimentalFoundationApi
+@Preview(name = "Light Mode", group = "Vertical")
+@Preview(name = "Dark Mode", group = "Vertical", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Composable
+fun EditorPreviewMany() {
+    IntervalTrainingTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            EditExerciseTableView(
+                editExercisesViewModel = fakeExercisesViewModel(numberOfExercises = 12)
             )
         }
     }

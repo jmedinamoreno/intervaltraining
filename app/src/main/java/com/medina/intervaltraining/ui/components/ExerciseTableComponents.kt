@@ -49,7 +49,6 @@ import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.medina.data.model.Exercise
 import com.medina.data.model.ExerciseIcon
 import com.medina.intervaltraining.R
@@ -173,17 +172,13 @@ fun ExerciseLabelBody(exercise: Exercise, modifier: Modifier = Modifier) {
             .align(Alignment.CenterVertically)) {
             Text(
                 text = exercise.name ,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 24.sp
-                ),
+                style = MaterialTheme.typography.bodyLarge,
             )
             Row {
                 Text(
                     text = stringResource(id = R.string.exercise_label_time_and_rest, exercise.timeSec, exercise.restSec),
                     color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 16.sp
-                    ),
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
         }
@@ -192,7 +187,11 @@ fun ExerciseLabelBody(exercise: Exercise, modifier: Modifier = Modifier) {
 
 @Composable
 fun ExerciseLabel(exercise: Exercise, modifier: Modifier = Modifier, shadowElevation: Dp = 1.dp ) {
-    Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, shadowElevation = shadowElevation) {
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        shadowElevation = shadowElevation
+    ) {
         ExerciseLabelBody(exercise = exercise)
     }
 }

@@ -74,12 +74,16 @@ class TrainingViewModelTest {
             Training(
                 name = "Training 1",
                 defaultTimeSec = 10,
-                defaultRestSec = 5
+                defaultRestSec = 5,
+                totalTimeSec = 15,
+                lastUsed = 0
             ),
             Training(
                 name = "Training 2",
                 defaultTimeSec = 15,
-                defaultRestSec = 8
+                defaultRestSec = 8,
+                totalTimeSec = 23,
+                lastUsed = 0
             )
         )
         whenever(repository.trainingsFlow).thenReturn(flowOf(expectedTrainings))
@@ -113,12 +117,15 @@ class TrainingViewModelTest {
             name = "Test Training",
             defaultTimeSec = 10,
             defaultRestSec = 5,
+            totalTimeSec = 15,
+            lastUsed = 0
         )
         val trainingItem = TrainingItem(
             id = trainingId,
             name = "Test Training",
             defaultTimeSec = 10,
             defaultRestSec = 5,
+            totalTimeSec = 15,
             lastUsed = 1
         )
         whenever(clock.timestamp()).thenReturn(1)

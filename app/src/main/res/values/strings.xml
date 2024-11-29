@@ -84,4 +84,5 @@
     <string name="settings_panel_rest_sound_desc">Play a sound when the rest interval starts</string>
     <string name="settings_panel_end_training_sound_label">End training sound</string>
     <string name="settings_panel_end_training_sound_desc">Play a sound when the training ends</string>
+    <string name="edit_training_name">Edit name</string>
 </resources>

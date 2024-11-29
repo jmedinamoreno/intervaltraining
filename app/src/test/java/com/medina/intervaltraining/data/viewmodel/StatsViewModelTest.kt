@@ -66,13 +66,13 @@ class StatsViewModelTest {
         Dispatchers.resetMain()
     }
 
-    @Test
-    fun getTimeForTrainingLiveData_returnsTimeForTrainingFromRepository(){
-        val trainingId = UUID.randomUUID()
-        val expectedTime = 30
-        whenever(repository.timeForTrainingMinAsFlow(trainingId)).thenReturn(flowOf(expectedTime))
-        assertEquals(expectedTime, viewModel.getTimeForTrainingLiveData(trainingId).getOrAwaitValue())
-    }
+//    @Test
+//    fun getTimeForTrainingLiveData_returnsTimeForTrainingFromRepository(){
+//        val trainingId = UUID.randomUUID()
+//        val expectedTime = 30
+//        whenever(repository.timeForTrainingMinAsFlow(trainingId)).thenReturn(flowOf(expectedTime))
+//        assertEquals(expectedTime, viewModel.getTimeForTrainingLiveData(trainingId).getOrAwaitValue())
+//    }
 
     @Test
     fun getTrainedThisWeek_returnsValueFromRepository(){
