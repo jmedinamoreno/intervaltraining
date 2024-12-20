@@ -1,6 +1,7 @@
 package com.medina.intervaltraining.ui.screens
 
 import android.content.res.Configuration
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -32,6 +33,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,6 +48,8 @@ import com.medina.data.repository.UserInfoDummyRepository
 import com.medina.intervaltraining.R
 import com.medina.intervaltraining.ui.floatToHours
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
+import com.medina.intervaltraining.ui.theme.LocalBackgroundTheme
+import com.medina.intervaltraining.ui.theme.shader
 import com.medina.intervaltraining.viewmodel.SettingsViewModel
 import com.medina.intervaltraining.viewmodel.StatsViewModel
 import com.medina.intervaltraining.viewmodel.TrainingViewModel
@@ -76,6 +81,9 @@ fun IntervalTrainingScreen(
             if(navSelectedItem == IntervalTrainingSections.TRAININGS) {
                 ExtendedFloatingActionButton(
                     onClick = onNewTraining,
+                    shape = MaterialTheme.shapes.small,
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.onTertiary,
                     icon = {
                         Icon(
                             Icons.Default.Add,
@@ -109,7 +117,9 @@ fun IntervalTrainingScreen(
             }
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding)) {
+        Column(
+            modifier = Modifier.padding(padding).shader()
+        ) {
             welcomePanel(
                 Modifier
                     .fillMaxWidth()
@@ -169,7 +179,8 @@ fun TrainingListPanel(
     modifier: Modifier,
     trainingViewModel: TrainingViewModel = hiltViewModel(),
     statsViewModel: StatsViewModel = hiltViewModel(),
-    onPlay: (training: Training, immediate:Boolean) -> Unit = { _, _->},){
+    onPlay: (training: Training, immediate: Boolean) -> Unit = { _, _ -> },
+){
     val items: List<Training> by trainingViewModel.trainingList.observeAsState(listOf())
     LazyColumn(modifier = modifier) {
         items(items) { training ->
@@ -182,20 +193,34 @@ fun TrainingListPanel(
 
 @Composable
 fun TrainingItemComponent(training: Training, timeMin: Int, modifier: Modifier, onClick:()->Unit, onPlay:()->Unit){
-    Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, shadowElevation = 1.dp) {
-        Row (modifier = Modifier.fillMaxWidth()){
-            Text(stringResource(id = R.string.welcome_training_min,timeMin),
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        shadowElevation = 1.dp
+    ) {
+        Row (modifier = Modifier
+            .padding(start = 8.dp, end = 4.dp)
+            .fillMaxWidth()
+        ){
+            Text(
+                stringResource(id = R.string.welcome_training_min, timeMin),
                 color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier
                     .padding(start = 8.dp, end = 4.dp)
                     .align(Alignment.CenterVertically),
             )
-            Text(training.name,  modifier = Modifier
-                .weight(1f)
-                .padding(end = 4.dp)
-                .align(Alignment.CenterVertically)
-                .clickable { onClick() },)
+            Text(
+                training.name,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp, end = 4.dp)
+                    .align(Alignment.CenterVertically)
+                    .clickable { onClick() },
+                style = MaterialTheme.typography.labelLarge,
+            )
             IconButton(onClick = onPlay, modifier = Modifier.align(Alignment.CenterVertically) ) {
                 Icon(imageVector = Icons.Default.PlayArrow, contentDescription = stringResource(id = R.string.ic_description_play_icon))
             }

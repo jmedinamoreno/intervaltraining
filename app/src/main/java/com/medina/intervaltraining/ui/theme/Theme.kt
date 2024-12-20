@@ -3,8 +3,12 @@ package com.medina.intervaltraining.ui.theme
 import android.os.Build
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.VisibleForTesting
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.then
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -12,6 +16,8 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -165,6 +171,9 @@ val LightAndroidBackgroundTheme = BackgroundTheme(color = DarkGreenGray95)
  */
 val DarkAndroidBackgroundTheme = BackgroundTheme(color = Color.Black)
 
+// 2. Create a CompositionLocal for Custom Shapes
+val LocalCustomShapes = staticCompositionLocalOf { Shapes() }
+
 /**
  * @param darkTheme Whether the theme should use a dark color scheme (follows system by default).
  * @param useDynamicTheming If `false`, disables the use of dynamic theming, even when it is
@@ -207,19 +216,30 @@ fun IntervalTrainingTheme(
         useDynamicTheming && supportsDynamicTheming() -> TintTheme(colorScheme.primary)
         else -> TintTheme()
     }
+    val shapes = Shapes(
+        extraLarge = RoundedCornerShape(28.0.dp),
+        large = RoundedCornerShape(16.dp),
+        medium = RoundedCornerShape(percent = 100),
+        small = RoundedCornerShape(percent = 100),
+        extraSmall = RoundedCornerShape(percent = 100),
+    )
+
     // Composition locals
     CompositionLocalProvider(
         LocalGradientColors provides gradientColors,
         LocalBackgroundTheme provides backgroundTheme,
         LocalTintTheme provides tintTheme,
+        LocalCustomShapes provides shapes,
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography,
             content = content,
+            shapes = shapes,
         )
     }
 }
 
 @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
 fun supportsDynamicTheming() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+

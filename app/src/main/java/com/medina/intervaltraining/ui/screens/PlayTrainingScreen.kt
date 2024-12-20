@@ -8,6 +8,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -24,6 +26,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -311,27 +315,32 @@ fun PlayExerciseTableBody(
                 onRestart = onRestart
             )
         }
-        Card(
+        Surface(
+            color =  MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            shadowElevation = 12.dp,
             shape = RoundedCornerShape(
-                topStart = 0.dp,
-                topEnd = 0.dp,
+                topStart = 8.dp,
+                topEnd = 8.dp,
                 bottomStart = 60.dp,
-                bottomEnd = 0.dp
+                bottomEnd = 8.dp
             ),
             modifier = Modifier
                 .width(80.dp)
                 .height(80.dp)
                 .align(Alignment.TopEnd),
         ) {
-            Text(text = "${currentExercise+1} / ${items.size}",
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .padding(top = 8.dp, end = 8.dp))
-            val totalMinutes = currentTimeMillis/60000 + items.subList(0,currentExercise).sumOf { it.timeSec+it.restSec }/60
-            Text(text = "$totalMinutes' / ${(items.sumOf { it.timeSec+it.restSec })/60}'",
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .padding(top = 2.dp, end = 8.dp))
+            Column {
+                Text(text = "${currentExercise+1} / ${items.size}",
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(top = 8.dp, end = 8.dp))
+                val totalMinutes = currentTimeMillis/60000 + items.subList(0,currentExercise).sumOf { it.timeSec+it.restSec }/60
+                Text(text = "$totalMinutes' / ${(items.sumOf { it.timeSec+it.restSec })/60}'",
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(top = 2.dp, end = 8.dp))
+            }
         }
     }
 }
@@ -361,14 +370,14 @@ fun PlayExerciseTableBodyVertical(
         }
     }
     LazyColumn(
-        modifier = modifier,
+        modifier = modifier.padding(horizontal = 4.dp),
         state = listState,
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         item {
             if(currentTimeMillis==0 && currentExercise==0){
                 Surface(
-                    shape = MaterialTheme.shapes.medium,
+                    shape = MaterialTheme.shapes.large,
                     shadowElevation = 1.dp,
                     modifier = Modifier
                         .padding(2.dp)
@@ -392,31 +401,24 @@ fun PlayExerciseTableBodyVertical(
                     ExerciseLabel(
                         exercise = exercise,
                         modifier = Modifier
-                            .padding(2.dp)
                             .combinedClickable {
                                 onSkip(items.indexOf(exercise))
                             }
                     )
                 items.indexOf(exercise) < currentExercise ->
-                    Surface(
-                        shape = MaterialTheme.shapes.medium,
-                        shadowElevation = 1.dp,
-                        modifier = modifier
-                            .padding(2.dp)
+                    ExerciseLabel(
+                        exercise = exercise,
+                        modifier = Modifier
                             .combinedClickable {
                                 onSkip(items.indexOf(exercise))
-                            }
-                    ) {
-                        Box(modifier = Modifier.background(Color(0x80808080))) {
-                            ExerciseLabelBody(exercise = exercise, modifier = modifier.padding(2.dp))
-                        }
-                    }
+                            },
+                        backgroundColor = Color(0x80808080)
+                    )
                 else ->
                     Surface(
-                        shape = MaterialTheme.shapes.medium,
+                        shape = MaterialTheme.shapes.large,
                         shadowElevation = 1.dp,
                         modifier = Modifier
-                            .padding(2.dp)
                             .combinedClickable(
                                 onLongClick = { onSkip(items.indexOf(exercise)) },
                                 onClick = {
@@ -461,81 +463,87 @@ fun PlayExerciseTableBodyHorizontal(
     onSkip:(toIndex:Int)->Unit,
     onRestart:()->Unit,
 ) {
-    Row (modifier = modifier.fillMaxWidth()){
-        LazyColumn(modifier = Modifier
-            .fillMaxHeight()
-            .weight(1f)
-        ) {
-            items(items) { exercise ->
-                when {
-                    items.indexOf(exercise) > currentExercise ->
-                        ExerciseLabel(
-                            exercise = exercise,
-                            modifier = Modifier
-                                .padding(2.dp)
-                                .combinedClickable {
-                                    onSkip(items.indexOf(exercise))
-                                }
-                        )
-                    items.indexOf(exercise) < currentExercise ->
-                        Surface(
-                            shape = MaterialTheme.shapes.medium,
-                            shadowElevation = 1.dp,
-                            modifier = modifier
-                                .padding(2.dp)
-                                .combinedClickable {
-                                    onSkip(items.indexOf(exercise))
-                                }
-                        ) {
-                            Box(modifier = Modifier.background(Color(0x80808080))) {
-                                ExerciseLabelBody(exercise = exercise, modifier = modifier.padding(2.dp))
-                            }
-                        }
-                    else ->
-                        Surface(
-                            shape = MaterialTheme.shapes.medium,
-                            shadowElevation = 1.dp,
-                            modifier = Modifier
-                                .padding(2.dp)
-                                .clickable {
-                                    when (playState) {
-                                        PlayExerciseTableState.READY -> onStart()
-                                        PlayExerciseTableState.STARTING ->  onPause()
-                                        PlayExerciseTableState.RUNNING -> onPause()
-                                        PlayExerciseTableState.PAUSED -> onResume()
-                                        PlayExerciseTableState.COMPLETE -> onRestart()
-                                    }
-                                }
-                        ) {
-                            ExerciseRunningLabel(exercise = exercise, currentTimeMillis, modifier = modifier.padding(2.dp))
-                        }
+    BoxWithConstraints {
+        Row(
+            modifier = modifier.padding(
+                end = if (maxHeight < 400.dp) {
+                    70.dp
+                } else {
+                    0.dp
                 }
-            }
-        }
-        Surface(
-            shape = MaterialTheme.shapes.medium,
-            shadowElevation = 1.dp,
-            modifier = Modifier.aspectRatio(1f)
-                .padding(2.dp)
-                .clickable {
-                    when (playState) {
-                        PlayExerciseTableState.READY -> onStart()
-                        PlayExerciseTableState.STARTING ->  onPause()
-                        PlayExerciseTableState.RUNNING -> onPause()
-                        PlayExerciseTableState.PAUSED -> onResume()
-                        PlayExerciseTableState.COMPLETE -> onRestart()
+            ).fillMaxWidth()
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(horizontal = 4.dp)
+                    .fillMaxHeight()
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items(items) { exercise ->
+                    when {
+                        items.indexOf(exercise) > currentExercise ->
+                            ExerciseLabel(
+                                exercise = exercise,
+                                modifier = Modifier
+                                    .combinedClickable {
+                                        onSkip(items.indexOf(exercise))
+                                    }
+                            )
+
+                        items.indexOf(exercise) < currentExercise ->
+                            ExerciseLabel(
+                                exercise = exercise,
+                                modifier = Modifier
+                                    .combinedClickable {
+                                        onSkip(items.indexOf(exercise))
+                                    },
+                                backgroundColor = Color(0x80808080)
+                            )
+
+                        else ->
+                            ExerciseRunningLabel(
+                                exercise = exercise,
+                                currentTimeMillis = currentTimeMillis,
+                                modifier = Modifier
+                                    .clickable {
+                                        when (playState) {
+                                            PlayExerciseTableState.READY -> onStart()
+                                            PlayExerciseTableState.STARTING -> onPause()
+                                            PlayExerciseTableState.RUNNING -> onPause()
+                                            PlayExerciseTableState.PAUSED -> onResume()
+                                            PlayExerciseTableState.COMPLETE -> onRestart()
+                                        }
+                                    }
+                            )
                     }
                 }
-        ) {
-            ExercisePlayer(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(bottom = 20.dp),
-                playState = playState,
-                startDelay = startDelay,
-                runningExercise = items.getOrNull(currentExercise),
-                currentTimeMillis = currentTimeMillis
-            )
+            }
+            Surface(
+                shape = MaterialTheme.shapes.large,
+                shadowElevation = 1.dp,
+                modifier = Modifier.aspectRatio(1f)
+                    .padding(2.dp)
+                    .clickable {
+                        when (playState) {
+                            PlayExerciseTableState.READY -> onStart()
+                            PlayExerciseTableState.STARTING -> onPause()
+                            PlayExerciseTableState.RUNNING -> onPause()
+                            PlayExerciseTableState.PAUSED -> onResume()
+                            PlayExerciseTableState.COMPLETE -> onRestart()
+                        }
+                    }
+            ) {
+                ExercisePlayer(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(bottom = 20.dp),
+                    playState = playState,
+                    startDelay = startDelay,
+                    runningExercise = items.getOrNull(currentExercise),
+                    currentTimeMillis = currentTimeMillis
+                )
+            }
         }
     }
 }

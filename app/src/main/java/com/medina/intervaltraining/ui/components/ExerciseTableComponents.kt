@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,6 +27,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
@@ -56,6 +58,7 @@ import com.medina.intervaltraining.ui.drawableId
 import com.medina.intervaltraining.ui.iconName
 import com.medina.intervaltraining.ui.iconToDrawableResource
 import com.medina.intervaltraining.ui.iconToStringResource
+import com.medina.intervaltraining.ui.screens.PlayExerciseTableState
 import com.medina.intervaltraining.ui.stringForButtonDescription
 import com.medina.intervaltraining.ui.stringForIconDescription
 import com.medina.intervaltraining.ui.theme.IntervalTrainingTheme
@@ -171,13 +174,14 @@ fun ExerciseLabelBody(exercise: Exercise, modifier: Modifier = Modifier) {
             .weight(1f)
             .align(Alignment.CenterVertically)) {
             Text(
-                text = exercise.name ,
+                text = exercise.name,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
                 style = MaterialTheme.typography.bodyLarge,
             )
             Row {
                 Text(
                     text = stringResource(id = R.string.exercise_label_time_and_rest, exercise.timeSec, exercise.restSec),
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -186,9 +190,15 @@ fun ExerciseLabelBody(exercise: Exercise, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ExerciseLabel(exercise: Exercise, modifier: Modifier = Modifier, shadowElevation: Dp = 1.dp ) {
+fun ExerciseLabel(
+    exercise: Exercise,
+    modifier: Modifier = Modifier,
+    shadowElevation: Dp = 1.dp,
+    backgroundColor: Color = MaterialTheme.colorScheme.primaryContainer
+) {
     Surface(
         modifier = modifier,
+        color = backgroundColor,
         shape = MaterialTheme.shapes.medium,
         shadowElevation = shadowElevation
     ) {
@@ -197,30 +207,43 @@ fun ExerciseLabel(exercise: Exercise, modifier: Modifier = Modifier, shadowEleva
 }
 
 @Composable
-fun ExerciseRunningLabel(exercise: Exercise, currentTimeMillis:Int, modifier: Modifier = Modifier) {
+fun ExerciseRunningLabel(
+    modifier: Modifier = Modifier,
+    exercise: Exercise,
+    currentTimeMillis: Int,
+    shadowElevation: Dp = 1.dp,
+    backgroundColor: Color = MaterialTheme.colorScheme.primaryContainer
+) {
     val totalProgress: Float by animateFloatAsState(
         targetValue = currentTimeMillis / ((exercise.restSec + exercise.timeSec)*1000).toFloat(),
         label = "TotalProgress"
     )
     val isRest = exercise.timeSec*1000 < currentTimeMillis
     val color = if(isRest) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
-
-    Box {
-        ExerciseLabelBody(
-            exercise = exercise,
-            modifier = modifier.padding(
-                top = 2.dp,
-                start = 2.dp,
-                end = 2.dp,
-                bottom = 10.dp
-            ))
-        Box(
-            modifier = Modifier
-                .height(12.dp)
-                .align(Alignment.BottomStart)
-                .fillMaxWidth(totalProgress)
-                .background(color)
-        )
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        shadowElevation = shadowElevation,
+        color = backgroundColor
+    ) {
+        Box {
+            ExerciseLabelBody(
+                exercise = exercise,
+                modifier = modifier.padding(
+                    top = 2.dp,
+                    start = 2.dp,
+                    end = 2.dp,
+                    bottom = 10.dp
+                )
+            )
+            Box(
+                modifier = Modifier
+                    .height(12.dp)
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth(totalProgress)
+                    .background(color, RoundedCornerShape(topEnd = 12.dp))
+            )
+        }
     }
 }
 
@@ -247,9 +270,11 @@ fun RunningLabelPreview() {
         ExerciseRunningLabel(exercise =
         Exercise(
             name = "Run",
-            icon = ExerciseIcon.RUN
+            icon = ExerciseIcon.RUN,
+            timeSec = 10,
+            restSec = 5
         ),
-                currentTimeMillis = 1000
+                currentTimeMillis = 3000
             )
     }
 }

@@ -422,27 +422,18 @@ fun ExerciseTableEditableListVertical(
             }
         )
         if (!newTraining) {
-                ExtendedFloatingActionButton(
-                    modifier = Modifier
-                        .align(
-                            if (exerciseList.isEmpty()) {
-                                Alignment.TopCenter
-                            } else {
-                                Alignment.BottomEnd
-                            }
-                        )
-                        .height(82.dp)
-                        .padding(16.dp),
-                    expanded = showFullButton,
-                    onClick = onNew,
-                    icon = {
-                        Icon(
-                            Icons.Default.Add,
-                            stringForButtonDescription(id = R.string.edit_exercise_table_new_exercise)
-                        )
-                    },
-                    text = { Text(text = stringResource(id = R.string.edit_exercise_table_new_exercise)) },
-                )
+            NewExerciseButton(
+                modifier = Modifier
+                    .align(
+                        if (exerciseList.isEmpty()) {
+                            Alignment.TopCenter
+                        } else {
+                            Alignment.BottomEnd
+                        }
+                    ),
+                expanded = showFullButton,
+                onClick = onNew,
+            )
         }
     }
 }
@@ -576,7 +567,7 @@ fun ExerciseTableEditableListHorizontal(
             }
         )
         if (!newTraining) {
-            ExtendedFloatingActionButton(
+            NewExerciseButton(
                 modifier = Modifier
                     .align(
                         if (exerciseList.isEmpty()) {
@@ -584,26 +575,40 @@ fun ExerciseTableEditableListHorizontal(
                         } else {
                             Alignment.CenterEnd
                         }
-                    )
-                    .height(82.dp)
-                    .padding(16.dp),
-                expanded = true,
+                    ),
                 onClick = onNew,
-                icon = {
-                    Icon(
-                        Icons.Default.Add,
-                        stringForButtonDescription(id = R.string.edit_exercise_table_new_exercise)
-                    )
-                },
-                text = { Text(text = stringResource(id = R.string.edit_exercise_table_new_exercise)) },
             )
         }
     }
 }
 
 @Composable
+fun NewExerciseButton(modifier: Modifier = Modifier, onClick: () -> Unit, expanded:Boolean=true) {
+    ExtendedFloatingActionButton(
+        modifier = modifier
+            .height(82.dp)
+            .padding(16.dp),
+        expanded = expanded,
+        onClick = onClick,
+        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        shape = MaterialTheme.shapes.small,
+        icon = {
+            Icon(
+                Icons.Default.Add,
+                stringForButtonDescription(id = R.string.edit_exercise_table_new_exercise)
+            )
+        },
+        text = { Text(text = stringResource(id = R.string.edit_exercise_table_new_exercise)) },
+    )
+}
+
+@Composable
 fun ExerciseTableHeader(modifier: Modifier, exercises: List<Exercise>) {
-    Row(modifier = modifier) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.Center,
+    ) {
         Text(
             text = "${exercises.size} exercises",
             style = MaterialTheme.typography.titleMedium,
@@ -683,7 +688,7 @@ fun EditExerciseDialogBody(
     Card(
         modifier = Modifier
             .fillMaxWidth(0.9f),
-        shape = RoundedCornerShape(8.dp)
+        shape = MaterialTheme.shapes.extraLarge,
     ) {
         Column {
             if(text.isBlank()){
